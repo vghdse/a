@@ -53,15 +53,42 @@ async (conn, mek, m, { from, reply, q, text, isCreator, fromMe }) => {
                 return reply(`_AntiDelete Status_\n\n*DM AntiDelete:* ${currentDmStatus ? 'Enabled' : 'Disabled'}\n*Group Chat AntiDelete:* ${currentGcStatus ? 'Enabled' : 'Disabled'}`);
 
             default:
-                const helpMessage = `-- *AntiDelete Command Guide: --*
-                • \`\`.antidelete on\`\` - Reset AntiDelete for all chats (disabled by default)
-                • \`\`.antidelete off gc\`\` - Disable AntiDelete for Group Chats
-                • \`\`.antidelete off dm\`\` - Disable AntiDelete for Direct Messages
-                • \`\`.antidelete set gc\`\` - Toggle AntiDelete for Group Chats
-                • \`\`.antidelete set dm\`\` - Toggle AntiDelete for Direct Messages
-                • \`\`.antidelete set all\`\` - Enable AntiDelete for all chats
-                • \`\`.antidelete status\`\` - Check current AntiDelete status`;
+                const helpMessage = `
+🔐 *ANTIDELETE COMMAND GUIDE* 🔐
 
+╭────────────────────────╮
+🔄 *Main Commands*
+│
+├ • 🟢 \`.antidelete on\` 
+│   Reset AntiDelete for all chats (disabled by default)
+│
+├ • 🔴 \`.antidelete off gc\` 
+│   Disable AntiDelete for Group Chats
+│
+├ • 🔴 \`.antidelete off dm\` 
+│   Disable AntiDelete for Direct Messages
+╰────────────────────────╯
+
+╭────────────────────────╮
+⚙️ *Toggle Settings*
+│
+├ • 🔄 \`.antidelete set gc\` 
+│   Toggle AntiDelete for Group Chats
+│
+├ • 🔄 \`.antidelete set dm\` 
+│   Toggle AntiDelete for Direct Messages
+│
+├ • 🔄 \`.antidelete set all\` 
+│   Enable AntiDelete for all chats
+╰────────────────────────╯
+
+╭────────────────────────╮
+ℹ️ *Status Check*
+│
+├ • 📊 \`.antidelete status\` 
+│   Check current AntiDelete status
+╰────────────────────────╯
+`;
                 return reply(helpMessage);
         }
     } catch (e) {
