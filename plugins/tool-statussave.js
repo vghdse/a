@@ -1,58 +1,58 @@
-const axios = require('axios');
-const config = require('../config');
-const { cmd, commands } = require('../command');
-const { downloadMediaMessage } = require('../lib/msg');
-const fs = require("fs");
+const { cmd } = require("../command");
 
 cmd({
-  pattern: "save",
-  desc: "Save a status/photo/video and send it to your private chat (Owner only).",
+  pattern: "send",
+  alias: ["sendme", 'save'],
+  react: '📤',
+  desc: "Forwards quoted message back to user",
   category: "utility",
-  filename: __filename,
-}, async (conn, mek, m, { isOwner, reply, quoted }) => {
-  if (!isOwner) return reply("❌ You are not the owner!");
-
+  filename: __filename
+}, async (client, message, match, { from }) => {
   try {
-    if (!quoted) {
-      return reply("❌ Please reply to a status, photo, or video message to save it.");
+    if (!match.quoted) {
+      return await client.sendMessage(from, {
+        text: "*🍁 Please reply to a message!*"
+      }, { quoted: message });
     }
 
-    // Extract the mimetype from the quoted message
-    let mime = (quoted.msg || quoted).mimetype || "";
-    console.log("Extracted mimetype:", mime); // Debugging: Log the mimetype
+    const buffer = await match.quoted.download();
+    const mtype = match.quoted.mtype;
+    const options = { quoted: message };
 
-    let mediaType = "";
-    if (mime.startsWith("image")) {
-      mediaType = "image";
-    } else if (mime.startsWith("video")) {
-      mediaType = "video";
-    } else if (mime.startsWith("audio")) {
-      mediaType = "audio";
-    } else {
-      console.log("Unsupported mimetype detected:", mime); // Debugging: Log unsupported mimetype
-      return reply("❌ Unsupported media type. Please reply to a status, photo, or video message.");
+    let messageContent = {};
+    switch (mtype) {
+      case "imageMessage":
+        messageContent = {
+          image: buffer,
+          caption: match.quoted.text || '',
+          mimetype: match.quoted.mimetype || "image/jpeg"
+        };
+        break;
+      case "videoMessage":
+        messageContent = {
+          video: buffer,
+          caption: match.quoted.text || '',
+          mimetype: match.quoted.mimetype || "video/mp4"
+        };
+        break;
+      case "audioMessage":
+        messageContent = {
+          audio: buffer,
+          mimetype: "audio/mp4",
+          ptt: match.quoted.ptt || false
+        };
+        break;
+      default:
+        return await client.sendMessage(from, {
+          text: "❌ Only image, video, and audio messages are supported"
+        }, { quoted: message });
     }
 
-    // Download the media
-    const mediaBuffer = await downloadMediaMessage(quoted);
-    if (!mediaBuffer) return reply("❌ Failed to download the media.");
-
-    // Prepare the message options based on the media type
-    let messageOptions = {};
-    if (mediaType === "image") {
-      messageOptions = { image: mediaBuffer, mimetype: mime };
-    } else if (mediaType === "video") {
-      messageOptions = { video: mediaBuffer, mimetype: mime };
-    } else if (mediaType === "audio") {
-      messageOptions = { audio: mediaBuffer, mimetype: mime };
-    }
-
-    // Send the media to the owner's private chat
-    await conn.sendMessage(m.sender, messageOptions, { quoted: m });
-    reply("✅ Media saved and sent to your private chat!");
-
+    await client.sendMessage(from, messageContent, options);
   } catch (error) {
-    console.error("Error in save command:", error); // Debugging: Log the error
-    reply("❌ An error occurred while saving the media.");
+    console.error("Forward Error:", error);
+    await client.sendMessage(from, {
+      text: "❌ Error forwarding message:\n" + error.message
+    }, { quoted: message });
   }
 });
