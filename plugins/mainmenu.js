@@ -25,13 +25,13 @@ function getHarareTime() {
 // Function to fetch version from package.json
 async function fetchVersion() {
     try {
-        const packageJsonUrl = 'https://raw.githubusercontent.com/mrfrank-ofc/SUBZERO-BOT/main/package.json';
+        const packageJsonUrl = 'https://raw.githubusercontent.com/mrfraank/SUBZERO/main/package.json';
         const response = await axios.get(packageJsonUrl);
         const packageJson = response.data;
         return packageJson.version || '3.0.0';
     } catch (error) {
         console.error("Error fetching version:", error);
-        return 'Unknown';
+        return 'Unkown';
     }
 }
 
