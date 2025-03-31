@@ -113,8 +113,8 @@ const port = process.env.PORT || 9090;
   console.log('[❄️] Plugins installed successful ✅')
   console.log('[❄️] SubZero MD connected to whatsapp ✅')
   
-  let up = `❄️\`SubZero Bot Connected !\` ✅
-  \n\n> _Light, Cold, Icy, Fast & Rich Loaded With Features, SubZero W.A Bot._\n\n────────────────\n> ᴄʜᴀɴɴᴇʟ 🖇️:\n https://whatsapp.com/channel/0029VagQEmB002T7MWo3Sj1D\n\n> ᴅᴇᴠᴇʟᴏᴘᴇʀ 🧑‍💻:\n https://github.com/mrfraank\n\n────────────────\n❆ *ᴘʀᴇғɪx ➜*  ${prefix}\n────────────────\n\n> © ᴘϙᴡᴇʀᴇᴅ ʙʏ ᴍʀ ꜰʀᴀɴᴋ ᴏꜰᴄ  🎐`;
+  let up = `❄️ \`SubZero Bot Connected !\` ✅
+  \n\n> _Light, Cold, Icy, Fast & Rich Loaded With Features, SubZero W.A Bot._\n\n────────────────\n> ᴄʜᴀɴɴᴇʟ 🖇️:\n https://whatsapp.com/channel/0029VagQEmB002T7MWo3Sj1D\n\n> ᴅᴇᴠᴇʟᴏᴘᴇʀ 🧑‍💻:\n https://github.com/mrfraank\n\n────────────────\n❆ *𝙋𝙍𝙀𝙁𝙄𝙓 ➜*  ${prefix}\n────────────────\n\n> © ᴘϙᴡᴇʀᴇᴅ ʙʏ ᴍʀ ꜰʀᴀɴᴋ ᴏꜰᴄ  🎐`;
   conn.sendMessage(conn.user.id, { image: { url: `https://i.postimg.cc/G365KsMt/IMG-20250224-WA0005.jpg` }, caption: up })
   }
   })
