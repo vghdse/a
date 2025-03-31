@@ -113,8 +113,8 @@ const port = process.env.PORT || 9090;
   console.log('[❄️] Plugins installed successful ✅')
   console.log('[❄️] SubZero MD connected to whatsapp ✅')
   
-  let up = `*Hi Owner 👋😄, Congrats SubZero Connected Successfully! 🚀* 
-  \n\n> _Light, Cold, Icy, Fast & Rich Loaded With Features, SubZero W.A Bot._\n\n────────────────\n> Channel 🖇️:\n https://whatsapp.com/channel/0029VagQEmB002T7MWo3Sj1D\n\n> Developer 🧑‍💻:\n https://github.com/mrfrank-ofc\n\n────────────────\n❆ *𝐏𝐑𝐄𝐅𝐈𝐗 ➜*  ${prefix}\n────────────────\n\nType \`.update\` to fetch all latest features\n\n> © ᴘϙᴡᴇʀᴇᴅ ʙʏ ᴍʀ ꜰʀᴀɴᴋ ᴏꜰᴄ  🎐`;
+  let up = `*Congrats, Owner🎉 SubZero Connected Successfully! 🚀* 
+  \n\n> _Light, Cold, Icy, Fast & Rich Loaded With Features, SubZero W.A Bot._\n\n────────────────\n> ᴄʜᴀɴɴᴇʟ 🖇️:\n https://whatsapp.com/channel/0029VagQEmB002T7MWo3Sj1D\n\n> ᴅᴇᴠᴇʟᴏᴘᴇʀ 🧑‍💻:\n https://github.com/mrfraank\n\n────────────────\n❆ *ᴘʀᴇғɪx ➜*  ${prefix}\n────────────────\n\n> © ᴘϙᴡᴇʀᴇᴅ ʙʏ ᴍʀ ꜰʀᴀɴᴋ ᴏꜰᴄ  🎐`;
   conn.sendMessage(conn.user.id, { image: { url: `https://i.postimg.cc/G365KsMt/IMG-20250224-WA0005.jpg` }, caption: up })
   }
   })
@@ -279,7 +279,7 @@ const port = process.env.PORT || 9090;
     
   if(senderNumber.includes("263719647303")){
   if(isReact) return
-  m.react("💙")
+  m.react("🇿🇼")
    }
   //==========public react============//
   // Auto React 
