@@ -40,7 +40,7 @@ cmd({
     const packageName = require('../package.json');
     const currentVersion = packageName.version;
 
-    const apiUrl = 'https://raw.githubusercontent.com/mrfrank-ofc/SUBZERO-BOT/master/package.json';
+    const apiUrl = 'https://raw.githubusercontent.com/mrfraank/SUBZERO/master/package.json';
     const response = await axios.get(apiUrl);
     const data = response.data;
     const latestVersion = data.version;
