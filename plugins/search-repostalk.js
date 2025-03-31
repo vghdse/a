@@ -13,7 +13,7 @@ cmd(
     },
     async (conn, mek, m, { quoted, args, q, reply, from }) => {
         try {
-            if (!q) return reply('*Please provide a GitHub repository URL*\nExample: .repostalk https://github.com/mrfrank-ofc/SUBZERO-BOT');
+            if (!q) return reply('*Please provide a GitHub repository URL*\nExample: .repostalk https://github.com/mrfraank/SUBZERO');
 
             // Extract repo URL from message
             let repoUrl = q.trim();
