@@ -10,7 +10,7 @@ function isEnabled(value) {
 
 cmd({
     pattern: "configurations",
-    alias: ["settings"],
+    alias: ["variables"],
     desc: "Settings of bot",
     category: "menu",
     react: "🦋",
