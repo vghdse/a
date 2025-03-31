@@ -13,7 +13,7 @@ cmd({
 }, 
 async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
     try {
-        let privacyMenu = `╭━〘 *ᴘʀɪᴠᴀᴄʏ sᴇᴛᴛɪɴɢs "🔐* 〙━┈⊷
+        let privacyMenu = `〘 *🔐 𝐏𝐑𝐈𝐕𝐀𝐂𝐘 𝐒𝐄𝐓𝐓𝐈𝐍𝐆𝐒* 〙
 ╭────────────·๏
 ┃◈ blocklist - View blocked users
 ┃◈ getbio - Get user's bio
@@ -22,24 +22,24 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
 ┃◈ setpp - Change bot's profile pic
 ┃◈ setmyname - Change bot's name
 ┃◈ updatebio - Change bot's bio
-┃◈ groupsprivacy - Set group add privacy
+┃◈ groupsprivacy - Set groupadd privacy
 ┃◈ getprivacy - View current privacy settings
 ┃◈ getpp - Get user's profile picture
 ┃◈
-┃◈ *Options for privacy commands:*
+┃◈ \`Options for privacy commands:\`
 ┃◈ all - Everyone
 ┃◈ contacts - My contacts only
 ┃◈ contact_blacklist - Contacts except blocked
 ┃◈ none - Nobody
 ┃◈ match_last_seen - Match last seen
-┃◈└───────────┈⊷
+┃
 ╰──────────────┈⊷
-*Note:* Most commands are owner-only`;
+`;
 
         await conn.sendMessage(
             from,
             {
-                image: { url: `https://i.postimg.cc/xdcd32vs/IMG-20250329-WA0124.jpg` }, // Replace with privacy-themed image if available
+                image: { url: `https://files.catbox.moe/18il7k.jpg` }, // Replace with privacy-themed image if available
                 caption: privacyMenu,
                 contextInfo: {
                     mentionedJid: [m.sender],
