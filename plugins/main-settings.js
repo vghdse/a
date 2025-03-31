@@ -9,11 +9,11 @@ function isEnabled(value) {
 }
 
 cmd({
-    pattern: "env",
-    alias: ["settings", "allvar"],
+    pattern: "configurations",
+    alias: ["settings"],
     desc: "Settings of bot",
     category: "menu",
-    react: "❄",
+    react: "🦋",
     filename: __filename
 }, 
 async (conn, mek, m, { from, quoted, reply }) => {
