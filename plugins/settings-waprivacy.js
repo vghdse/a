@@ -13,29 +13,42 @@ cmd({
 }, 
 async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
     try {
-        let privacyMenu = `〘 *🔐 𝐏𝐑𝐈𝐕𝐀𝐂𝐘 𝐒𝐄𝐓𝐓𝐈𝐍𝐆𝐒* 〙
-╭────────────·๏
-┃◈ blocklist - View blocked users
-┃◈ getbio - Get user's bio
-┃◈ setppall - Set profile pic privacy
-┃◈ setonline - Set online privacy
-┃◈ setpp - Change bot's profile pic
-┃◈ setmyname - Change bot's name
-┃◈ updatebio - Change bot's bio
-┃◈ groupsprivacy - Set groupadd privacy
-┃◈ getprivacy - View current privacy settings
-┃◈ getpp - Get user's profile picture
-┃◈
-┃◈ \`Options for privacy commands:\`
-┃◈ all - Everyone
-┃◈ contacts - My contacts only
-┃◈ contact_blacklist - Contacts except blocked
-┃◈ none - Nobody
-┃◈ match_last_seen - Match last seen
-┃
-╰──────────────┈⊷
-`;
 
+        let privacyMenu = `
+╭───「 🔒 *SUBZERO PRIVACY CENTER* 」───╮
+│                                         
+│  👋 *Hello ${pushname}*! 
+│                                         
+╰─────────────────────────────────────────╯
+
+╭───「 🔐 *PRIVACY COMMANDS* 」──────────╮
+│                                         │
+│  📋 .blocklist - View blocked users     │
+│  📝 .getbio - Get user's bio            │
+│  🖼️ .setppall - Profile pic privacy    │
+│  🟢 .setonline - Online status privacy  │
+│  🎭 .setpp - Change bot's profile pic   │
+│  ✏️ .setmyname - Change bot's name     │
+│  📜 .updatebio - Change bot's bio       │
+│  👥 .groupsprivacy - Group add settings │
+│  🔍 .getprivacy - View current settings │
+│  🖼️ .getpp - Get user's profile pic    │
+│                                         │
+╰─────────────────────────────────────────╯
+
+╭───「 ⚙️ *PRIVACY OPTIONS* 」───────────╮
+│                                         │
+│  🌍 all - Everyone                      │
+│  👥 contacts - Contacts only            │
+│  🚫 contact_blacklist - Exclude blocked │
+│  ❌ none - Nobody                       │
+│  ⏱️ match_last_seen - Match last seen   │
+│                                         │
+╰─────────────────────────────────────────╯
+
+📌 *Note*: Some commands are owner-only`;
+
+        
         await conn.sendMessage(
             from,
             {
