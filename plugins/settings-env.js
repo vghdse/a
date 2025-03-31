@@ -760,8 +760,8 @@ cmd({
 
 cmd({
     pattern: "setvar",
-    alias: ["envvar", "cmdlist"],
-    react: "📜",
+    alias: ["settings", "cmdlist"],
+    react: "⚙️",
     desc: "List all commands and their current status.",
     category: "settings",
     filename: __filename,
@@ -770,7 +770,7 @@ cmd({
 
     const cmdList = `
     ----------------------------------------
-    \`\`\`SUBZERO SETTINGS V2\`\`\`
+    \`\`\`SUBZERO SETTINGS\`\`\`
  -----------------------------------------
  
 🔧 *1. Mode*
