@@ -252,10 +252,10 @@ async (conn, mek, m, { from }) => {
             image: { url: 'https://i.postimg.cc/Tw01QQgN/White-and-Green-Simple-Professional-Business-Project-Presentation-3.jpg' }, // Image URL from your request
             caption: `╭━━〔 *SUBZERO MD* 〕━━┈⊷
 ┃◈╭─────────────·๏
-┃◈┃• *Here are the owner details*
+┃◈┃ 𝐇𝐄𝐑𝐄 𝐈𝐒 𝐌𝐘 𝐃𝐀𝐃𝐃𝐘 !
 ┃◈┃• *Name* - ${ownerName}
 ┃◈┃• *Number* ${ownerNumber}
-┃◈┃• *Version*: 2.0.0
+┃◈┃
 ┃◈└───────────┈⊷
 ╰──────────────┈⊷
 > © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ꜰʀᴀɴᴋ`, // Display the owner's details
@@ -273,7 +273,7 @@ async (conn, mek, m, { from }) => {
 
         // Send audio as per your request
         await conn.sendMessage(from, {
-            audio: { url: 'https://github.com/mrfrank-ofc/SUBZERO-MD-DATABASE/raw/refs/heads/main/audios/subzero-theone.mp3' }, // Audio URL
+            audio: { url: 'https://files.catbox.moe/qda847.m4a' }, // Audio URL
             mimetype: 'audio/mp4',
             ptt: true
         }, { quoted: mek });
