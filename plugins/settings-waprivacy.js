@@ -15,36 +15,36 @@ async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sen
     try {
 
         let privacyMenu = `
-╭───「 🔒 *SUBZERO PRIVACY CENTER* 」───╮
+╭「 🔒 *SUBZERO PRIVACY CENTER* 」
 │                                         
 │  👋 *Hello ${pushname}*! 
 │                                         
-╰─────────────────────────────────────────╯
+╰───────────────────❖
 
-╭───「 🔐 *PRIVACY COMMANDS* 」──────────╮
-│                                         │
-│  📋 .blocklist - View blocked users     │
-│  📝 .getbio - Get user's bio            │
-│  🖼️ .setppall - Profile pic privacy    │
-│  🟢 .setonline - Online status privacy  │
-│  🎭 .setpp - Change bot's profile pic   │
-│  ✏️ .setmyname - Change bot's name     │
-│  📜 .updatebio - Change bot's bio       │
-│  👥 .groupsprivacy - Group add settings │
-│  🔍 .getprivacy - View current settings │
-│  🖼️ .getpp - Get user's profile pic    │
-│                                         │
-╰─────────────────────────────────────────╯
+╭「 🔐 *PRIVACY COMMANDS* 」─❖
+│                                         
+│  📋 .blocklist - View blocked users     
+│  📝 .getbio - Get user's bio            
+│  🖼️ .setppall - Profile pic privacy    
+│  🟢 .setonline - Online status privacy  
+│  🎭 .setpp - Change bot's profile pic   
+│  ✏️ .setmyname - Change bot's name     
+│  📜 .updatebio - Change bot's bio      
+│  👥 .groupsprivacy - Group add settings 
+│  🔍 .getprivacy - View current settings 
+│  🖼️ .getpp - Get user's profile pic    
+│                                         
+╰─────────────────────❖
 
-╭───「 ⚙️ *PRIVACY OPTIONS* 」───────────╮
-│                                         │
-│  🌍 all - Everyone                      │
-│  👥 contacts - Contacts only            │
-│  🚫 contact_blacklist - Exclude blocked │
-│  ❌ none - Nobody                       │
-│  ⏱️ match_last_seen - Match last seen   │
-│                                         │
-╰─────────────────────────────────────────╯
+╭「 ⚙️ *PRIVACY OPTIONS* 」─❖
+│                                         
+│  🌍 all - Everyone                      
+│  👥 contacts - Contacts only            
+│  🚫 contact_blacklist - Exclude blocked 
+│  ❌ none - Nobody                       
+│  ⏱️ match_last_seen - Match last seen   
+│                                         
+╰───────────────────────❖
 
 📌 *Note*: Some commands are owner-only`;
 
