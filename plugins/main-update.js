@@ -53,7 +53,7 @@ cmd({
     //await reply("```🔄 Replacing files...```\n");  
       
     // Copy updated files, skipping config.js and app.json  
-    const sourcePath = path.join(extractPath, "KHAN-MD-main");  
+    const sourcePath = path.join(extractPath, "SUBZERO-main");  
     const destinationPath = path.join(__dirname, '..');  
     copyFolderSync(sourcePath, destinationPath);  
 
