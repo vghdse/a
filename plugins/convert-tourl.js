@@ -15,7 +15,7 @@ const API_KEYS = [
 
 cmd({
   pattern: "tourl",
-  alias: ["imgtourl", "imgurl", "url","uploadimg"],
+  alias: ["imgtourl", "imgurl", "url2","uploadimg"],
   react: '🔄',
   desc: "Convert an image to a URL.",
   category: "utility",
@@ -88,7 +88,7 @@ cmd({
 
 cmd({
   'pattern': "tourl2",
-  'alias': ["imgtourl2", "imgurl2", "url2", "geturl2", "upload"],
+  'alias': ["imgtourl2", "imgurl2", "url", "geturl2", "upload"],
   'react': '📤',
   'desc': "Convert media to Catbox URL",
   'category': "utility",
