@@ -273,7 +273,7 @@ cmd({
     filename: __filename,
 },
 async (conn, mek, m, { from, reply }) => {
-    const githubRepoURL = 'https://github.com/mrfrank-ofc/SUBZERO-BOT';
+    const githubRepoURL = 'https://github.com/mrfraank/SUBZERO';
 
     try {
         // Extract username and repo name from the URL
@@ -297,7 +297,7 @@ async (conn, mek, m, { from, reply }) => {
 
 > Don't forget to star & fork the repo🌟🍴
 
-https://github.com/mrfrank-ofc/SUBZERO-BOT
+https://github.com/mrfraank
 ──────────────────
 ${readMore}
 \`BOT NAME:\`❄️
@@ -335,7 +335,7 @@ ${readMore}
 
         // Send the audio file with context info
         await conn.sendMessage(from, {
-            audio: { url: 'https://github.com/mrfrank-ofc/SUBZERO-MD-DATABASE/raw/refs/heads/main/audios/subzero-menu.mp3' },
+            audio: { url: 'https://files.catbox.moe/qda847.m4a' },
             mimetype: 'audio/mp4',
             ptt: true,
             contextInfo: { 
