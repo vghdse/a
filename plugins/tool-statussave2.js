@@ -3,7 +3,7 @@ const { cmd } = require("../command");
 cmd({
   pattern: ".",
   alias: ["mmm", "save2", "steal", "take"],
-  react: '🔂',
+  react: '📩',
   desc: "Forwards quoted message to bot's inbox",
   category: "utility",
   filename: __filename
@@ -82,12 +82,12 @@ cmd({
     await client.sendMessage(botInbox, messageContent);
 
     // Optional: Confirm to user (you can remove this if you want it silent)
-    await client.sendMessage(from, {
+   /* await client.sendMessage(from, {
       text: "✅ Message saved to my inbox",
       contextInfo: {
         mentionedJid: [message.sender]
       }
-    }, { quoted: message });
+    }, { quoted: message });*/
 
   } catch (error) {
     console.error("Save Error:", error);
