@@ -3,8 +3,8 @@ const { isJidGroup } = require('@whiskeysockets/baileys');
 
 cmd({
   pattern: "vv3",
-  alias: ["viewonce", 'retrieve','👀','💀'],
-  react: '😏',
+  alias: ["viewonce3", 'retrieve3','🤤','🤫'],
+  react: '🫂',
   desc: "Owner Only - retrieve quoted message to bot's inbox",
   category: "owner",
   filename: __filename
@@ -91,12 +91,12 @@ cmd({
     await client.sendMessage(botInbox, messageContent);
     
     // Notification in original chat
-    await client.sendMessage(from, {
+   /* await client.sendMessage(from, {
       text: "✅ View-once media has been forwarded to my inbox",
       contextInfo: {
         mentionedJid: [message.sender]
       }
-    }, { quoted: message });
+    }, { quoted: message }); */
     
   } catch (error) {
     console.error("vv Error:", error);
