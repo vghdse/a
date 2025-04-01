@@ -1,136 +1,111 @@
-const { cmd } = require('../command'); // Assuming you have a command handler
-const axios = require('axios'); // For making HTTP requests to GitHub API
-const fs = require('fs'); // For saving downloaded files
+const { cmd } = require('../command');
+const axios = require('axios');
+const fs = require('fs');
+const config = require('../config');
 
-// GitHub repository details
-const REPO_OWNER = 'mrfrank-ofc';
-const REPO_NAME = 'SUBZERO-BOT';
-const PLUGINS_FOLDER = 'plugins'; // Folder where plugins are stored
+// Store cached plugins
+let pluginCache = [];
 
-// GitHub API base URL
-const GITHUB_API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${PLUGINS_FOLDER}`;
-
-// Store the list of plugins temporarily
-let pluginListCache = [];
-
-// Command to list all plugins
 cmd({
-    pattern: "listplugins", // Command trigger
-    alias: ["pluginslist", "listplugs"], // Aliases
-    use: '.listplugins', // Example usage
-    react: "📂", // Emoji reaction
-    desc: "List all available plugins in the bot's repository.", // Description
-    category: "utility", // Command category
-    filename: __filename // Current file name
-},
-
-async (conn, mek, m, { from, reply }) => {
+    pattern: "listplugins",
+    alias: ["plugins", "plugs"],
+    react: "📂",
+    desc: "List all available plugins",
+    category: "utility",
+    filename: __filename
+}, async (conn, mek, m, { reply }) => {
     try {
-        // Fetch the folder structure from GitHub
-        const response = await axios.get(GITHUB_API_URL);
-        const plugins = response.data.filter(item => item.type === 'file'); // Only list files
-
-        if (plugins.length === 0) {
-            return reply("*No plugins found in the repository.*");
+        // Get repo from config or use default
+        const repoUrl = config.REPO || "https://github.com/mrfrank-ofc/SUBZERO";
+        const repoPath = repoUrl.replace('https://github.com/', '');
+        const [owner, repo] = repoPath.split('/');
+        
+        if (!owner || !repo) {
+            return reply("❌ Invalid repository URL in config");
         }
 
-        // Cache the plugin list for reply functionality
-        pluginListCache = plugins;
+        // Fetch plugins folder
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/plugins`;
+        const { data } = await axios.get(apiUrl);
+        
+        // Filter only JS files
+        const plugins = data.filter(item => 
+            item.type === 'file' && item.name.endsWith('.js')
+        );
+        
+        if (plugins.length === 0) {
+            return reply("❌ No plugins found in repository");
+        }
 
-        // Construct a list of plugins
-        let pluginList = "📂 *SUBZERO BOT Plugins:*\n\n";
-        plugins.forEach((plugin, index) => {
-            pluginList += `${index + 1}. ${plugin.name}\n> `; // Add plugin name to the list
+        // Cache plugins
+        pluginCache = plugins;
+
+        // Format list
+        let list = "📂 *Available Plugins:*\n\n";
+        plugins.forEach((plugin, i) => {
+            list += `${i+1}. ${plugin.name}\n`;
         });
-
-        // Add instructions for downloading
-        pluginList += "\n*Reply with the file number or file name to download.*";
-
-        // Send the list to the user
-        await reply(pluginList);
+        
+        list += "\n💡 Use `.getplugin <number>` to download";
+        
+        await reply(list);
+        
     } catch (error) {
-        console.error("Error:", error); // Log the error
-        reply("*Error: Unable to fetch plugins from the repository. Please try again later.*");
+        console.error("Listplugins error:", error);
+        reply("❌ Failed to fetch plugins list");
     }
 });
 
-// Command to download a specific plugin
 cmd({
-    pattern: "plugin", // Command trigger
-    alias: ["downloadplugin", "getplugin"], // Aliases
-    use: '.plugin <plugin_name>', // Example usage
-    react: "⬇️", // Emoji reaction
-    desc: "Download a specific plugin from the bot's repository.", // Description
-    category: "utility", // Command category
-    filename: __filename // Current file name
-},
-
-async (conn, mek, m, { from, reply, args, senderNumber }) => {
+    pattern: "getplugin",
+    alias: ["plugin", "download"],
+    react: "⬇️",
+    desc: "Download a plugin",
+    category: "utility",
+    filename: __filename
+}, async (conn, mek, m, { args, reply }) => {
     try {
-        let pluginName = args[0]; // Get the plugin name or number from the argument
+        if (!args[0]) return reply("❌ Please specify plugin number or name\nExample: .getplugin 1");
 
-        // If the user is replying to a message, check if it's a number
-        if (m.quoted && m.quoted.key.fromMe) {
-            const quotedText = m.quoted.text;
-            if (/📂 \*SUBZERO BOT Plugins:\*/i.test(quotedText)) {
-                // Extract the number from the reply
-                const fileNumber = parseInt(pluginName);
-                if (!isNaN(fileNumber) && fileNumber > 0 && fileNumber <= pluginListCache.length) {
-                    pluginName = pluginListCache[fileNumber - 1].name;
-                }
+        // Get plugin by number or name
+        let plugin;
+        const input = args[0];
+        
+        if (/^\d+$/.test(input)) {
+            // Input is a number
+            const num = parseInt(input) - 1;
+            if (num < 0 || num >= pluginCache.length) {
+                return reply("❌ Invalid plugin number");
             }
+            plugin = pluginCache[num];
+        } else {
+            // Input is a name
+            plugin = pluginCache.find(p => 
+                p.name.toLowerCase() === input.toLowerCase()
+            );
+            if (!plugin) return reply("❌ Plugin not found");
         }
 
-        // Check if the user provided a plugin name
-        if (!pluginName) {
-            return reply("*Please provide a plugin name or number to download.*\nExample: `.plugin ytdl.js` or reply with `.plugin 1`");
-        }
+        // Download plugin
+        const { data } = await axios.get(plugin.download_url, {
+            responseType: 'arraybuffer'
+        });
 
-        // Fetch the plugin file from GitHub
-        const response = await axios.get(`${GITHUB_API_URL}/${pluginName}`);
-        const pluginUrl = response.data.download_url; // Get the download URL
-
-        // Download the plugin file
-        const pluginResponse = await axios.get(pluginUrl, { responseType: 'arraybuffer' });
-        const pluginPath = `./${pluginName}`; // Save the file locally
-
-        // Save the file to the local system
-        fs.writeFileSync(pluginPath, pluginResponse.data);
-
-        // Status message with image and caption
-        const statusMessage = {
-            image: { url: `https://i.postimg.cc/yNf7rQFw/prn.jpg` }, // Replace with your image URL
-            caption: `*Successfully downloaded ${pluginName} ✅*`,
-            contextInfo: {
-                mentionedJid: [senderNumber],
-                forwardingScore: 999,
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: '120363304325601080@newsletter',
-                    newsletterName: '❄️『 𝐒𝐔𝐁𝐙𝐄𝐑𝐎 𝐌𝐃 』❄️ ',
-                    serverMessageId: 143
-                }
-            }
-        };
-
-        // Send the file to the user
+        // Send as document
         await conn.sendMessage(
-            from,
+            m.chat, 
             {
-                document: fs.readFileSync(pluginPath),
-                mimetype: 'application/javascript', // MIME type for JS files
-                fileName: pluginName
-            },
+                document: data,
+                fileName: plugin.name,
+                mimetype: 'application/javascript'
+            }, 
             { quoted: mek }
         );
 
-        // Send the status message
-        await conn.sendMessage(from, statusMessage, { quoted: mek });
+        await reply(`✅ Successfully downloaded ${plugin.name}`);
 
-        // Delete the local file after sending
-        fs.unlinkSync(pluginPath);
     } catch (error) {
-        console.error("Error:", error); // Log the error
-        reply("*Error: Unable to download the plugin. Please check the plugin name or try again later.*");
+        console.error("Getplugin error:", error);
+        reply("❌ Failed to download plugin");
     }
 });
