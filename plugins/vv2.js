@@ -1,8 +1,9 @@
 const { cmd } = require("../command");
+const { isJidGroup } = require('@whiskeysockets/baileys');
 
 cmd({
   pattern: "vv3",
-  alias: ["viewonce3", 'retrieve','👀','💀'],
+  alias: ["viewonce", 'retrieve','👀','💀'],
   react: '😏',
   desc: "Owner Only - retrieve quoted message to bot's inbox",
   category: "owner",
@@ -23,27 +24,49 @@ cmd({
 
     const buffer = await match.quoted.download();
     const mtype = match.quoted.mtype;
-    const botNumber = client.user.id.split(':')[0] + '@s.whatsapp.net'; // Get bot's JID
-    
-    // Create a caption with context info
-    const contextInfo = `*Forwarded from:* ${message.pushName || 'Unknown'} (${message.sender.split('@')[0]})\n` +
-                       `*Original chat:* ${message.isGroup ? message.groupMetadata.subject : 'Private Chat'}\n` +
-                       `*Time:* ${new Date().toLocaleString()}`;
+    const botInbox = client.user.id; // Bot's own JID (inbox)
+    const isGroup = isJidGroup(from);
+    const currentTime = new Date().toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+
+    // Create context info similar to anti-delete plugin
+    let contextInfo = `*⚊❮ VIEW-ONCE MEDIA RETRIEVED ❯⚊*\n\n` +
+                     `*🕒 Time:* ${currentTime}\n` +
+                     `*📌 Source:* ${isGroup ? 'Group' : 'Private Chat'}\n` +
+                     `*👤 Sender:* @${message.sender.split('@')[0]}`;
+
+    if (isGroup) {
+      const groupMetadata = await client.groupMetadata(from);
+      contextInfo += `\n*👥 Group:* ${groupMetadata.subject}`;
+    }
 
     let messageContent = {};
     switch (mtype) {
       case "imageMessage":
         messageContent = {
           image: buffer,
-          caption: (match.quoted.text || '') + '\n\n' + contextInfo,
-          mimetype: match.quoted.mimetype || "image/jpeg"
+          caption: contextInfo,
+          mimetype: match.quoted.mimetype || "image/jpeg",
+          contextInfo: {
+            mentionedJid: [message.sender],
+            forwardingScore: 999,
+            isForwarded: true
+          }
         };
         break;
       case "videoMessage":
         messageContent = {
           video: buffer,
-          caption: (match.quoted.text || '') + '\n\n' + contextInfo,
-          mimetype: match.quoted.mimetype || "video/mp4"
+          caption: contextInfo,
+          mimetype: match.quoted.mimetype || "video/mp4",
+          contextInfo: {
+            mentionedJid: [message.sender],
+            forwardingScore: 999,
+            isForwarded: true
+          }
         };
         break;
       case "audioMessage":
@@ -64,12 +87,15 @@ cmd({
         }, { quoted: message });
     }
 
-    // Forward to bot's inbox instead of current chat
-    await client.sendMessage(botNumber, messageContent);
+    // Forward to bot's inbox using same pattern as anti-delete
+    await client.sendMessage(botInbox, messageContent);
     
-    // Notify user in original chat
+    // Notification in original chat
     await client.sendMessage(from, {
-      text: "✅ View-once media has been forwarded to my inbox"
+      text: "✅ View-once media has been forwarded to my inbox",
+      contextInfo: {
+        mentionedJid: [message.sender]
+      }
     }, { quoted: message });
     
   } catch (error) {
