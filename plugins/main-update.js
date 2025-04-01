@@ -1,95 +1,87 @@
-const { cmd } = require("../command");  
-const axios = require('axios');  
-const fs = require('fs');  
-const path = require("path");  
-const AdmZip = require("adm-zip");  
+const { cmd } = require("../command");
+const axios = require('axios');
+const fs = require('fs');
+const path = require("path");
+const AdmZip = require("adm-zip");
+const config = require('../config');
 
 cmd({  
   pattern: "update",  
   alias: ["upgrade", "sync"],  
   react: '🚀',  
-  desc: "Update the bot to the latest version.",  
-  category: "misc",  
-  filename: __filename  
+  desc: "Update the bot to the latest version",  
+  category: "system",  
+  filename: __filename
 }, async (client, message, args, { from, reply, sender, isOwner }) => {  
-  if (!isOwner) {  
-    return reply("This command is only for the bot owner.");  
-  }  
+  if (!isOwner) return reply("❌ Owner only command!");
+  
+  try {
+    // Use config.REPO or default to original repo
+    const repoUrl = config.REPO || "https://github.com/mrfraank/SUBZERO";
+    const repoPath = repoUrl.replace('https://github.com/', '');
+    
+    await reply("```📥 Downloading updates...```");
+    
+    // 1. Download the latest code
+    const zipPath = path.join(__dirname, "update.zip");
+    const { data } = await axios.get(`${repoUrl}/archive/main.zip`, {
+      responseType: "arraybuffer"
+    });
+    fs.writeFileSync(zipPath, data);
 
-  try {  
-    await reply("```📂 Initializing```\n");  
+    // 2. Extract the ZIP
+    const extractPath = path.join(__dirname, 'temp_update');
+    const zip = new AdmZip(zipPath);
+    zip.extractAllTo(extractPath, true);
+
+    // 3. Copy files (skip config.js and app.json)
+    const sourcePath = path.join(extractPath, `${repoPath.split('/')[1]}-main`);
+    const destinationPath = path.join(__dirname, '..');
+    
+    const files = fs.readdirSync(sourcePath);
+    for (const file of files) {
+      // Skip these important files
+      if (file === "config.js" || file === "app.json") continue;
       
-    // Get latest commit from GitHub  
-    const { data: commitData } = await axios.get("https://api.github.com/repos/mrfraank/SUBZERO/commits/main");  
-    const latestCommitHash = commitData.sha;  
-
-    // Get current commit hash  
-    let currentHash = 'unknown';  
-    try {  
-      const packageJson = require('../package.json');  
-      currentHash = packageJson.commitHash || 'unknown';  
-    } catch (error) {  
-      console.error("Error reading package.json:", error);  
-    }  
-
-    if (latestCommitHash === currentHash) {  
-      return reply("```✅ SUBZERO-MD bot is already up-to-date!```\n");  
-    }  
-
-    await reply("```📦 UPDATING SUBZERO...```\n");  
+      const src = path.join(sourcePath, file);
+      const dest = path.join(destinationPath, file);
       
-    // Download latest code  
-    const zipPath = path.join(__dirname, "latest.zip");  
-    const { data: zipData } = await axios.get("https://github.com/mrfraank/SUBZERO/archive/main.zip", { responseType: "arraybuffer" });  
-    fs.writeFileSync(zipPath, zipData);  
+      if (fs.lstatSync(src).isDirectory()) {
+        if (!fs.existsSync(dest)) fs.mkdirSync(dest);
+        copyFiles(src, dest);
+      } else {
+        fs.copyFileSync(src, dest);
+      }
+    }
 
-  //  await reply("```📦 Extracting the latest code...```\n");  
-      
-    // Extract ZIP file  
-    const extractPath = path.join(__dirname, 'latest');  
-    const zip = new AdmZip(zipPath);  
-    zip.extractAllTo(extractPath, true);  
+    // 4. Cleanup
+    fs.unlinkSync(zipPath);
+    fs.rmSync(extractPath, { recursive: true, force: true });
 
-    //await reply("```🔄 Replacing files...```\n");  
-      
-    // Copy updated files, skipping config.js and app.json  
-    const sourcePath = path.join(extractPath, "SUBZERO-main");  
-    const destinationPath = path.join(__dirname, '..');  
-    copyFolderSync(sourcePath, destinationPath);  
+    await reply("```✅ Update complete! Restarting...```");
+    setTimeout(() => process.exit(0), 2000);
 
-    // Cleanup  
-    fs.unlinkSync(zipPath);  
-    fs.rmSync(extractPath, { recursive: true, force: true });  
+  } catch (error) {
+    console.error(error);
+    reply("❌ Update failed. Please update manually.");
+  }
+});
 
-    await reply("```🔄 Restarting the bot to apply updates...```\n");  
-    process.exit(0);  
-  } catch (error) {  
-    console.error("Update error:", error);  
-    reply("❌ Update failed. Please try manually.");  
-  }  
-});  
-
-// Helper function to copy directories while preserving config.js and app.json  
-function copyFolderSync(source, target) {  
-  if (!fs.existsSync(target)) {  
-    fs.mkdirSync(target, { recursive: true });  
-  }  
-
-  const items = fs.readdirSync(source);  
-  for (const item of items) {  
-    const srcPath = path.join(source, item);  
-    const destPath = path.join(target, item);  
-
-    // Skip config.js and app.json  
-    if (item === "config.js" || item === "app.json") {  
-      console.log(`Skipping ${item} to preserve custom settings.`);  
-      continue;  
-    }  
-
-    if (fs.lstatSync(srcPath).isDirectory()) {  
-      copyFolderSync(srcPath, destPath);  
-    } else {  
-      fs.copyFileSync(srcPath, destPath);  
-    }  
-  }  
+// Simple file copy helper
+function copyFiles(source, target) {
+  const files = fs.readdirSync(source);
+  for (const file of files) {
+    // Skip these important files in subdirectories too
+    if (file === "config.js" || file === "app.json") continue;
+    
+    const src = path.join(source, file);
+    const dest = path.join(target, file);
+    
+    if (fs.lstatSync(src).isDirectory()) {
+      if (!fs.existsSync(dest)) fs.mkdirSync(dest);
+      copyFiles(src, dest);
+    } else {
+      fs.copyFileSync(src, dest);
+    }
+  }
 }
