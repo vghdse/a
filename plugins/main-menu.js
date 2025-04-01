@@ -32,7 +32,7 @@ async function getBotVersion() {
         return data.version || '3.0.0';
     } catch (error) {
         console.error("Version check error:", error);
-        return 'Unknown';
+        return 'Ultimate';
     }
 }
 
