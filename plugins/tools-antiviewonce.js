@@ -68,30 +68,48 @@ cmd({
 
 // 2viewonce
 
+
 cmd({
   pattern: "vv2",
-  alias: ["viewonce2", 'retrieve','😷','🤭'],
-  react: '😏',
+  alias: ["viewonce2", 'retrieve2','🤤','🤫'],
+  react: '🫂',
   desc: "Owner Only - retrieve quoted message to bot's inbox",
   category: "owner",
   filename: __filename
 }, async (client, message, match, { from, isOwner }) => {
   try {
-    if (!isOwner) return; // Silent fail for non-owners
-    
-    if (!match.quoted) return; // Silent fail if no quoted message
+    if (!isOwner) {
+      return await client.sendMessage(from, {
+        text: "*❌ Command for owner only.*"
+      }, { quoted: message });
+    }
+
+    if (!match.quoted) {
+      return await client.sendMessage(from, {
+        text: "*Reply to a view once message!*"
+      }, { quoted: message });
+    }
 
     const buffer = await match.quoted.download();
     const mtype = match.quoted.mtype;
-    const botInbox = client.user.id; // Bot's own JID
+    const botInbox = client.user.id; // Bot's own JID (inbox)
+    const isGroup = isJidGroup(from);
     const currentTime = new Date().toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit'
     });
 
-    // Minimal context info
-    const contextInfo = `🕒 ${currentTime}\n👤 ${message.sender.split('@')[0]}`;
+    // Create context info similar to anti-delete plugin
+    let contextInfo = `\`SUBZERO BOT VV\`\n\n` +
+                     `*🕒 Time:* ${currentTime}\n` +
+                     `*📌 Source:* ${isGroup ? 'Group' : 'Private Chat'}\n` +
+                     `*👤 Sender:* @${message.sender.split('@')[0]}`;
+
+    if (isGroup) {
+      const groupMetadata = await client.groupMetadata(from);
+      contextInfo += `\n*👥 Group:* ${groupMetadata.subject}`;
+    }
 
     let messageContent = {};
     switch (mtype) {
@@ -99,31 +117,59 @@ cmd({
         messageContent = {
           image: buffer,
           caption: contextInfo,
-          mimetype: match.quoted.mimetype || "image/jpeg"
+          mimetype: match.quoted.mimetype || "image/jpeg",
+          contextInfo: {
+            mentionedJid: [message.sender],
+            forwardingScore: 999,
+            isForwarded: true
+          }
         };
         break;
       case "videoMessage":
         messageContent = {
           video: buffer,
           caption: contextInfo,
-          mimetype: match.quoted.mimetype || "video/mp4"
+          mimetype: match.quoted.mimetype || "video/mp4",
+          contextInfo: {
+            mentionedJid: [message.sender],
+            forwardingScore: 999,
+            isForwarded: true
+          }
         };
         break;
       case "audioMessage":
         messageContent = {
           audio: buffer,
           mimetype: "audio/mp4",
-          ptt: match.quoted.ptt || false
+          ptt: match.quoted.ptt || false,
+          contextInfo: {
+            mentionedJid: [message.sender],
+            forwardingScore: 999,
+            isForwarded: true
+          }
         };
         break;
       default:
-        return; // Silent fail for unsupported types
+        return await client.sendMessage(from, {
+          text: "❌ Only image, video, and audio messages are supported"
+        }, { quoted: message });
     }
 
-    // Directly forward to bot's inbox without confirmation
+    // Forward to bot's inbox using same pattern as anti-delete
     await client.sendMessage(botInbox, messageContent);
     
+    // Notification in original chat
+   /* await client.sendMessage(from, {
+      text: "✅ View-once media has been forwarded to my inbox",
+      contextInfo: {
+        mentionedJid: [message.sender]
+      }
+    }, { quoted: message }); */
+    
   } catch (error) {
-    console.error("vv Error:", error); // Silent error logging
+    console.error("vv Error:", error);
+    await client.sendMessage(from, {
+      text: "❌ Error retrieving view-once message:\n" + error.message
+    }, { quoted: message });
   }
 });
