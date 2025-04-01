@@ -1,4 +1,6 @@
 const { cmd } = require("../command");
+const { isJidGroup } = require('@whiskeysockets/baileys');
+
 
 cmd({
   pattern: "vv",
@@ -65,8 +67,6 @@ cmd({
 
 
 // 2viewonce
-const { cmd } = require("../command");
-const { isJidGroup } = require('@whiskeysockets/baileys');
 
 cmd({
   pattern: "vv2",
