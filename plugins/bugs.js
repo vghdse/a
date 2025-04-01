@@ -1,4 +1,4 @@
-const { cmd } = require("../command");
+/* const { cmd } = require("../command");
 const config = require("../config");
 
 // ZUI Command
@@ -51,3 +51,5 @@ cmd({
     reply('❌ Error processing command');
   }
 });
+
+*/
