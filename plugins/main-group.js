@@ -5,6 +5,651 @@ const config = require('../config')
 const { cmd, commands } = require('../command')
 const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson } = require('../lib/functions')
 
+// ==========================
+// Helper: Custom Message Sender
+// ==========================
+const sendCustomMessage = async (conn, from, message, mek, m) => {
+    await conn.sendMessage(from, {
+        image: { url: `https://files.catbox.moe/18il7k.jpg` },
+        caption: message,
+        contextInfo: {
+            mentionedJid: [m.sender],
+            forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+                newsletterJid: '120363304325601080@newsletter',
+                newsletterName: '『 𝐒𝐔𝐁𝐙𝐄𝐑𝐎 𝐌𝐃 』',
+                serverMessageId: 143
+            }
+        }
+    }, { quoted: mek });
+}
+
+// ==========================
+// Leave Group Command
+// ==========================
+cmd({
+    pattern: "leave",
+    alias: ["left", "leftgc", "leavegc"],
+    desc: "Leave the group",
+    react: "🎉",
+    category: "owner",
+    filename: __filename
+},
+async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, senderNumber }) => {
+    try {
+        if (!isGroup) {
+            return await sendCustomMessage(conn, from, "This command can only be used in groups.", mek, m);
+        }
+        
+        const botOwner = conn.user.id.split(":")[0]; 
+        if (senderNumber !== botOwner) {
+            return await sendCustomMessage(conn, from, "Only the bot owner can use this command.", mek, m);
+        }
+
+        await sendCustomMessage(conn, from, "Leaving group...", mek, m);
+        await sleep(1500);
+        await conn.groupLeave(from);
+        await sendCustomMessage(conn, from, "Goodbye! 👋", mek, m);
+    } catch (e) {
+        console.error(e);
+        await sendCustomMessage(conn, from, `❌ Error: ${e}`, mek, m);
+    }
+});
+
+
+// ==========================
+// Add Member Command
+// ==========================
+cmd({
+    pattern: "add",
+    alias: ["a", "invite"],
+    desc: "Adds a member to the group",
+    category: "admin",
+    react: "➕",
+    filename: __filename
+},
+async (conn, mek, m, { from, q, isGroup, isBotAdmins, senderNumber, quoted }) => {
+    if (!isGroup) return await sendCustomMessage(conn, from, "❌ This command can only be used in groups.", mek, m);
+
+    const botOwner = conn.user.id.split(":")[0];
+    if (senderNumber !== botOwner) {
+        return await sendCustomMessage(conn, from, "❌ Only the bot owner can use this command.", mek, m);
+    }
+
+    if (!isBotAdmins) return await sendCustomMessage(conn, from, "❌ I need to be an admin to use this command.", mek, m);
+
+    let number;
+    if (m.quoted) {
+        number = m.quoted.sender.split("@")[0];
+    } else if (q && q.includes("@")) {
+        number = q.replace(/[@\s]/g, '');
+    } else if (q && /^\d+$/.test(q)) {
+        number = q;
+    } else {
+        return await sendCustomMessage(conn, from, "❌ Please reply to a message, mention a user, or provide a number to add.", mek, m);
+    }
+
+    const jid = number + "@s.whatsapp.net";
+
+    try {
+        await conn.groupParticipantsUpdate(from, [jid], "add");
+        await sendCustomMessage(conn, from, `✅ Successfully added @${number}`, mek, m);
+    } catch (error) {
+        console.error("Add command error:", error);
+        await sendCustomMessage(conn, from, "❌ Failed to add the member.", mek, m);
+    }
+});
+
+
+// ==========================
+// Remove Member (Kick) Command
+// ==========================
+cmd({
+    pattern: "remove",
+    alias: ["kick", "k", "out"],
+    desc: "Removes a member from the group",
+    category: "admin",
+    react: "❌",
+    filename: __filename
+},
+async (conn, mek, m, { from, q, isGroup, isBotAdmins, senderNumber, quoted }) => {
+    if (!isGroup) return await sendCustomMessage(conn, from, "❌ This command can only be used in groups.", mek, m);
+
+    const botOwner = conn.user.id.split(":")[0];
+    if (senderNumber !== botOwner) {
+        return await sendCustomMessage(conn, from, "❌ Only the bot owner can use this command.", mek, m);
+    }
+
+    if (!isBotAdmins) return await sendCustomMessage(conn, from, "❌ I need to be an admin to use this command.", mek, m);
+
+    let number;
+    if (m.quoted) {
+        number = m.quoted.sender.split("@")[0];
+    } else if (q && q.includes("@")) {
+        number = q.replace(/[@\s]/g, '');
+    } else {
+        return await sendCustomMessage(conn, from, "❌ Please reply to a message or mention a user to remove.", mek, m);
+    }
+
+    const jid = number + "@s.whatsapp.net";
+
+    try {
+        await conn.groupParticipantsUpdate(from, [jid], "remove");
+        await sendCustomMessage(conn, from, `✅ Successfully removed @${number}`, mek, m);
+    } catch (error) {
+        console.error("Remove command error:", error);
+        await sendCustomMessage(conn, from, "❌ Failed to remove the member.", mek, m);
+    }
+});
+
+
+// ==========================
+// Promote Member Command
+// ==========================
+cmd({
+    pattern: "promote",
+    alias: ["p", "admin", "makeadmin"],
+    desc: "Promotes a member to group admin",
+    category: "admin",
+    react: "⬆️",
+    filename: __filename
+},
+async (conn, mek, m, { from, q, isGroup, senderNumber, botNumber, isAdmins, isBotAdmins }) => {
+    if (!isGroup) return await sendCustomMessage(conn, from, "❌ This command can only be used in groups.", mek, m);
+    if (!isAdmins) return await sendCustomMessage(conn, from, "❌ Only group admins can use this command.", mek, m);
+    if (!isBotAdmins) return await sendCustomMessage(conn, from, "❌ I need to be an admin to use this command.", mek, m);
+
+    let number;
+    if (m.quoted) {
+        number = m.quoted.sender.split("@")[0];
+    } else if (q && q.includes("@")) {
+        number = q.replace(/[@\s]/g, '');
+    } else {
+        return await sendCustomMessage(conn, from, "❌ Please reply to a message or provide a number to promote.", mek, m);
+    }
+
+    if (number === botNumber) return await sendCustomMessage(conn, from, "❌ The bot cannot promote itself.", mek, m);
+
+    const jid = number + "@s.whatsapp.net";
+
+    try {
+        await conn.groupParticipantsUpdate(from, [jid], "promote");
+        await sendCustomMessage(conn, from, `✅ Successfully promoted @${number} to admin.`, mek, m);
+    } catch (error) {
+        console.error("Promote command error:", error);
+        await sendCustomMessage(conn, from, "❌ Failed to promote the member.", mek, m);
+    }
+});
+
+
+// ==========================
+// Demote Admin Command
+// ==========================
+cmd({
+    pattern: "demote",
+    alias: ["d", "dismiss", "removeadmin"],
+    desc: "Demotes a group admin to a normal member",
+    category: "admin",
+    react: "⬇️",
+    filename: __filename
+},
+async (conn, mek, m, { from, q, isGroup, senderNumber, botNumber, isAdmins, isBotAdmins }) => {
+    if (!isGroup) return await sendCustomMessage(conn, from, "❌ This command can only be used in groups.", mek, m);
+    if (!isAdmins) return await sendCustomMessage(conn, from, "❌ Only group admins can use this command.", mek, m);
+    if (!isBotAdmins) return await sendCustomMessage(conn, from, "❌ I need to be an admin to use this command.", mek, m);
+
+    let number;
+    if (m.quoted) {
+        number = m.quoted.sender.split("@")[0];
+    } else if (q && q.includes("@")) {
+        number = q.replace(/[@\s]/g, '');
+    } else {
+        return await sendCustomMessage(conn, from, "❌ Please reply to a message or provide a number to demote.", mek, m);
+    }
+
+    if (number === botNumber) return await sendCustomMessage(conn, from, "❌ The bot cannot demote itself.", mek, m);
+
+    const jid = number + "@s.whatsapp.net";
+
+    try {
+        await conn.groupParticipantsUpdate(from, [jid], "demote");
+        await sendCustomMessage(conn, from, `✅ Successfully demoted @${number} to a normal member.`, mek, m);
+    } catch (error) {
+        console.error("Demote command error:", error);
+        await sendCustomMessage(conn, from, "❌ Failed to demote the member.", mek, m);
+    }
+});
+
+
+// ==========================
+// Unmute Group Command
+// ==========================
+cmd({
+    pattern: "unmute",
+    alias: ["groupunmute"],
+    react: "🔊",
+    desc: "Unmute the group (Everyone can send messages).",
+    category: "group",
+    filename: __filename
+},           
+async (conn, mek, m, { from, isGroup, senderNumber, isAdmins, isBotAdmins }) => {
+    try {
+        if (!isGroup) return await sendCustomMessage(conn, from, "❌ This command can only be used in groups.", mek, m);
+        if (!isAdmins) return await sendCustomMessage(conn, from, "❌ Only group admins can use this command.", mek, m);
+        if (!isBotAdmins) return await sendCustomMessage(conn, from, "❌ I need to be an admin to unmute the group.", mek, m);
+
+        await conn.groupSettingUpdate(from, "not_announcement");
+        await sendCustomMessage(conn, from, "✅ Group has been unmuted. Everyone can send messages.", mek, m);
+    } catch (e) {
+        console.error("Error unmuting group:", e);
+        await sendCustomMessage(conn, from, "❌ Failed to unmute the group. Please try again.", mek, m);
+    }
+});
+
+
+// ==========================
+// Lock Group Command
+// ==========================
+cmd({
+    pattern: "lockgc",
+    alias: ["lock", "close", "mute"],
+    react: "🔒",
+    desc: "Lock the group (Prevents new members from joining).",
+    category: "group",
+    filename: __filename
+},           
+async (conn, mek, m, { from, isGroup, isAdmins, isBotAdmins }) => {
+    try {
+        if (!isGroup) return await sendCustomMessage(conn, from, "❌ This command can only be used in groups.", mek, m);
+        if (!isAdmins) return await sendCustomMessage(conn, from, "❌ Only group admins can use this command.", mek, m);
+        if (!isBotAdmins) return await sendCustomMessage(conn, from, "❌ I need to be an admin to lock the group.", mek, m);
+
+        await conn.groupSettingUpdate(from, "locked");
+        await sendCustomMessage(conn, from, "✅ Group has been locked. New members cannot join.", mek, m);
+    } catch (e) {
+        console.error("Error locking group:", e);
+        await sendCustomMessage(conn, from, "❌ Failed to lock the group. Please try again.", mek, m);
+    }
+});
+
+    
+// ==========================
+// Update Group Description Command
+// ==========================
+cmd({
+    pattern: "updategdesc",
+    alias: ["upgdesc", "gdesc"],
+    react: "📜",
+    desc: "Change the group description.",
+    category: "group",
+    filename: __filename
+},           
+async (conn, mek, m, { from, isGroup, isAdmins, isBotAdmins, q }) => {
+    try {
+        if (!isGroup) return await sendCustomMessage(conn, from, "❌ This command can only be used in groups.", mek, m);
+        if (!isAdmins) return await sendCustomMessage(conn, from, "❌ Only group admins can use this command.", mek, m);
+        if (!isBotAdmins) return await sendCustomMessage(conn, from, "❌ I need to be an admin to update the group description.", mek, m);
+        if (!q) return await sendCustomMessage(conn, from, "❌ Please provide a new group description.", mek, m);
+
+        await conn.groupUpdateDescription(from, q);
+        await sendCustomMessage(conn, from, "✅ Group description has been updated.", mek, m);
+    } catch (e) {
+        console.error("Error updating group description:", e);
+        await sendCustomMessage(conn, from, "❌ Failed to update the group description. Please try again.", mek, m);
+    }
+});
+
+
+// ==========================
+// Update Group Name Command
+// ==========================
+cmd({
+    pattern: "updategname",
+    alias: ["upgname", "gname"],
+    react: "📝",
+    desc: "Change the group name.",
+    category: "group",
+    filename: __filename
+},           
+async (conn, mek, m, { from, isGroup, isAdmins, isBotAdmins, q }) => {
+    try {
+        if (!isGroup) return await sendCustomMessage(conn, from, "❌ This command can only be used in groups.", mek, m);
+        if (!isAdmins) return await sendCustomMessage(conn, from, "❌ Only group admins can use this command.", mek, m);
+        if (!isBotAdmins) return await sendCustomMessage(conn, from, "❌ I need to be an admin to update the group name.", mek, m);
+        if (!q) return await sendCustomMessage(conn, from, "❌ Please provide a new group name.", mek, m);
+
+        await conn.groupUpdateSubject(from, q);
+        await sendCustomMessage(conn, from, `✅ Group name has been updated to: *${q}*`, mek, m);
+    } catch (e) {
+        console.error("Error updating group name:", e);
+        await sendCustomMessage(conn, from, "❌ Failed to update the group name. Please try again.", mek, m);
+    }
+});
+
+
+// ==========================
+// Join Group via Invite Link Command
+// ==========================
+cmd({
+    pattern: "join",
+    react: "📬",
+    alias: ["joinme", "f_join"],
+    desc: "To Join a Group from Invite link",
+    category: "group",
+    use: '.join < Group Link >',
+    filename: __filename
+},
+async (conn, mek, m, { from, q, isGroup, sender, senderNumber, isCreator, isDev, isOwner, isMe, args }) => {
+    try {
+        const msr = (await fetchJson('https://raw.githubusercontent.com/XdTechPro/KHAN-DATA/refs/heads/main/MSG/mreply.json')).replyMsg
+
+        if (!isCreator && !isDev && !isOwner && !isMe) return await sendCustomMessage(conn, from, msr.own_cmd, mek, m);
+        if (!q) return await sendCustomMessage(conn, from, "*Please write the Group Link*️ 🖇️", mek, m);
+        let result = args[0].split('https://chat.whatsapp.com/')[1];
+        await conn.groupAcceptInvite(result);
+        await conn.sendMessage(from, { text: `✔️ *Successfully Joined*` }, { quoted: mek });
+    } catch (e) {
+        await conn.sendMessage(from, { react: { text: '❌', key: mek.key } });
+        console.error(e);
+        await sendCustomMessage(conn, from, `❌ *Error Occurred !!*\n\n${e}`, mek, m);
+    }
+});
+
+
+// ==========================
+// Get Group Invite Link Command
+// ==========================
+cmd({
+    pattern: "invite",
+    react: "🖇️",
+    alias: ["grouplink", "glink"],
+    desc: "To Get the Group Invite link",
+    category: "group",
+    use: '.invite',
+    filename: __filename
+},
+async (conn, mek, m, { from, isGroup, isAdmins, isDev, isBotAdmins }) => {
+    try {
+        const msr = (await fetchJson('https://raw.githubusercontent.com/XdTechPro/KHAN-DATA/refs/heads/main/MSG/mreply.json')).replyMsg
+
+        if (!isGroup) return await sendCustomMessage(conn, from, msr.only_gp, mek, m);
+        if (!isAdmins && !isDev) return await sendCustomMessage(conn, from, msr.you_adm, mek, m);
+        if (!isBotAdmins) return await sendCustomMessage(conn, from, msr.give_adm, mek, m);
+        const code = await conn.groupInviteCode(from);
+
+        await conn.sendMessage(from, { text: `🖇️ *Group Link*\n\nhttps://chat.whatsapp.com/${code}` }, { quoted: mek });
+    } catch (e) {
+        await conn.sendMessage(from, { react: { text: '❌', key: mek.key } });
+        console.error(e);
+        await sendCustomMessage(conn, from, `❌ *Error Occurred !!*\n\n${e}`, mek, m);
+    }
+});
+
+
+// ==========================
+// Reset (Revoke) Group Invite Link Command
+// ==========================
+cmd({
+    pattern: "revoke",
+    react: "🖇️",
+    alias: ["revokegrouplink", "resetglink", "revokelink", "f_revoke"],
+    desc: "To Reset the group link",
+    category: "group",
+    use: '.revoke',
+    filename: __filename
+},
+async (conn, mek, m, { from, isGroup, isAdmins, isDev, isBotAdmins }) => {
+    try {
+        const msr = (await fetchJson('https://raw.githubusercontent.com/XdTechPro/KHAN-DATA/refs/heads/main/MSG/mreply.json')).replyMsg
+
+        if (!isGroup) return await sendCustomMessage(conn, from, msr.only_gp, mek, m);
+        if (!isAdmins && !isDev) return await sendCustomMessage(conn, from, msr.you_adm, mek, m);
+        if (!isBotAdmins) return await sendCustomMessage(conn, from, msr.give_adm, mek, m);
+        await conn.groupRevokeInvite(from);
+        await conn.sendMessage(from, { text: `*Group link Reset* ⛔` }, { quoted: mek });
+    } catch (e) {
+        await conn.sendMessage(from, { react: { text: '❌', key: mek.key } });
+        console.error(e);
+        await sendCustomMessage(conn, from, `❌ *Error Occurred !!*\n\n${e}`, mek, m);
+    }
+});
+
+
+// ==========================
+// Hidetag (Tag All Members) Command
+// ==========================
+cmd({
+    pattern: "hidetag",
+    react: "🔊",
+    desc: "To Tag all Members for Message",
+    category: "group",
+    use: '.tag Hi',
+    filename: __filename
+},
+async (conn, mek, m, { from, q, isGroup, isAdmins, isDev, isBotAdmins, participants }) => {
+    try {
+        const msr = (await fetchJson('https://raw.githubusercontent.com/XdTechPro/KHAN-DATA/refs/heads/main/MSG/mreply.json')).replyMsg
+
+        if (!isGroup) return await sendCustomMessage(conn, from, msr.only_gp, mek, m);
+        if (!isAdmins && !isDev) return await sendCustomMessage(conn, from, msr.you_adm, mek, m);
+        if (!isBotAdmins) return await sendCustomMessage(conn, from, msr.give_adm, mek, m);
+        if (!q) return await sendCustomMessage(conn, from, '*Please add a Message* ℹ️', mek, m);
+        let teks = `${q}`;
+        conn.sendMessage(from, { text: teks, mentions: participants.map(a => a.id) }, { quoted: mek });
+    } catch (e) {
+        await conn.sendMessage(from, { react: { text: '❌', key: mek.key } });
+        console.error(e);
+        await sendCustomMessage(conn, from, `❌ *Error Occurred !!*\n\n${e}`, mek, m);
+    }
+});
+
+
+// ==========================
+// Tag Group (Reply and Tag All) Command
+// ==========================
+cmd({
+    pattern: "taggp",
+    react: "🔊",
+    alias: ["tggp", "tagall"],
+    desc: "To Tag all Members for Message",
+    category: "group",
+    use: '.tag Hi',
+    filename: __filename
+},
+async (conn, mek, m, { from, q, isGroup, participants }) => {
+    try {
+        if (!m.quoted) return await sendCustomMessage(conn, from, '*Please mention a message* ℹ️', mek, m);
+        if (!q) return await sendCustomMessage(conn, from, '*Please add a Group Jid* ℹ️', mek, m);
+        let teks = `${m.quoted.msg}`;
+        conn.sendMessage(q, { text: teks, mentions: participants.map(a => a.id) }, { quoted: mek });
+    } catch (e) {
+        await conn.sendMessage(from, { react: { text: '❌', key: mek.key } });
+        console.error(e);
+        await sendCustomMessage(conn, from, `❌ *Error Occurred !!*\n\n${e}`, mek, m);
+    }
+});
+
+
+// ==========================
+// Remove All Non-Admin Members Command
+// ==========================
+cmd({
+    pattern: "removemembers",
+    alias: ["kickall", "endgc", "endgroup"],
+    desc: "Remove all non-admin members from the group.",
+    react: "🎉",
+    category: "group",
+    filename: __filename,
+}, 
+async (conn, mek, m, { from, groupMetadata, groupAdmins, isBotAdmins, senderNumber, isGroup }) => {
+    try {
+        if (!isGroup) {
+            return await sendCustomMessage(conn, from, "This command can only be used in groups.", mek, m);
+        }
+
+        const botOwner = conn.user.id.split(":")[0];
+        if (senderNumber !== botOwner) {
+            return await sendCustomMessage(conn, from, "Only the bot owner can use this command.", mek, m);
+        }
+
+        if (!isBotAdmins) {
+            return await sendCustomMessage(conn, from, "I need to be an admin to execute this command.", mek, m);
+        }
+
+        const allParticipants = groupMetadata.participants;
+        const nonAdminParticipants = allParticipants.filter(member => !groupAdmins.includes(member.id));
+
+        if (nonAdminParticipants.length === 0) {
+            return await sendCustomMessage(conn, from, "There are no non-admin members to remove.", mek, m);
+        }
+
+        await sendCustomMessage(conn, from, `Starting to remove ${nonAdminParticipants.length} non-admin members...`, mek, m);
+
+        for (let participant of nonAdminParticipants) {
+            try {
+                await conn.groupParticipantsUpdate(from, [participant.id], "remove");
+                await sleep(2000);
+            } catch (e) {
+                console.error(`Failed to remove ${participant.id}:`, e);
+            }
+        }
+
+        await sendCustomMessage(conn, from, "Successfully removed all non-admin members from the group.", mek, m);
+    } catch (e) {
+        console.error("Error removing non-admin users:", e);
+        await sendCustomMessage(conn, from, "An error occurred while trying to remove non-admin members. Please try again.", mek, m);
+    }
+});
+
+
+// ==========================
+// Remove All Admin Members (Excluding Bot & Owner) Command
+// ==========================
+cmd({
+    pattern: "removeadmins",
+    alias: ["kickadmins", "kickall3", "deladmins"],
+    desc: "Remove all admin members from the group, excluding the bot and bot owner.",
+    react: "🎉",
+    category: "group",
+    filename: __filename,
+}, 
+async (conn, mek, m, { from, isGroup, senderNumber, groupMetadata, groupAdmins, isBotAdmins }) => {
+    try {
+        if (!isGroup) {
+            return await sendCustomMessage(conn, from, "This command can only be used in groups.", mek, m);
+        }
+
+        const botOwner = conn.user.id.split(":")[0];
+        if (senderNumber !== botOwner) {
+            return await sendCustomMessage(conn, from, "Only the bot owner can use this command.", mek, m);
+        }
+
+        if (!isBotAdmins) {
+            return await sendCustomMessage(conn, from, "I need to be an admin to execute this command.", mek, m);
+        }
+
+        const allParticipants = groupMetadata.participants;
+        const adminParticipants = allParticipants.filter(member => 
+            groupAdmins.includes(member.id) && 
+            member.id !== conn.user.id && 
+            member.id !== `${botOwner}@s.whatsapp.net`
+        );
+
+        if (adminParticipants.length === 0) {
+            return await sendCustomMessage(conn, from, "There are no admin members to remove.", mek, m);
+        }
+
+        await sendCustomMessage(conn, from, `Starting to remove ${adminParticipants.length} admin members, excluding the bot and bot owner...`, mek, m);
+
+        for (let participant of adminParticipants) {
+            try {
+                await conn.groupParticipantsUpdate(from, [participant.id], "remove");
+                await sleep(2000);
+            } catch (e) {
+                console.error(`Failed to remove ${participant.id}:`, e);
+            }
+        }
+
+        await sendCustomMessage(conn, from, "Successfully removed all admin members from the group, excluding the bot and bot owner.", mek, m);
+    } catch (e) {
+        console.error("Error removing admins:", e);
+        await sendCustomMessage(conn, from, "An error occurred while trying to remove admins. Please try again.", mek, m);
+    }
+});
+
+
+// ==========================
+// Remove All Members (Excluding Bot & Owner) Command
+// ==========================
+cmd({
+    pattern: "removeall2",
+    alias: ["kickall2", "endgc2", "endgroup2"],
+    desc: "Remove all members and admins from the group, excluding the bot and bot owner.",
+    react: "🎉",
+    category: "group",
+    filename: __filename,
+}, 
+async (conn, mek, m, { from, isGroup, senderNumber, groupMetadata, isBotAdmins }) => {
+    try {
+        if (!isGroup) {
+            return await sendCustomMessage(conn, from, "This command can only be used in groups.", mek, m);
+        }
+
+        const botOwner = conn.user.id.split(":")[0];
+        if (senderNumber !== botOwner) {
+            return await sendCustomMessage(conn, from, "Only the bot owner can use this command.", mek, m);
+        }
+
+        if (!isBotAdmins) {
+            return await sendCustomMessage(conn, from, "I need to be an admin to execute this command.", mek, m);
+        }
+
+        const allParticipants = groupMetadata.participants;
+        if (allParticipants.length === 0) {
+            return await sendCustomMessage(conn, from, "The group has no members to remove.", mek, m);
+        }
+
+        const participantsToRemove = allParticipants.filter(
+            participant => participant.id !== conn.user.id && participant.id !== `${botOwner}@s.whatsapp.net`
+        );
+
+        if (participantsToRemove.length === 0) {
+            return await sendCustomMessage(conn, from, "No members to remove after excluding the bot and bot owner.", mek, m);
+        }
+
+        await sendCustomMessage(conn, from, `Starting to remove ${participantsToRemove.length} members, excluding the bot and bot owner...`, mek, m);
+
+        for (let participant of participantsToRemove) {
+            try {
+                await conn.groupParticipantsUpdate(from, [participant.id], "remove");
+                await sleep(2000);
+            } catch (e) {
+                console.error(`Failed to remove ${participant.id}:`, e);
+            }
+        }
+
+        await sendCustomMessage(conn, from, "Successfully removed all members, excluding the bot and bot owner, from the group.", mek, m);
+    } catch (e) {
+        console.error("Error removing members:", e);
+        await sendCustomMessage(conn, from, "An error occurred while trying to remove members. Please try again.", mek, m);
+    }
+});
+
+
+
+
+
+
+
+/*
+// ==========================
+// Required Modules
+// ==========================
+const config = require('../config')
+const { cmd, commands } = require('../command')
+const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, runtime, sleep, fetchJson } = require('../lib/functions')
+
 // Override sleep if needed; if the library version is sufficient, you can remove this override
 // const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -696,3 +1341,4 @@ l(e)
 }
 })
 
+*/
