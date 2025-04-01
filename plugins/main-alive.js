@@ -1,6 +1,6 @@
 const { cmd } = require("../command");
 const moment = require("moment-timezone");
-const config = require("../../config"); // Import config file
+const config = require("../config"); // Import config file
 let botStartTime = Date.now();
 
 const ALIVE_IMG = "https://i.postimg.cc/3RgPr15t/IMG-20250305-WA0008.jpg";
