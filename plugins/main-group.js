@@ -433,8 +433,8 @@ async (conn, mek, m, { from, q, isGroup, participants }) => {
     try {
         if (!isGroup) return await sendCustomMessage(conn, from, "❌ This command can only be used in groups.", mek, m);
         if (!q) return await sendCustomMessage(conn, from, "❌ Please provide a message to send.", mek, m);
-        const header = "🔔 *Attention Everyone:*";
-        const fullMsg = `${header}\n\n${q}`;
+        const header = "🔔 `Attention Everyone:`";
+        const fullMsg = `${header}\n\n> ${q}\n\n© SUBZERO BOT`;
         await conn.sendMessage(from, { text: fullMsg, mentions: participants.map(a => a.id) }, { quoted: mek });
     } catch(e) {
         await sendCustomMessage(conn, from, `❌ *Error Occurred!!* \n\n${e}`, mek, m);
