@@ -514,7 +514,7 @@ async (conn, mek, m, { from, prefix, l, args, q, isGroup, isAdmins, participants
         await sendCustomMessage(conn, from, `_Group will be automatically closed after ${q}_`, mek, m);
         setTimeout(async () => {
             const closeMsg = "```🔐 Time's Up! Group auto closed.```" +
-                             "\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ғʀᴀɴᴋ";
+                             "\n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ғʀᴀɴᴋ";
             await conn.groupSettingUpdate(from, 'announcement');
             await sendCustomMessage(conn, from, closeMsg, mek, m);
         }, timer);
