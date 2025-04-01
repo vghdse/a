@@ -2,8 +2,8 @@ const { cmd } = require('../command'); // Assuming you have a command handler
 const axios = require('axios'); // For making HTTP requests to GitHub API
 
 // GitHub repository details
-const REPO_OWNER = 'mrfrank-ofc';
-const REPO_NAME = 'SUBZERO-BOT';
+const REPO_OWNER = 'mrfr4nkk';
+const REPO_NAME = 'SUBZERO';
 const GITHUB_API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents`;
 
 // Function to fetch repository structure recursively
