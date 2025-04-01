@@ -5,51 +5,56 @@ const moment = require('moment-timezone');
 
 cmd({
     pattern: 'version',
-    react: '📌',
-    desc: 'Check bot version and update status',
+    react: '📦',
+    desc: 'Check bot version and compare with repository',
     category: 'info',
     filename: __filename
 }, async (conn, mek, m, { from, sender, reply }) => {
     try {
-        const packageName = require('../package.json');
-        const currentVersion = packageName.version;
         const time = moment().tz('Africa/Harare').format('HH:mm:ss');
         const date = moment().tz('Africa/Harare').format('DD/MM/YYYY');
+        
+        // Get local version
+        const localPackage = require('../package.json');
+        const currentVersion = localPackage.version;
+        
+        // Extract repo info from config.REPO
+        const repoUrl = config.REPO || 'https://github.com/mrfrank-ofc/SUBZERO-MD';
+        const repoPath = repoUrl.replace('https://github.com/', '');
+        const rawUrl = `https://raw.githubusercontent.com/${repoPath}/master/package.json`;
 
-        // Fetch latest version
-        const apiUrl = 'https://raw.githubusercontent.com/mrfrank-ofc/SUBZERO-MD/master/package.json';
-        const response = await axios.get(apiUrl);
-        const latestVersion = response.data.version;
+        // Fetch remote version
+        const { data: remotePackage } = await axios.get(rawUrl);
+        const latestVersion = remotePackage.version;
 
         // Version comparison
         const versionStatus = currentVersion === latestVersion 
             ? '🟢 UP-TO-DATE' 
-            : '🔴 OUTDATED';
+            : '🔴 UPDATE AVAILABLE';
         
-        const versionMessage = currentVersion === latestVersion
-            ? `*Your SUBZERO is running the latest version!* 🎉`
-            : `*Update available!* 🚀\nCurrent: v${currentVersion}\nLatest: v${latestVersion}`;
+        const versionDiff = currentVersion === latestVersion
+            ? `✅ You're running the latest version (v${currentVersion})`
+            : `📥 Current: v${currentVersion}\n🆕 Latest: v${latestVersion}`;
 
         // Build message
         const message = `
-📌 *SUBZERO VERSION CHECK* 📌
+📦 *VERSION COMPARISON* 📦
 
 ${versionStatus}
-        
-${versionMessage}
 
-⏰ *Time:* ${time}
-📅 *Date:* ${date}
+${versionDiff}
+
+⏰ Checked at: ${time} (${date})
 
 💻 *Developer:* ${config.OWNER_NAME || "Mr Frank"}
 🤖 *Bot Name:* ${config.BOT_NAME || "SUBZERO-MD"}
 
-🌟 *Support Development:*
-🔗 ${config.REPO || "https://github.com/mrfrank-ofc/SUBZERO-MD"}
-⭐ *Don't forget to star the repo!*
+🔗 *Repository:*
+${repoUrl}
+⭐ *Please star the repo to support development!*
 `.trim();
 
-        // Send response with image
+        // Send response
         await conn.sendMessage(from, { 
             image: { 
                 url: config.ALIVE_IMG || 'https://i.postimg.cc/zv76KffW/IMG-20250115-WA0020.jpg' 
@@ -70,14 +75,16 @@ ${versionMessage}
     } catch (e) {
         console.error("Version check error:", e);
         
-        // Fallback message
+        // Fallback with local version only
+        const localPackage = require('../package.json');
         const fallback = `
-⚠️ *Version Check Failed*
+⚠️ *Version Check (Partial)*
         
-Couldn't fetch version information.
-Please try again later.
+📦 Local Version: v${localPackage.version}
+🔗 Repository: ${config.REPO || "Not configured"}
 
-🔗 Repository: ${config.REPO || "https://github.com/mrfrank-ofc/SUBZERO-MD"}
+❌ Couldn't fetch remote version:
+${e.message}
 `.trim();
         
         reply(fallback);
