@@ -23,7 +23,7 @@ function getHarareTime() {
 }
 
 // Function to fetch version from package.json
-async function fetchVersion() {
+/* async function fetchVersion() {
     try {
         const packageJsonUrl = 'https://raw.githubusercontent.com/mrfraank/SUBZERO/main/package.json';
         const response = await axios.get(packageJsonUrl);
@@ -32,6 +32,20 @@ async function fetchVersion() {
     } catch (error) {
         console.error("Error fetching version:", error);
         return 'Unkown';
+    }
+}
+*/
+async function getBotVersion() {
+    try {
+        // Use config.REPO or fallback to default
+        const repoUrl = config.REPO || 'https://github.com/mrfrank-ofc/SUBZERO';
+        const rawUrl = repoUrl.replace('github.com', 'raw.githubusercontent.com') + '/main/package.json';
+        
+        const { data } = await axios.get(rawUrl);
+        return data.version || '3.0.0';
+    } catch (error) {
+        console.error("Version check error:", error);
+        return 'Unknown';
     }
 }
 
@@ -46,8 +60,9 @@ cmd({
 async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
     try {
         // Fetch version dynamically
-        const version = await fetchVersion();
-
+       // const version = await fetchVersion();
+         const version = await getBotVersion();
+        
         // Calculate total commands from the commands collection (supports both arrays and objects)
         const totalCommands = Array.isArray(commands) ? commands.length : Object.keys(commands).length;
 
