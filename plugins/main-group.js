@@ -31,9 +31,9 @@ const sendCustomMessage = async (conn, from, message, mek, m) => {
 // ==========================
 cmd({
     pattern: "leave",
-    alias: ["left", "leftgc", "leavegc"],
+    alias: ["left", "leftgc", "leavegc","exit"],
     desc: "Leave the group",
-    react: "🎉",
+    react: "👋",
     category: "owner",
     filename: __filename
 },
@@ -141,7 +141,7 @@ cmd({
     alias: ["p", "admin", "makeadmin"],
     desc: "Promotes a member to group admin",
     category: "admin",
-    react: "⬆️",
+    react: "🤴",
     filename: __filename
 },
 async (conn, mek, m, { from, q, isGroup, senderNumber, botNumber, isAdmins, isBotAdmins }) => {
@@ -176,7 +176,7 @@ cmd({
     alias: ["d", "dismiss", "removeadmin"],
     desc: "Demotes a group admin to a normal member",
     category: "admin",
-    react: "⬇️",
+    react: "🙅‍♂",
     filename: __filename
 },
 async (conn, mek, m, { from, q, isGroup, senderNumber, botNumber, isAdmins, isBotAdmins }) => {
@@ -208,7 +208,7 @@ async (conn, mek, m, { from, q, isGroup, senderNumber, botNumber, isAdmins, isBo
 // ==========================
 cmd({
     pattern: "unmute",
-    alias: ["groupunmute"],
+    alias: ["groupunmute","open","unlock"],
     react: "🔊",
     desc: "Unmute the group (Everyone can send messages).",
     category: "group",
@@ -233,7 +233,7 @@ async (conn, mek, m, { from, isGroup, senderNumber, isAdmins, isBotAdmins }) => 
 // ==========================
 cmd({
     pattern: "lockgc",
-    alias: ["lock", "close", "mute"],
+    alias: ["lock", "close", "mute","closegc"],
     react: "🔒",
     desc: "Immediately close the group chat (only admins can send messages).",
     category: "group",
@@ -395,6 +395,7 @@ async (conn, mek, m, { from, isGroup, isAdmins, isDev, isBotAdmins }) => {
 // ==========================
 cmd({
     pattern: "hidetag",
+    alias: ["htag"],
     react: "🔊",
     desc: "To Tag all Members for Message",
     category: "group",
@@ -512,7 +513,7 @@ async (conn, mek, m, { from, prefix, l, args, q, isGroup, isAdmins, participants
         }
         await sendCustomMessage(conn, from, `_Group will be automatically closed after ${q}_`, mek, m);
         setTimeout(async () => {
-            const closeMsg = "```🔐 Time's Up! Group has been closed.```" +
+            const closeMsg = "```🔐 Time's Up! Group auto closed.```" +
                              "\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ғʀᴀɴᴋ";
             await conn.groupSettingUpdate(from, 'announcement');
             await sendCustomMessage(conn, from, closeMsg, mek, m);
