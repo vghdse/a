@@ -619,3 +619,80 @@ async (conn, mek, m, { from, isGroup, senderNumber, groupMetadata, isBotAdmins, 
         reply("An error occurred while trying to remove members. Please try again.");
     }
 });
+
+// OPEN TIME & CLOSE
+
+cmd({
+    pattern: "opentime",
+    react: "🔑",
+    desc: "To open group to a time",
+    category: "group",
+    use: '.opentime',
+    filename: __filename
+},
+async(conn, mek, m,{from, prefix, l, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
+try{   
+if (!isGroup) return reply(ONLGROUP)
+if (!isAdmins) return reply(ADMIN)	
+  if (args[1] == 'second') {
+                    var timer = args[0] * `1000`
+                } else if (args[1] == 'minute') {
+                    var timer = args[0] * `60000`
+                } else if (args[1] == 'hour') {
+                    var timer = args[0] * `3600000`
+                } else if (args[1] == 'day') {
+                    var timer = args[0] * `86400000`
+                } else {
+                    return reply('*select:*\nsecond\nminute\nhour\n\n*example*\n10 second')
+                }
+                reply(`_Group will automatically open after ${q}_`)
+                setTimeout(() => {
+                    var nomor = mek.participant
+                    const open = `\`\`\`🔓Good News! Group has been opened Enjoy :)\`\`\`\n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ғʀᴀɴᴋ`
+                    conn.groupSettingUpdate(from, 'not_announcement')
+                    reply(open)
+                }, timer)
+await conn.sendMessage(from, { react: { text: `✅`, key: mek.key }}) 
+} catch (e) {
+reply('*Error !!*')
+l(e)
+}
+})
+
+cmd({
+    pattern: "closetime",
+    react: "🔒",
+    desc: "To close group to a time",
+    category: "group",
+    use: '.closstime',
+    filename: __filename
+},
+async(conn, mek, m,{from, prefix, l, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
+try{   
+if (!isGroup) return reply(ONLGROUP)
+if (!isAdmins) return reply(ADMIN)	
+                if (args[1] == 'second') {
+                    var timer = args[0] * `1000`
+                } else if (args[1] == 'minute') {
+                    var timer = args[0] * `60000`
+                } else if (args[1] == 'hour') {
+                    var timer = args[0] * `3600000`
+                } else if (args[1] == 'day') {
+                    var timer = args[0] * `86400000`
+                } else {
+                    return reply('*select:*\nsecond\nminute\nhour\n\n*Example*\n10 second')
+                }
+                reply(`_Group will be automatically closed after ${q}_`)
+                setTimeout(() => {
+                    var nomor = m.participant
+                    const close = `\`\`\`🔐 Time's Up !, Group Automatically Closed\`\`\` \n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ғʀᴀɴᴋ `
+                    conn.groupSettingUpdate(from, 'announcement')
+                    reply(close)
+                }, timer)
+await conn.sendMessage(from, { react: { text: `✅`, key: mek.key }}) 
+} catch (e) {
+reply('*Error !!*')
+l(e)
+}
+})
+
