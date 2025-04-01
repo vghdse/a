@@ -1,84 +1,93 @@
-const { cmd } = require('../command'); // Assuming you have a command handler
-const axios = require('axios'); // For making HTTP requests to GitHub API
+const { cmd } = require('../command');
+const axios = require('axios');
+const config = require('../config');
+const moment = require('moment-timezone');
 
-// GitHub repository details
-const REPO_OWNER = 'mrfraank';
-const REPO_NAME = 'SUBZERO';
-const PLUGINS_FOLDER = 'plugins'; // Folder where plugins are stored
-
-// GitHub API base URL
-const GITHUB_API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${PLUGINS_FOLDER}`;
-
-// Function to fetch commit history for a file
-async function fetchCommitHistory(filePath) {
-    try {
-        const response = await axios.get(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits`, {
-            params: {
-                path: filePath,
-                per_page: 1 // Fetch only the latest commit
-            }
-        });
-        return response.data[0]; // Return the latest commit
-    } catch (error) {
-        console.error("Error fetching commit history:", error);
-        return null;
-    }
-}
-
-// Function to check if a commit is within the last 2 hours
-function isCommitRecent(commit) {
-    if (!commit) return false;
-    const commitDate = new Date(commit.commit.author.date);
-    const now = new Date();
-    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000); // 2 hours ago
-    return commitDate >= twoHoursAgo;
-}
-
-// Command to list plugins with recent commit history
 cmd({
-    pattern: "recentplugins", // Command trigger
-    alias: ["recentplugs", "newplugins","whatsnew"], // Aliases
-    use: '.recentplugins', // Example usage
-    react: "🕒", // Emoji reaction
-    desc: "List all plugins with commit history from the last 2 hours.", // Description
-    category: "utility", // Command category
-    filename: __filename // Current file name
-},
-
-async (conn, mek, m, { from, reply }) => {
+    pattern: "recentplugins",
+    alias: ["recentplugs", "newplugins", "whatsnew"],
+    react: "🆕",
+    desc: "List plugins updated in the last 2 hours",
+    category: "info",
+    filename: __filename
+}, async (conn, mek, m, { from, reply }) => {
     try {
-        // Fetch the folder structure from GitHub
-        const response = await axios.get(GITHUB_API_URL);
-        const plugins = response.data.filter(item => item.type === 'file'); // Only list files
+        // Validate config.REPO
+        if (!config.REPO) throw new Error('Repository URL not configured in config.REPO');
+        
+        // Extract repo path from config.REPO
+        const repoPath = config.REPO.replace('https://github.com/', '').replace(/\/$/, '');
+        const [owner, repo] = repoPath.split('/');
+        
+        if (!owner || !repo) throw new Error('Invalid repository URL format in config.REPO');
 
-        if (plugins.length === 0) {
-            return reply("*No plugins found in the repository.*");
+        const pluginsFolder = 'plugins';
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${pluginsFolder}`;
+
+        // Fetch plugins
+        const { data: plugins } = await axios.get(apiUrl);
+        const pluginFiles = plugins.filter(item => item.type === 'file' && item.name.endsWith('.js'));
+
+        if (pluginFiles.length === 0) {
+            return reply("❌ No plugin files found in the repository");
         }
 
-        // Fetch commit history for each plugin and filter by recent commits
-        let recentPlugins = [];
-        for (const plugin of plugins) {
-            const commit = await fetchCommitHistory(plugin.path);
-            if (isCommitRecent(commit)) {
-                recentPlugins.push(plugin);
+        // Check recent updates
+        const recentUpdates = [];
+        const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+        for (const plugin of pluginFiles) {
+            try {
+                const { data: [latestCommit] } = await axios.get(
+                    `https://api.github.com/repos/${owner}/${repo}/commits`,
+                    { params: { path: plugin.path, per_page: 1 } }
+                );
+                
+                if (latestCommit && new Date(latestCommit.commit.author.date) > twoHoursAgo) {
+                    recentUpdates.push({
+                        name: plugin.name.replace('.js', ''),
+                        updated: moment(latestCommit.commit.author.date).fromNow(),
+                        author: latestCommit.author?.login || 'Unknown'
+                    });
+                }
+            } catch (e) {
+                console.error(`Error checking ${plugin.name}:`, e.message);
             }
         }
 
-        if (recentPlugins.length === 0) {
-            return reply("*No plugins have been updated in the last 2 hours.*");
+        // Format response
+        if (recentUpdates.length === 0) {
+            return reply("🕒 No plugins updated in the last 2 hours");
         }
 
-        // Construct a list of recent plugins
-        let pluginList = "🕒 *RECENTLY UPDATED PLUGINS (Last 2 Hours):*\n\n";
-        recentPlugins.forEach((plugin, index) => {
-            pluginList += `${index + 1}. ${plugin.name}\n`; // Add plugin name to the list
+        let message = `🆕 *Recently Updated Plugins* 🆕\n`;
+        message += `⏳ *Last 2 Hours*\n\n`;
+        message += `📂 *Repository:* ${config.REPO}\n\n`;
+        
+        recentUpdates.forEach((plugin, index) => {
+            message += `${index + 1}. *${plugin.name}*\n`;
+            message += `   👤 Updated by: ${plugin.author}\n`;
+            message += `   ⏰ ${plugin.updated}\n\n`;
         });
 
-        // Send the list to the user
-        await reply(pluginList);
+        message += `\n💡 *Tip:* Use .getplugin <name> to download updates`;
+        
+        await conn.sendMessage(from, {
+            text: message,
+            contextInfo: {
+                mentionedJid: [m.sender],
+                forwardingScore: 999,
+                isForwarded: true,
+                forwardedNewsletterMessageInfo: {
+                    newsletterJid: '120363304325601080@newsletter',
+                    newsletterName: config.BOT_NAME ? `${config.BOT_NAME} Updates` : 'Plugin Updates',
+                    serverMessageId: 143
+                }
+            }
+        }, { quoted: mek });
+
     } catch (error) {
-        console.error("Error:", error); // Log the error
-        reply("*Error: Unable to fetch plugins from the repository. Please try again later.*");
+        console.error("Recent plugins error:", error);
+        reply(`❌ Error: ${error.message}\n\nPlease ensure:\n1. config.REPO is properly set\n2. The repository is public\n3. GitHub API is available`);
     }
 });
-
