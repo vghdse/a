@@ -637,6 +637,98 @@ async (conn, mek, m, { from, isGroup, senderNumber, groupMetadata, isBotAdmins }
 });
 
 
+// OPEN TIME
+
+// ==========================
+// Open Group by Time Command
+// ==========================
+cmd({
+    pattern: "opentime",
+    react: "🔑",
+    desc: "To open group to a time",
+    category: "group",
+    use: '.opentime',
+    filename: __filename
+},
+async (conn, mek, m, { from, prefix, l, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins }) => {
+    try {   
+        if (!isGroup) return await sendCustomMessage(conn, from, ONLGROUP, mek, m);
+        if (!isAdmins) return await sendCustomMessage(conn, from, ADMIN, mek, m);
+
+        let timer;
+        if (args[1] === 'second') {
+            timer = args[0] * `1000`;
+        } else if (args[1] === 'minute') {
+            timer = args[0] * `60000`;
+        } else if (args[1] === 'hour') {
+            timer = args[0] * `3600000`;
+        } else if (args[1] === 'day') {
+            timer = args[0] * `86400000`;
+        } else {
+            return await sendCustomMessage(conn, from, '*select:*\nsecond\nminute\nhour\n\n*example*\n10 second', mek, m);
+        }
+
+        await sendCustomMessage(conn, from, `_Group will automatically open after ${q}_`, mek, m);
+
+        setTimeout(async () => {
+            const open = "```🔓Good News! Group has been opened Enjoy :)```" +
+                         "\n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ғʀᴀɴᴋ";
+            await conn.groupSettingUpdate(from, 'not_announcement');
+            await sendCustomMessage(conn, from, open, mek, m);
+        }, timer);
+
+        await conn.sendMessage(from, { react: { text: `✅`, key: mek.key } });
+    } catch (e) {
+        await sendCustomMessage(conn, from, '*Error !!*', mek, m);
+        l(e);
+    }
+});
+
+
+// ==========================
+// Close Group by Time Command
+// ==========================
+cmd({
+    pattern: "closetime",
+    react: "🔒",
+    desc: "To close group to a time",
+    category: "group",
+    use: '.closetime',
+    filename: __filename
+},
+async (conn, mek, m, { from, prefix, l, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins }) => {
+    try {   
+        if (!isGroup) return await sendCustomMessage(conn, from, ONLGROUP, mek, m);
+        if (!isAdmins) return await sendCustomMessage(conn, from, ADMIN, mek, m);
+
+        let timer;
+        if (args[1] === 'second') {
+            timer = args[0] * `1000`;
+        } else if (args[1] === 'minute') {
+            timer = args[0] * `60000`;
+        } else if (args[1] === 'hour') {
+            timer = args[0] * `3600000`;
+        } else if (args[1] === 'day') {
+            timer = args[0] * `86400000`;
+        } else {
+            return await sendCustomMessage(conn, from, '*select:*\nsecond\nminute\nhour\n\n*Example*\n10 second', mek, m);
+        }
+
+        await sendCustomMessage(conn, from, `_Group will be automatically closed after ${q}_`, mek, m);
+
+        setTimeout(async () => {
+            const close = "```🔐 Time's Up !, Group Automatically Closed```" +
+                          "\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ғʀᴀɴᴋ";
+            await conn.groupSettingUpdate(from, 'announcement');
+            await sendCustomMessage(conn, from, close, mek, m);
+        }, timer);
+
+        await conn.sendMessage(from, { react: { text: `✅`, key: mek.key } });
+    } catch (e) {
+        await sendCustomMessage(conn, from, '*Error !!*', mek, m);
+        l(e);
+    }
+});
 
 
 
