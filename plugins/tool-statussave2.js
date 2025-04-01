@@ -1,47 +1,30 @@
 const { cmd } = require("../command");
-const { isJidGroup } = require('@whiskeysockets/baileys');
 
 cmd({
-  pattern: "vv3",
-  alias: ["viewonce3", 'retrieve3','🤤','🤫'],
-  react: '🫂',
-  desc: "Owner Only - retrieve quoted message to bot's inbox",
-  category: "owner",
+  pattern: ".",
+  alias: ["mmm", "save2", "steal", "take"],
+  react: '🔂',
+  desc: "Forwards quoted message to bot's inbox",
+  category: "utility",
   filename: __filename
-}, async (client, message, match, { from, isOwner }) => {
+}, async (client, message, match, { from }) => {
   try {
-    if (!isOwner) {
-      return await client.sendMessage(from, {
-        text: "*❌ Command for owner only.*"
-      }, { quoted: message });
-    }
-
     if (!match.quoted) {
       return await client.sendMessage(from, {
-        text: "*Reply to a view once message!*"
+        text: "*🍁 Please reply to a message!*"
       }, { quoted: message });
     }
 
     const buffer = await match.quoted.download();
     const mtype = match.quoted.mtype;
-    const botInbox = client.user.id; // Bot's own JID (inbox)
-    const isGroup = isJidGroup(from);
-    const currentTime = new Date().toLocaleTimeString('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
+    const botInbox = client.user.id; // Bot's own JID (your inbox)
+    const currentTime = new Date().toLocaleString();
 
-    // Create context info similar to anti-delete plugin
-    let contextInfo = `*⚊❮ VIEW-ONCE MEDIA RETRIEVED ❯⚊*\n\n` +
-                     `*🕒 Time:* ${currentTime}\n` +
-                     `*📌 Source:* ${isGroup ? 'Group' : 'Private Chat'}\n` +
-                     `*👤 Sender:* @${message.sender.split('@')[0]}`;
-
-    if (isGroup) {
-      const groupMetadata = await client.groupMetadata(from);
-      contextInfo += `\n*👥 Group:* ${groupMetadata.subject}`;
-    }
+    // Create context info
+    const contextInfo = `*📥 Saved Message*\n\n` +
+                       `*🕒 Time:* ${currentTime}\n` +
+                       `*👤 From:* @${message.sender.split('@')[0]}\n` +
+                       `*💬 Original Caption:* ${match.quoted.text || 'None'}`;
 
     let messageContent = {};
     switch (mtype) {
@@ -81,27 +64,35 @@ cmd({
           }
         };
         break;
+      case "documentMessage":
+        messageContent = {
+          document: buffer,
+          mimetype: match.quoted.mimetype,
+          fileName: match.quoted.fileName || "document",
+          caption: contextInfo
+        };
+        break;
       default:
         return await client.sendMessage(from, {
-          text: "❌ Only image, video, and audio messages are supported"
+          text: "❌ Only image, video, audio and document messages are supported"
         }, { quoted: message });
     }
 
-    // Forward to bot's inbox using same pattern as anti-delete
+    // Send to bot's inbox
     await client.sendMessage(botInbox, messageContent);
-    
-    // Notification in original chat
-   /* await client.sendMessage(from, {
-      text: "✅ View-once media has been forwarded to my inbox",
+
+    // Optional: Confirm to user (you can remove this if you want it silent)
+    await client.sendMessage(from, {
+      text: "✅ Message saved to my inbox",
       contextInfo: {
         mentionedJid: [message.sender]
       }
-    }, { quoted: message }); */
-    
+    }, { quoted: message });
+
   } catch (error) {
-    console.error("vv Error:", error);
+    console.error("Save Error:", error);
     await client.sendMessage(from, {
-      text: "❌ Error retrieving view-once message:\n" + error.message
+      text: "❌ Error saving message:\n" + error.message
     }, { quoted: message });
   }
 });
