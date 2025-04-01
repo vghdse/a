@@ -1,82 +1,85 @@
-
 const axios = require('axios');
 const config = require('../config');
-const { cmd, commands } = require('../command');
-const { fetchJson } = require('../lib/functions');
-
-
+const { cmd } = require('../command');
+const moment = require('moment-timezone');
 
 cmd({
-  pattern: 'version',
-  react: '✔️',
-  desc: 'Check the bot\'s version',
-  category: 'info',
-  filename: __filename
-}, async (conn, mek, m, {
-  from,
-  quoted,
-  body,
-  isCmd,
-  command,
-  args,
-  q,
-  isGroup,
-  sender,
-  senderNumber,
-  botNumber2,
-  botNumber,
-  pushname,
-  isMe,
-  isOwner,
-  groupMetadata,
-  groupName,
-  participants,
-  groupAdmins,
-  isBotAdmins,
-  isAdmins,
-  reply
-}) => {
-  try {
-    const packageName = require('../package.json');
-    const currentVersion = packageName.version;
+    pattern: 'version',
+    react: '📌',
+    desc: 'Check bot version and update status',
+    category: 'info',
+    filename: __filename
+}, async (conn, mek, m, { from, sender, reply }) => {
+    try {
+        const packageName = require('../package.json');
+        const currentVersion = packageName.version;
+        const time = moment().tz('Africa/Harare').format('HH:mm:ss');
+        const date = moment().tz('Africa/Harare').format('DD/MM/YYYY');
 
-    const apiUrl = 'https://raw.githubusercontent.com/mrfr4nkk/SUBZERO/master/package.json';
-    const response = await axios.get(apiUrl);
-    const data = response.data;
-    const latestVersion = data.version;
+        // Fetch latest version
+        const apiUrl = 'https://raw.githubusercontent.com/mrfrank-ofc/SUBZERO-MD/master/package.json';
+        const response = await axios.get(apiUrl);
+        const latestVersion = response.data.version;
 
-    let message = '';
-    if (currentVersion === latestVersion) {
-      message = `Your Subzero bot is up-to-date! 😊\n Current version is: ${currentVersion}`;
-    } else {
-      message = `Your Subzero bot is outdated 😵!\n\n  Current version: ${currentVersion} \n Latest version: ${latestVersion}`;
-    }
+        // Version comparison
+        const versionStatus = currentVersion === latestVersion 
+            ? '🟢 UP-TO-DATE' 
+            : '🔴 OUTDATED';
+        
+        const versionMessage = currentVersion === latestVersion
+            ? `*Your SUBZERO is running the latest version!* 🎉`
+            : `*Update available!* 🚀\nCurrent: v${currentVersion}\nLatest: v${latestVersion}`;
 
-   // await reply(message);
-    
- // } catch (error) {
-  //  console.error('Error fetching version:', error);
-   // await reply('Error fetching version. Please try again later.');
-//  }
-//});
-       // Send the status message with an image
+        // Build message
+        const message = `
+📌 *SUBZERO VERSION CHECK* 📌
+
+${versionStatus}
+        
+${versionMessage}
+
+⏰ *Time:* ${time}
+📅 *Date:* ${date}
+
+💻 *Developer:* ${config.OWNER_NAME || "Mr Frank"}
+🤖 *Bot Name:* ${config.BOT_NAME || "SUBZERO-MD"}
+
+🌟 *Support Development:*
+🔗 ${config.REPO || "https://github.com/mrfrank-ofc/SUBZERO-MD"}
+⭐ *Don't forget to star the repo!*
+`.trim();
+
+        // Send response with image
         await conn.sendMessage(from, { 
-            image: { url: `https://i.postimg.cc/zv76KffW/IMG-20250115-WA0020.jpg` },  // Image URL
+            image: { 
+                url: config.ALIVE_IMG || 'https://i.postimg.cc/zv76KffW/IMG-20250115-WA0020.jpg' 
+            },
             caption: message,
             contextInfo: {
-                mentionedJid: [m.sender],
+                mentionedJid: [sender],
                 forwardingScore: 999,
                 isForwarded: true,
                 forwardedNewsletterMessageInfo: {
                     newsletterJid: '120363304325601080@newsletter',
-                    newsletterName: '『 𝐒𝐔𝐁𝐙𝐄𝐑𝐎 𝐌𝐃 』',
+                    newsletterName: config.BOT_NAME ? `${config.BOT_NAME} Bot` : 'SUBZERO MD',
                     serverMessageId: 143
                 }
             }
         }, { quoted: mek });
 
     } catch (e) {
-        console.error("Error in Subzero checking Version:", e);
-        reply(`An error Occured Fetching Version 😕`);
+        console.error("Version check error:", e);
+        
+        // Fallback message
+        const fallback = `
+⚠️ *Version Check Failed*
+        
+Couldn't fetch version information.
+Please try again later.
+
+🔗 Repository: ${config.REPO || "https://github.com/mrfrank-ofc/SUBZERO-MD"}
+`.trim();
+        
+        reply(fallback);
     }
 });
