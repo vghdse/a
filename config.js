@@ -5,6 +5,8 @@ function convertToBool(text, fault = 'true') {
     return text === fault ? true : false;
 }
 module.exports = {
+// REPO
+REPO: process.env.REPO || "https://github.com/itzfrakaumbadev/SUBZERO.git",
 SESSION_ID: process.env.SESSION_ID || "",
 // add your Session Id 
 AUTO_STATUS_REACT: process.env.AUTO_STATUS_REACT || "true",
