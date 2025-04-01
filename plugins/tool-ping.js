@@ -1,41 +1,65 @@
 const config = require('../config');
-const { cmd, commands } = require('../command');
+const { cmd } = require('../command');
+const moment = require('moment-timezone');
 
+// Enhanced ping command with repo info
 cmd({
     pattern: "ping",
-    alias: ["speed","pong"],use: '.ping',
-    desc: "Check bot's response time.",
+    alias: ["speed", "pong"],
+    desc: "Check bot's response time and status",
     category: "main",
-    react: "✔️",
+    react: "⚡",
     filename: __filename
 },
-async (conn, mek, m, { from, quoted, sender, reply }) => {
+async (conn, mek, m, { from, sender, reply }) => {
     try {
-        const start = new Date().getTime();
+        const start = Date.now();
+        
+        // Emoji collections
+        const emojiSets = {
+            reactions: ['⚡', '🚀', '💨', '🎯', '🌟', '💎', '🔥', '✨', '🌀', '🔹'],
+            decorations: ['▰▰▰▰▰▰▰▰▰▰', '▰▱▱▱▱▱▱▱▱▱', '▰▰▱▱▱▱▱▱▱▱', '▰▰▰▱▱▱▱▱▱▱', '▰▰▰▰▱▱▱▱▱▱'],
+            status: ['🟢 ONLINE', '🔵 ACTIVE', '🟣 RUNNING', '🟡 RESPONDING']
+        };
 
-        const reactionEmojis = ['🔥', '⚡', '🚀', '💨', '🎯', '🎉', '🌟', '💥', '🕐', '🔹'];
-        const textEmojis = ['💎', '🏆', '⚡️', '🚀', '🎶', '🌠', '🌀', '🔱', '🛡️', '✨'];
+        // Random selections
+        const reactionEmoji = emojiSets.reactions[Math.floor(Math.random() * emojiSets.reactions.length)];
+        const statusEmoji = emojiSets.status[Math.floor(Math.random() * emojiSets.status.length)];
+        const loadingBar = emojiSets.decorations[Math.floor(Math.random() * emojiSets.decorations.length)];
 
-        const reactionEmoji = reactionEmojis[Math.floor(Math.random() * reactionEmojis.length)];
-        let textEmoji = textEmojis[Math.floor(Math.random() * textEmojis.length)];
-
-        // Ensure reaction and text emojis are different
-        while (textEmoji === reactionEmoji) {
-            textEmoji = textEmojis[Math.floor(Math.random() * textEmojis.length)];
-        }
-
-        // Send reaction using conn.sendMessage()
+        // Send reaction
         await conn.sendMessage(from, {
-            react: { text: textEmoji, key: mek.key }
+            react: { text: reactionEmoji, key: mek.key }
         });
 
-        const end = new Date().getTime();
-        const responseTime = (end - start) / 1000;
+        // Calculate response time
+        const responseTime = (Date.now() - start) / 1000;
+        
+        // Get current time
+        const time = moment().tz('Africa/Harare').format('HH:mm:ss');
+        const date = moment().tz('Africa/Harare').format('DD/MM/YYYY');
 
-        const text = `*sᴜʙᴢᴇʀᴏ ɪᴄᴇ ᴍᴇʟᴛᴇᴅ ${responseTime.toFixed(2)}ms*`;
+        // Build response message
+        const pingMessage = `
+${loadingBar}
+*${statusEmoji}*
+        
+⚡ *Response Time:* ${responseTime.toFixed(2)}ms
+⏰ *Time:* ${time}
+📅 *Date:* ${date}
 
+💻 *Developer:* ${config.OWNER_NAME || "Mr Frank"}
+🤖 *Bot Name:* ${config.BOT_NAME || "SUBZERO-MD"}
+
+🌟 *Don't forget to star & fork the repo!*
+🔗 ${config.REPO || "https://github.com/mrfrank-ofc/SUBZERO-MD"}
+
+${loadingBar}
+`.trim();
+
+        // Send ping response
         await conn.sendMessage(from, {
-            text,
+            text: pingMessage,
             contextInfo: {
                 mentionedJid: [sender],
                 forwardingScore: 999,
@@ -49,65 +73,95 @@ async (conn, mek, m, { from, quoted, sender, reply }) => {
         }, { quoted: mek });
 
     } catch (e) {
-        console.error("Error in ping command:", e);
-        reply(`An error occurred: ${e.message}`);
+        console.error("Ping command error:", e);
+        reply(`❌ Error: ${e.message}`);
     }
 });
 
-// ping2 
-
+// Ping2 with enhanced visuals
 cmd({
     pattern: "ping2",
-    desc: "Check bot's response time.",
+    desc: "Advanced ping with system info",
     category: "main",
     react: "🧠",
     filename: __filename
 },
-async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
+async (conn, mek, m, { from, sender, reply }) => {
     try {
-        const startTime = Date.now()
-        const message = await conn.sendMessage(from, { text: '\`SUBZERO PINGING 🚀\`' })
-        const endTime = Date.now()
-        const ping = endTime - startTime
-        await conn.sendMessage(from, { text: `*SUBZERO PONGED ! : ${ping}ms ⚡*` }, { quoted: message })
-    } catch (e) {
-        console.log(e)
-        reply(`${e}`)
-    }
-})
-;
+        const startTime = Date.now();
+        const loadingMsg = await conn.sendMessage(from, { 
+            text: '🚀 *Measuring SUBZERO performance...*' 
+        });
 
+        const endTime = Date.now();
+        const ping = endTime - startTime;
+
+        // System emojis
+        const systemEmojis = {
+            cpu: '⚙️',
+            ram: '🧠', 
+            speed: '⚡',
+            clock: '⏱️',
+            repo: '📦'
+        };
+
+        const pingMessage = `
+${systemEmojis.cpu} *SYSTEM PERFORMANCE*
+        
+${systemEmojis.clock} *Response Time:* ${ping}ms
+${systemEmojis.speed} *Speed:* ${ping < 500 ? '⚡ Blazing Fast' : ping < 1000 ? '🚀 Fast' : '🐢 Slow'}
+
+${systemEmojis.repo} *Repository:*
+${config.REPO || "https://github.com/mrfrank-ofc/SUBZERO-MD"}
+
+💫 *Don't forget to star the repo!*
+`.trim();
+
+        await conn.sendMessage(from, { 
+            text: pingMessage,
+            edit: loadingMsg.key
+        });
+
+    } catch (e) {
+        console.error("Ping2 error:", e);
+        reply(`⚠️ Command failed: ${e.message}`);
+    }
+});
+
+// Ping3 with typing indicator
 cmd({
     pattern: "ping3",
-    alias: ["speed","pong"],
-    desc: "Check bot's response time",
+    desc: "Ping with typing simulation",
     category: "utility",
-    react: "⚡",
+    react: "⏱️",
     filename: __filename
-}, async (m, conn) => {
+}, async (conn, mek, m, { from, reply }) => {
     try {
-        // Get start time
-        const start = Date.now();
+        // Show typing indicator
+        await conn.sendPresenceUpdate('composing', from);
         
-        // Send initial message
-        const pingMsg = await conn.sendMessage(m.chat, {
-            text: '🚀 *Measuring response time...*'
-        }, { quoted: m });
-
-        // Calculate latency
+        const start = Date.now();
+        // Simulate processing
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         const latency = Date.now() - start;
+        await conn.sendPresenceUpdate('paused', from);
 
-        // Edit with results
-        await conn.sendMessage(m.chat, {
-            text: `🏓 *Pong!*\n⏱️ Response time: ${latency}ms`,
-            edit: pingMsg.key
-        });
+        const resultMessage = `
+⏱️ *Real-time Performance Metrics*
+        
+🏓 *Pong!* 
+📶 *Latency:* ${latency}ms
+📊 *Status:* ${latency < 300 ? 'Excellent' : latency < 600 ? 'Good' : 'Fair'}
+
+✨ *Keep SUBZERO alive by starring the repo!*
+🔗 ${config.REPO || "https://github.com/mrfrank-ofc/SUBZERO-MD"}
+`.trim();
+
+        await reply(resultMessage);
 
     } catch (error) {
-        console.error('Ping error:', error);
-        await conn.sendMessage(m.chat, {
-            text: '❌ Failed to measure response time',
-            quoted: m
-        });
+        console.error('Ping3 error:', error);
+        reply('❌ Failed to measure performance');
     }
 });
