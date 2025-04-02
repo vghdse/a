@@ -1,7 +1,7 @@
 const config = require('../config');
 const { cmd } = require('../command');
 const moment = require('moment-timezone');
-
+const { isBanned, isSudo, loadJSON, saveJSON } = require('./index'); // adjust the path as necessary
 // Enhanced ping command with repo info
 cmd({
     pattern: "ping",
@@ -137,6 +137,13 @@ cmd({
     filename: __filename
 }, async (conn, mek, m, { from, reply }) => {
     try {
+        if (isBanned(senderJid)) {
+  return reply("❌ You are banned from using this bot.");
+}
+
+if (!isOwner && !isSudo(senderJid)) {
+  return reply("❌ You do not have permission to use this command.");
+}
         // Show typing indicator
         await conn.sendPresenceUpdate('composing', from);
         
