@@ -4,128 +4,116 @@ const axios = require('axios');
 const moment = require('moment-timezone');
 
 // Constants
-const BANNER_IMG = 'https://i.postimg.cc/MpLk9Xmm/IMG-20250305-WA0010.jpg';
-const AUDIO_URL = 'https://files.catbox.moe/qda847.m4a';
-const more = String.fromCharCode(8206);
-const readMore = more.repeat(4001);
+const DEFAULT_BANNER = 'https://i.postimg.cc/MpLk9Xmm/IMG-20250305-WA0010.jpg';
+const DEFAULT_AUDIO = 'https://files.catbox.moe/qda847.m4a';
+const DEFAULT_REPO = 'https://github.com/mrfrank-ofc/SUBZERO-MD';
 
 cmd({
     pattern: "repo",
-    alias: ["sc", "script", "info", "repository"],
+    alias: ["repository", "github", "gitrepo"],
     desc: "Show GitHub repository information",
-    react: "❄️",
-    category: "info",
+    react: "📦",
+    category: "utility",
     filename: __filename,
     use: '<github-repo-url> or leave empty for default repo'
 },
-async (conn, mek, m, { from, reply, args, q }) => {
+async (Void, citel, text) => {
     try {
-        // Determine repo URL (user input or config default)
-        let repoUrl = q || config.REPO || 'https://github.com/mrfrank-ofc/SUBZERO-MD';
-        if (!repoUrl.startsWith('http') {
-            repoUrl = 'https://github.com/' + repoUrl;
+        // Determine repo URL
+        let repoUrl = text.trim() || config.REPO || DEFAULT_REPO;
+        
+        // Validate and format repo URL
+        if (!repoUrl.includes('github.com')) {
+            if (!repoUrl.includes('/')) {
+                return await citel.reply(`*Invalid format!*\nUse: .repo username/repo\nOr full GitHub URL`);
+            }
+            repoUrl = `https://github.com/${repoUrl.replace(/^\/|\/$/g, '')}`;
         }
+        
+        // Extract owner and repo name
+        const repoPath = repoUrl.match(/github\.com\/([^\/]+\/[^\/]+)/)[1];
+        if (!repoPath) return await citel.reply('*Invalid GitHub repository URL*');
 
         // Send processing reaction
-        await conn.sendMessage(from, { react: { text: "⏳", key: mek.key } });
+        await citel.react('⏳');
 
-        // Call BK9 API for rich repository data
-        const bk9Url = `https://bk9.fun/stalk/githubrepo?url=${encodeURIComponent(repoUrl)}`;
-        const bk9Response = await axios.get(bk9Url, { timeout: 10000 });
-        
-        if (!bk9Response.data.status) {
-            throw new Error('BK9 API failed');
-        }
+        // Fetch repository data from GitHub API
+        const apiUrl = `https://api.github.com/repos/${repoPath}`;
+        const response = await axios.get(apiUrl, {
+            headers: {
+                'User-Agent': 'SUBZERO-MD-Bot',
+                ...(config.GITHUB_TOKEN && { 'Authorization': `token ${config.GITHUB_TOKEN}` })
+            },
+            timeout: 10000
+        });
 
-        const repoData = bk9Response.data.BK9;
-        const ownerData = repoData.owner;
+        const repoData = response.data;
         const zipUrl = `${repoData.html_url}/archive/refs/heads/${repoData.default_branch}.zip`;
 
         // Format the information
         const formattedInfo = `
-*❄️ ${config.BOT_NAME || 'SUBZERO MD'} REPOSITORY ❄️*
-
-👋 *Hello ${m.pushName || "User"}!* 
-
-> *${config.DESCRIPTION || 'Simple, Icy, Cold & Feature-Rich WhatsApp Bot'}*
-
-${readMore}
-📂 *Repository Information*
+*📦 Repository Information*
 
 🔹 *Name:* ${repoData.name}
-🔹 *Owner:* [${ownerData.login}](${ownerData.html_url})
+🔹 *Owner:* ${repoData.owner.login}
 🔹 *Description:* ${repoData.description || 'No description'}
 🔹 *Stars:* ⭐ ${repoData.stargazers_count}
 🔹 *Forks:* 🍴 ${repoData.forks_count}
-🔹 *Watchers:* 👀 ${repoData.watchers_count}
+🔹 *Watchers:* 👀 ${repoData.subscribers_count || repoData.watchers_count}
 🔹 *Open Issues:* ⚠️ ${repoData.open_issues_count}
 🔹 *Language:* ${repoData.language || 'Not specified'}
-🔹 *License:* 📜 ${repoData.license?.name || 'Not specified'}
-🔹 *Created At:* ${moment(repoData.created_at).format('MMMM Do YYYY')}
-🔹 *Last Updated:* ${moment(repoData.updated_at).format('MMMM Do YYYY')}
+🔹 *License:* ${repoData.license?.name || 'None'}
+🔹 *Created:* ${moment(repoData.created_at).format('DD/MM/YYYY')}
+🔹 *Updated:* ${moment(repoData.pushed_at).format('DD/MM/YYYY')}
 
-📦 *Download Options:*
+📥 *Download:*
 - [Download ZIP](${zipUrl})
-- [Git Clone](${repoData.clone_url})
+- Clone: \`git clone ${repoData.clone_url}\`
 
 🌐 *Links:*
-- [Repository](${repoData.html_url})
-- [Owner Profile](${ownerData.html_url})
+- [View Repository](${repoData.html_url})
+- [Owner Profile](${repoData.owner.html_url})
 
-💡 *Don't forget to star & fork the repo!*
-
-> *© Powered by ${config.OWNER_NAME || 'Mr Frank OFC'}*
+${repoData.archived ? '⚠️ *This repository is archived*' : ''}
 `.trim();
 
-        // Send response with owner avatar as banner (fallback to default)
-        await conn.sendMessage(from, {
-            image: { url: ownerData.avatar_url || config.ALIVE_IMG || BANNER_IMG },
+        // Send response with owner avatar
+        await Void.sendMessage(citel.chat, {
+            image: { url: repoData.owner.avatar_url || config.ALIVE_IMG || DEFAULT_BANNER },
             caption: formattedInfo,
             contextInfo: { 
-                mentionedJid: [m.sender],
+                mentionedJid: [citel.sender],
                 forwardingScore: 999,
                 isForwarded: true
             }
-        }, { quoted: mek });
+        }, { quoted: citel });
 
-        // Send audio file
-        await conn.sendMessage(from, {
-            audio: { url: AUDIO_URL },
-            mimetype: 'audio/mp4',
-            ptt: true
-        }, { quoted: mek });
+        // Optional: Send audio file
+        if (config.SEND_AUDIO !== false) {
+            await Void.sendMessage(citel.chat, {
+                audio: { url: DEFAULT_AUDIO },
+                mimetype: 'audio/mp4'
+            }, { quoted: citel });
+        }
 
-        // Send success reaction
-        await conn.sendMessage(from, { react: { text: "✅", key: mek.key } });
+        await citel.react('✅');
 
     } catch (error) {
         console.error("Repo command error:", error);
+        await citel.react('❌');
         
-        // Fallback to basic info when API fails
-        const repoUrl = config.REPO || 'https://github.com/mrfrank-ofc/SUBZERO-MD';
+        // Fallback message
+        const repoUrl = config.REPO || DEFAULT_REPO;
         const repoPath = repoUrl.replace('https://github.com/', '');
-        const zipUrl = `${repoUrl}/archive/refs/heads/main.zip`;
+        
+        await citel.reply(`
+*⚠️ Couldn't fetch full repository info*
 
-        const fallbackInfo = `
-*❄️ ${config.BOT_NAME || 'SUBZERO MD'} REPOSITORY ❄️*
+Here's basic info:
+🌐 *Repository:* ${repoUrl}
+📥 *Download ZIP:* ${repoUrl}/archive/refs/heads/main.zip
 
-👋 *Hello ${m.pushName || "User"}!*
-
-🌐 *Repository URL:*
-${repoUrl}
-
-📦 *Download Options:*
-- [Download ZIP](${zipUrl})
-- Git Clone: \`git clone https://github.com/${repoPath}.git\`
-
-> *© Powered by ${config.OWNER_NAME || 'Mr Frank OFC'}*
-`.trim();
-
-        await conn.sendMessage(from, {
-            image: { url: config.ALIVE_IMG || BANNER_IMG },
-            caption: fallbackInfo
-        }, { quoted: mek });
-
-        await conn.sendMessage(from, { react: { text: "❌", key: mek.key } });
+Try again later or check the URL.
+`.trim());
     }
 });
