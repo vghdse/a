@@ -88,12 +88,15 @@ ${repoUrl}
         
         // Fallback message if API fails
         const fallbackInfo = `
-*❄️ ${config.BOT_NAME || 'SUBZERO MD'} REPOSITORY ❄️*
+*\`❄️ ${config.BOT_NAME || 'SUBZERO MD'} REPOSITORY ❄️\`*
 
 👋 *Hello ${m.pushName || "User"}!*
 
-🌐 *Repository URL:*
+🌐 \`REPOSITORY URL\`
 ${config.REPO || 'https://github.com/mrfrank-ofc/SUBZERO-MD'}
+
+🗂️ \`ZIP FILE\`
+${config.REPO}/archive/refs/heads/main.zip
 
 > *© Powered by ${config.OWNER_NAME || 'Mr Frank OFC'}*
 `.trim();
