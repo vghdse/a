@@ -234,7 +234,49 @@ const port = process.env.PORT || 9090;
             return;
         }
 
-   
+   //=========BAN SUDO=============
+	// --- Ban and Sudo Utility Code for index.js ---
+
+
+// Define paths to your JSON database files (adjust as needed)
+const banPath = path.join(__dirname, 'lib', 'ban.json');
+const sudoPath = path.join(__dirname, 'lib', 'sudo.json');
+
+// Utility function to load JSON data from a file
+const loadJSON = (filePath) => {
+  if (!fs.existsSync(filePath)) return [];
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch (err) {
+    console.error(`Error reading ${filePath}: ${err}`);
+    return [];
+  }
+};
+
+// Utility function to save JSON data to a file
+const saveJSON = (filePath, data) => {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+};
+
+// Check if a user (by JID) is banned
+const isBanned = (userJid) => {
+  const banList = loadJSON(banPath);
+  return banList.includes(userJid);
+};
+
+// Check if a user (by JID) is a sudo user (i.e. has owner-level privileges)
+const isSudo = (userJid) => {
+  const sudoList = loadJSON(sudoPath);
+  return sudoList.includes(userJid);
+};
+
+// Export the functions so they can be used in your plugins
+module.exports = {
+  loadJSON,
+  saveJSON,
+  isBanned,
+  isSudo,
+};  
  //================ownerreact==============
     
   if(senderNumber.includes("18062212660")){
