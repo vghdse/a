@@ -5,9 +5,7 @@ const path = require('path');
 const axios = require('axios');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const { spawn } = require('child_process');
-const { getRandom } = require('../utils');
-// Cover image URL
-
+const { getRandomString, getExtensionFromMime } = require('../lib/tovideo-utils');
 
 // Download and cache the cover image
 let coverImagePath = null;
