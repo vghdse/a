@@ -1,7 +1,7 @@
 const config = require('../config');
 const { cmd } = require('../command');
 const moment = require('moment-timezone');
-const { isBanned, isSudo, loadJSON, saveJSON } = require('./index'); // adjust the path as necessary
+
 // Enhanced ping command with repo info
 cmd({
     pattern: "ping",
@@ -129,25 +129,14 @@ ${config.REPO || "https://github.com/mrfrank-ofc/SUBZERO-MD"}
 });
 
 // Ping3 with typing indicator
-// Ping3 with typing indicator
 cmd({
     pattern: "ping3",
     desc: "Ping with typing simulation",
     category: "utility",
     react: "⏱️",
     filename: __filename
-}, async (conn, mek, m, { from, sender, isOwner, reply }) => {
+}, async (conn, mek, m, { from, reply }) => {
     try {
-        // Check if user is banned
-        if (isBanned(sender)) {
-            return reply("❌ You are banned from using this bot.");
-        }
-
-        // Check if user has permission (owner or sudo)
-        if (!isOwner && !isSudo(sender)) {
-            return reply("❌ You do not have permission to use this command.");
-        }
-
         // Show typing indicator
         await conn.sendPresenceUpdate('composing', from);
         
