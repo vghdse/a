@@ -5,7 +5,7 @@ const path = require('path');
 const axios = require('axios');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const { spawn } = require('child_process');
-const { getRandom } = require('../utils');
+//const { getRandom } = require('../utils');
 // Cover image URL
 const COVER_URL = 'https://files.catbox.moe/18il7k.jpg';
 
