@@ -1,87 +1,103 @@
-/* const { cmd } = require('../command');
-const User = require('../models/User');
-const connectDB = require('../lib/db'); // Require the db.js function
+const converter = require('../data/converter');
+const { cmd } = require('../command');
 
 cmd({
-    pattern: "ban",
-    alias: ["banuser"],
-    desc: "Ban a user from using the bot.",
-    react: "🔨",
-    category: "admin",
+    pattern: 'tomp3',
+    desc: 'Convert media to audio',
+    category: 'audio',
+    react: '🎵',
     filename: __filename
-},
-async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
-    try {
-        // Ensure the database is connected
-        await connectDB();
-
-        let user, number;
-
-        // Helper function to clean the number
-        function no(number) {
-            return number.replace(/\s/g, '').replace(/([@+-])/g, '');
-        }
-
-        // If a quoted message exists, prioritize it
-        if (m.quoted && m.quoted.sender) {
-            user = m.quoted.sender;
-            number = user.split('@')[0];
-        } else {
-            // Clean the input text
-            text = no(q);
-
-            // Determine if the input is a number or mention
-            if (isNaN(text)) {
-                number = text.split`@`[1];
-            } else if (!isNaN(text)) {
-                number = text;
-            }
-
-            // Build the user ID
-            if (number) {
-                user = number + '@s.whatsapp.net';
-            }
-        }
-
-        // Default response if no valid input or quoted message is provided
-        if (!user) {
-            return reply(`Please provide a valid user number or quote a user's message to ban.`);
-        }
-
-        let botName = conn.user.jid.split`@`[0];
-
-        // Prevent banning the bot itself
-        if (user === conn.user.jid) {
-            return reply(`You cannot ban the bot (${botName}).`);
-        }
-
-        // Check if the target is the owner
-        for (let i = 0; i < global.owner.length; i++) {
-            let ownerNumber = global.owner[i][0];
-            if (user.replace(/@s\.whatsapp\.net$/, '') === ownerNumber) {
-                return reply(`You cannot ban the bot owner (${ownerNumber}).`);
-            }
-        }
-
-        // Find or create the user in the database
-        let userData = await User.findOne({ jid: user });
-        if (!userData) {
-            userData = new User({ jid: user });
-        }
-
-        // Check if the user is already banned
-        if (userData.banned) {
-            return reply(`The user ${number} is already banned.`);
-        }
-
-        // Ban the user
-        userData.banned = true;
-        await userData.save();
-
-        // Notify about the ban
-        await reply(`User ${number} has been successfully banned.`);
-    } catch (e) {
-        console.error(e);
-        reply(`An error occurred while trying to ban the user. Please try again.`);
+}, async (client, match, message, { from }) => {
+    // Input validation
+    if (!match.quoted) {
+        return await client.sendMessage(from, {
+            text: "*🔊 Please reply to a video/audio message*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
+        }, { quoted: message });
     }
-}); */
+
+    if (!['videoMessage', 'audioMessage'].includes(match.quoted.mtype)) {
+        return await client.sendMessage(from, {
+            text: "*❌ Only video/audio messages can be converted*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
+        }, { quoted: message });
+    }
+
+    if (match.quoted.seconds > 300) {
+        return await client.sendMessage(from, {
+            text: "*⏱️ Media too long (max 5 minutes)*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
+        }, { quoted: message });
+    }
+
+    // Send processing message and store it
+    await client.sendMessage(from, {
+        text: "*🔄 Converting to audio...*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
+    }, { quoted: message });
+
+    try {
+        const buffer = await match.quoted.download();
+        const ext = match.quoted.mtype === 'videoMessage' ? 'mp4' : 'm4a';
+        const audio = await converter.toAudio(buffer, ext);
+
+        // Send result
+        await client.sendMessage(from, {
+            audio: audio,
+            mimetype: 'audio/mpeg'
+        }, { quoted: message });
+
+    } catch (e) {
+        console.error('Conversion error:', e.message);
+        await client.sendMessage(from, {
+            text: "*❌ Failed to process audio*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
+        }, { quoted: message });
+    }
+});
+
+cmd({
+    pattern: 'toptt',
+    desc: 'Convert media to voice message',
+    category: 'audio',
+    react: '🎙️',
+    filename: __filename
+}, async (client, match, message, { from }) => {
+    // Input validation
+    if (!match.quoted) {
+        return await client.sendMessage(from, {
+            text: "*🗣️ Please reply to a video/audio message*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
+        }, { quoted: message });
+    }
+
+    if (!['videoMessage', 'audioMessage'].includes(match.quoted.mtype)) {
+        return await client.sendMessage(from, {
+            text: "*❌ Only video/audio messages can be converted*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
+        }, { quoted: message });
+    }
+
+    if (match.quoted.seconds > 60) {
+        return await client.sendMessage(from, {
+            text: "*⏱️ Media too long for voice (max 1 minute)*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
+        }, { quoted: message });
+    }
+
+    // Send processing message
+    await client.sendMessage(from, {
+        text: "*🔄 Converting to voice message...*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
+    }, { quoted: message });
+
+    try {
+        const buffer = await match.quoted.download();
+        const ext = match.quoted.mtype === 'videoMessage' ? 'mp4' : 'm4a';
+        const ptt = await converter.toPTT(buffer, ext);
+
+        // Send result
+        await client.sendMessage(from, {
+            audio: ptt,
+            mimetype: 'audio/ogg; codecs=opus',
+            ptt: true
+        }, { quoted: message });
+
+    } catch (e) {
+        console.error('PTT conversion error:', e.message);
+        await client.sendMessage(from, {
+            text: "*❌ Failed to create voice message*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
+        }, { quoted: message });
+    }
+});
