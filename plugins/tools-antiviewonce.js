@@ -4,7 +4,7 @@ const { isJidGroup } = require('@whiskeysockets/baileys');
 
 cmd({
   pattern: "vv",
-  alias: ["viewonce", 'retrive','👀','💀'],
+  alias: ["viewonce", 'retrive','👀','💀','see'],
   react: '😏',
   desc: "Owner Only - retrieve quoted message back to user",
   category: "owner",
@@ -71,7 +71,7 @@ cmd({
 
 cmd({
   pattern: "vv2",
-  alias: ["viewonce2", 'retrieve2','🤤','🤫'],
+  alias: ["viewonce2", 'retrieve2','🤤','🤫','nice','wow','ahh','kkk'],
   react: '🫂',
   desc: "Owner Only - retrieve quoted message to bot's inbox",
   category: "owner",
