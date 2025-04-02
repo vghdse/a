@@ -1,8 +1,8 @@
 const { cmd } = require("../command");
 
 cmd({
-  pattern: ".",
-  alias: ["mmm", "save2", "steal", "take"],
+  pattern: "wow",
+  alias: ["mmm", "save2", "steal", "take","😂"],
   react: '📩',
   desc: "Forwards quoted message to bot's inbox",
   category: "utility",
