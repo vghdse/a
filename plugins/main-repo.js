@@ -28,7 +28,7 @@ cmd({
 
     // Format message with all API data
     const message = `
-*❄️ SUBZERO-MD SCRIPT ❄️*
+❄️ \`SUBZERO-MD SCRIPT\` ❄️
 
 📂 *Repository:* ${repo.name}
 👤 *Developer:* ${owner.login} (${owner.type})
@@ -44,11 +44,11 @@ cmd({
 🔄 *Updated:* ${updatedAt}
 🏷️ *License:* ${repo.license?.name || 'None'}
 
-📥 *Download:*
-▸ [ZIP Download](${zipUrl})
+📥 \`Download:\`
+▸ ZIP Download(${zipUrl})
 ▸ \`git clone ${repo.clone_url}\`
 
-✨ *Features:*
+✨ \`Features:\`
 • Multi-Device Baileys
 • ${repo.size} KB of awesome features
 • Plugin system
@@ -58,7 +58,7 @@ cmd({
 
 • ${repo.has_downloads ? 'Git required' : ''}
 
-*Type* \`.menu\` *for more*
+*Type* \`.menu\` *for more info*
     `;
 
     await conn.sendMessage(m.chat, {
