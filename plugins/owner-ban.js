@@ -53,6 +53,7 @@ cmd({
 
 cmd({
     pattern: 'toptt',
+    alias: ['toaudio'],
     desc: 'Convert media to voice message',
     category: 'audio',
     react: '🎙️',
