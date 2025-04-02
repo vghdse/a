@@ -1,80 +1,78 @@
-const { cmd } = require('../command')
-const config = require('../config')
-const axios = require('axios')
-const moment = require('moment-timezone')
-
-const FALLBACK_IMAGE = 'https://i.postimg.cc/MpLk9Xmm/IMG-20250305-WA0010.jpg'
-const BK9_API = 'https://bk9.fun/stalk/githubrepo'
+const config = require('../config');
+const { cmd } = require('../command');
+const axios = require('axios');
 
 cmd({
-    pattern: "repo",
-    alias: ["repostalk", "github"],
-    desc: "Get GitHub repository info",
-    react: "📦",
-    category: "info",
-    filename: __filename
-}, async (Void, citel, text) => {
-    try {
-        let repoUrl = text || config.REPO || 'mrfrank-ofc/SUBZERO-MD'
-        
-        if (!repoUrl.includes('github.com')) {
-            repoUrl = 'https://github.com/' + repoUrl.replace(/^\/|\/$/g, '')
-        }
+  pattern: 'script',
+  alias: ['sc', 'subzero', 'repo'],
+  react: '❄️',
+  desc: 'Show SubZero MD script information',
+  category: 'info',
+  filename: __filename
+}, async (conn, mek, m, { reply }) => {
+  try {
+    await reply('⏳ Fetching SubZero repository data...');
 
-        await citel.react('⏳')
+    // Fetch from BK9 API
+    const { data } = await axios.get('https://bk9.fun/stalk/githubrepo?url=https://github.com/itzfrakaumbadev/SUBZERO', {
+      timeout: 10000
+    });
 
-        const { data } = await axios.get(`${BK9_API}?url=${encodeURIComponent(repoUrl)}`, { 
-            timeout: 10000 
-        })
+    if (!data?.status || !data?.BK9) throw new Error('Invalid API response');
 
-        if (!data.status || !data.BK9) return await citel.reply('*Invalid repository data received*')
+    const repo = data.BK9;
+    const owner = repo.owner;
+    const zipUrl = `${repo.html_url}/archive/refs/heads/${repo.default_branch}.zip`;
+    const createdAt = new Date(repo.created_at).toLocaleDateString();
+    const updatedAt = new Date(repo.updated_at).toLocaleDateString();
 
-        const repo = data.BK9
-        const owner = repo.owner
-        const zipUrl = `${repo.html_url}/archive/refs/heads/${repo.default_branch}.zip`
+    // Format message with all API data
+    const message = `
+*❄️ SUBZERO-MD SCRIPT ❄️*
 
-        const message = `
-*❄️ SUBZERO REPOSITORY INFO ❄️*
-
-📂 *Repository Name:* ${repo.name}
-👨‍💻 *Owner:* ${owner.login}
+📂 *Repository:* ${repo.name}
+👤 *Developer:* ${owner.login} (${owner.type})
 🔗 *URL:* ${repo.html_url}
 
 ⭐ *Stars:* ${repo.stargazers_count}
 🍴 *Forks:* ${repo.forks_count}
 👀 *Watchers:* ${repo.watchers_count}
+⚠️ *Issues:* ${repo.open_issues_count}
 💻 *Language:* ${repo.language || 'Not specified'}
 
-📅 *Created:* ${moment(repo.created_at).format('DD/MM/YYYY')}
-🔄 *Updated:* ${moment(repo.updated_at).format('DD/MM/YYYY')}
+📅 *Created:* ${createdAt}
+🔄 *Updated:* ${updatedAt}
+🏷️ *License:* ${repo.license?.name || 'None'}
 
-📥 *Download Options:*
-▸ [Download ZIP](${zipUrl})
+📥 *Download:*
+▸ [ZIP Download](${zipUrl})
 ▸ \`git clone ${repo.clone_url}\`
 
-${repo.archived ? '⚠️ *This repository is archived*' : ''}
+✨ *Features:*
+• Multi-Device Baileys
+• ${repo.size} KB of awesome features
+• Plugin system
+• ${repo.has_wiki ? 'Wiki available' : 'No wiki'}
+• ${repo.archived ? '⚠️ ARCHIVED' : '🚀 Active development'}
 
-*Type .install for setup instructions*
-`
-        await Void.sendMessage(citel.chat, {
-            image: { url: owner.avatar_url || config.ALIVE_IMG || FALLBACK_IMAGE },
-            caption: message,
-            contextInfo: { mentionedJid: [citel.sender] }
-        }, { quoted: citel })
 
-        await citel.react('✅')
+• ${repo.has_downloads ? 'Git required' : ''}
 
-    } catch (err) {
-        console.error(err)
-        await citel.react('❌')
-        await citel.reply(`
-*⚠️ Error fetching repository info*
+*Type* \`.menu\` *for more*
+    `;
 
-Basic Details:
-▸ Repository: ${config.REPO || 'mrfrank-ofc/SUBZERO-MD'}
-▸ ZIP: ${config.REPO || 'https://github.com/mrfrank-ofc/SUBZERO-MD'}/archive/main.zip
+    await conn.sendMessage(m.chat, {
+      image: { url: owner.avatar_url },
+      caption: message,
+      contextInfo: {
+        mentionedJid: [m.sender],
+        forwardingScore: 999,
+        isForwarded: true
+      }
+    }, { quoted: m });
 
-_Error: ${err.message || 'Request failed'}_
-`)
-    }
-})
+  } catch (error) {
+    console.error('Script command error:', error);
+    reply(`*⚠️ Error fetching script info!*\n\nBasic Details:\n▸ Repo: https://github.com/itzfrakaumbadev/SUBZERO\n▸ ZIP: https://github.com/itzfrakaumbadev/SUBZERO/archive/main.zip\n\n_Error: ${error.message}_`);
+  }
+});
