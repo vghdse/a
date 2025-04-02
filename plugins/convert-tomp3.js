@@ -1,4 +1,4 @@
-const converter = require('../data/converter');
+const converter = require('../data/mediaconverter');
 const { cmd } = require('../command');
 
 cmd({
