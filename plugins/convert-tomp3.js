@@ -2,7 +2,6 @@ const converter = require('../data/mediaconverter');
 const { cmd } = require('../command');
 const fs = require('fs');
 const path = require('path');
-const { getRandom } = require('../utils');
 const axios = require('axios');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const { spawn } = require('child_process');
