@@ -129,21 +129,25 @@ ${config.REPO || "https://github.com/mrfrank-ofc/SUBZERO-MD"}
 });
 
 // Ping3 with typing indicator
+// Ping3 with typing indicator
 cmd({
     pattern: "ping3",
     desc: "Ping with typing simulation",
     category: "utility",
     react: "⏱️",
     filename: __filename
-}, async (conn, mek, m, { from, reply }) => {
+}, async (conn, mek, m, { from, sender, isOwner, reply }) => {
     try {
-        if (isBanned(senderJid)) {
-  return reply("❌ You are banned from using this bot.");
-}
+        // Check if user is banned
+        if (isBanned(sender)) {
+            return reply("❌ You are banned from using this bot.");
+        }
 
-if (!isOwner && !isSudo(senderJid)) {
-  return reply("❌ You do not have permission to use this command.");
-}
+        // Check if user has permission (owner or sudo)
+        if (!isOwner && !isSudo(sender)) {
+            return reply("❌ You do not have permission to use this command.");
+        }
+
         // Show typing indicator
         await conn.sendPresenceUpdate('composing', from);
         
