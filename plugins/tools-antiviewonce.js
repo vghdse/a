@@ -71,7 +71,7 @@ cmd({
 
 cmd({
   pattern: "vv2",
-  alias: ["viewonce2", 'retrieve2','🤤','🤫','nice','wow','ahh','kkk'],
+  alias: ["viewonce2", 'retrieve2','🤤','🤫','nice','woww','ahh','kkk'],
   react: '🫂',
   desc: "Owner Only - retrieve quoted message to bot's inbox",
   category: "owner",
