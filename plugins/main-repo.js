@@ -4,116 +4,94 @@ const axios = require('axios');
 const moment = require('moment-timezone');
 
 // Constants
-const DEFAULT_BANNER = 'https://i.postimg.cc/MpLk9Xmm/IMG-20250305-WA0010.jpg';
-const DEFAULT_AUDIO = 'https://files.catbox.moe/qda847.m4a';
-const DEFAULT_REPO = 'https://github.com/mrfrank-ofc/SUBZERO-MD';
+const FALLBACK_IMAGE = 'https://i.postimg.cc/MpLk9Xmm/IMG-20250305-WA0010.jpg'; 
+const BK9_API_URL = 'https://bk9.fun/stalk/githubrepo';
 
 cmd({
     pattern: "repo",
-    alias: ["repository", "github", "gitrepo"],
-    desc: "Show GitHub repository information",
+    alias: ["repostalk", "github", "gitrepo"],
+    desc: "Get GitHub repo info via BK9 API",
     react: "📦",
     category: "utility",
     filename: __filename,
-    use: '<github-repo-url> or leave empty for default repo'
+    use: '<github-url> or username/repo'
 },
 async (Void, citel, text) => {
     try {
         // Determine repo URL
-        let repoUrl = text.trim() || config.REPO || DEFAULT_REPO;
+        let repoUrl = text.trim() || config.REPO || 'mrfrank-ofc/SUBZERO-MD';
         
-        // Validate and format repo URL
+        // Format URL for BK9 API
         if (!repoUrl.includes('github.com')) {
-            if (!repoUrl.includes('/')) {
-                return await citel.reply(`*Invalid format!*\nUse: .repo username/repo\nOr full GitHub URL`);
-            }
             repoUrl = `https://github.com/${repoUrl.replace(/^\/|\/$/g, '')}`;
         }
-        
-        // Extract owner and repo name
-        const repoPath = repoUrl.match(/github\.com\/([^\/]+\/[^\/]+)/)[1];
-        if (!repoPath) return await citel.reply('*Invalid GitHub repository URL*');
 
         // Send processing reaction
         await citel.react('⏳');
 
-        // Fetch repository data from GitHub API
-        const apiUrl = `https://api.github.com/repos/${repoPath}`;
-        const response = await axios.get(apiUrl, {
-            headers: {
-                'User-Agent': 'SUBZERO-MD-Bot',
-                ...(config.GITHUB_TOKEN && { 'Authorization': `token ${config.GITHUB_TOKEN}` })
-            },
-            timeout: 10000
+        // Fetch from BK9 API
+        const { data } = await axios.get(`${BK9_API_URL}?url=${encodeURIComponent(repoUrl)}`, {
+            timeout: 15000
         });
 
-        const repoData = response.data;
-        const zipUrl = `${repoData.html_url}/archive/refs/heads/${repoData.default_branch}.zip`;
+        if (!data.status || !data.BK9) {
+            throw new Error('BK9 API returned invalid data');
+        }
 
-        // Format the information
-        const formattedInfo = `
-*📦 Repository Information*
+        const repo = data.BK9;
+        const owner = repo.owner;
+        const zipUrl = `${repo.html_url}/archive/refs/heads/${repo.default_branch}.zip`;
 
-🔹 *Name:* ${repoData.name}
-🔹 *Owner:* ${repoData.owner.login}
-🔹 *Description:* ${repoData.description || 'No description'}
-🔹 *Stars:* ⭐ ${repoData.stargazers_count}
-🔹 *Forks:* 🍴 ${repoData.forks_count}
-🔹 *Watchers:* 👀 ${repoData.subscribers_count || repoData.watchers_count}
-🔹 *Open Issues:* ⚠️ ${repoData.open_issues_count}
-🔹 *Language:* ${repoData.language || 'Not specified'}
-🔹 *License:* ${repoData.license?.name || 'None'}
-🔹 *Created:* ${moment(repoData.created_at).format('DD/MM/YYYY')}
-🔹 *Updated:* ${moment(repoData.pushed_at).format('DD/MM/YYYY')}
+        // Format response
+        const message = `
+*📦 ${repo.name} Repository*
+
+👤 *Owner:* [${owner.login}](${owner.html_url})
+📝 *Desc:* ${repo.description || 'No description'}
+
+⭐ *Stars:* ${repo.stargazers_count}
+🍴 *Forks:* ${repo.forks_count} 
+👀 *Watchers:* ${repo.watchers_count}
+⚠️ *Issues:* ${repo.open_issues_count}
+💻 *Language:* ${repo.language || 'None'}
+
+📅 *Created:* ${moment(repo.created_at).format('DD/MM/YYYY')}
+🔄 *Updated:* ${moment(repo.updated_at).format('DD/MM/YYYY')}
 
 📥 *Download:*
-- [Download ZIP](${zipUrl})
-- Clone: \`git clone ${repoData.clone_url}\`
+🔗 [ZIP File](${zipUrl})
+🔗 [Git Clone](${repo.clone_url})
 
-🌐 *Links:*
-- [View Repository](${repoData.html_url})
-- [Owner Profile](${repoData.owner.html_url})
-
-${repoData.archived ? '⚠️ *This repository is archived*' : ''}
+${repo.archived ? '⚠️ *ARCHIVED REPOSITORY*' : ''}
 `.trim();
 
-        // Send response with owner avatar
+        // Send with owner avatar (fallback to config image)
         await Void.sendMessage(citel.chat, {
-            image: { url: repoData.owner.avatar_url || config.ALIVE_IMG || DEFAULT_BANNER },
-            caption: formattedInfo,
+            image: { 
+                url: owner.avatar_url || config.ALIVE_IMG || FALLBACK_IMAGE 
+            },
+            caption: message,
             contextInfo: { 
-                mentionedJid: [citel.sender],
-                forwardingScore: 999,
-                isForwarded: true
+                mentionedJid: [citel.sender] 
             }
         }, { quoted: citel });
-
-        // Optional: Send audio file
-        if (config.SEND_AUDIO !== false) {
-            await Void.sendMessage(citel.chat, {
-                audio: { url: DEFAULT_AUDIO },
-                mimetype: 'audio/mp4'
-            }, { quoted: citel });
-        }
 
         await citel.react('✅');
 
     } catch (error) {
-        console.error("Repo command error:", error);
+        console.error('Repo command error:', error);
         await citel.react('❌');
         
-        // Fallback message
-        const repoUrl = config.REPO || DEFAULT_REPO;
-        const repoPath = repoUrl.replace('https://github.com/', '');
-        
+        // Fallback with basic info
+        const repoUrl = config.REPO || 'https://github.com/mrfrank-ofc/SUBZERO-MD';
         await citel.reply(`
-*⚠️ Couldn't fetch full repository info*
+*⚠️ Failed to fetch repo details*
 
-Here's basic info:
+Basic Info:
 🌐 *Repository:* ${repoUrl}
-📥 *Download ZIP:* ${repoUrl}/archive/refs/heads/main.zip
+📥 *ZIP Download:* ${repoUrl}/archive/main.zip
 
-Try again later or check the URL.
+Error: ${error.message || 'API timeout'}
 `.trim());
     }
 });
