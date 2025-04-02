@@ -44,12 +44,12 @@ async (conn, mek, m, { from, sender, reply }) => {
 ${loadingBar}
 *${statusEmoji}*
         
-⚡ *Response Time:* ${responseTime.toFixed(2)}ms
-⏰ *Time:* ${time}
-📅 *Date:* ${date}
+⚡ \`Response Time:\` ${responseTime.toFixed(2)}ms
+⏰ \`Time:\` ${time}
+📅 \`Date:\` ${date}
 
-💻 *Developer:* ${config.OWNER_NAME || "Mr Frank"}
-🤖 *Bot Name:* ${config.BOT_NAME || "SUBZERO-MD"}
+💻 \`DEVELOPER:\` ${config.OWNER_NAME || "Mr Frank"}
+🤖 \`Bot Name:\` ${config.BOT_NAME || "SUBZERO-MD"}
 
 🌟 *Don't forget to star & fork the repo!*
 🔗 ${config.REPO || "https://github.com/mrfrank-ofc/SUBZERO-MD"}
