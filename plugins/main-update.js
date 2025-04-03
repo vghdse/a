@@ -2,7 +2,7 @@ const { cmd } = require("../command");
 const axios = require('axios');
 const fs = require('fs');
 const path = require("path");
-const { execSync } = require('child_process');
+const AdmZip = require("adm-zip");
 const config = require('../config');
 
 cmd({  
@@ -17,24 +17,50 @@ cmd({
   
   try {
     const repoUrl = config.REPO || "https://github.com/mrfraank/SUBZERO";
-    const repoPath = repoUrl.replace('https://github.com/', '');
+    const repoName = repoUrl.split('/').pop();
     
-    await reply("```🔄 Updating from GitHub...```");
+    await reply("```📥 Downloading updates directly...```");
     
-    // 1. Fetch latest changes directly from git
-    execSync(`git fetch ${repoUrl}`, { stdio: 'inherit' });
+    // 1. Download the ZIP directly to memory
+    const { data } = await axios.get(`${repoUrl}/archive/main.zip`, {
+      responseType: "arraybuffer",
+      timeout: 30000
+    });
+
+    // 2. Process ZIP directly in memory
+    const zip = new AdmZip(data);
+    const zipEntries = zip.getEntries();
     
-    // 2. Reset to latest main branch
-    execSync('git reset --hard origin/main', { stdio: 'inherit' });
+    // 3. Find and process files directly from ZIP
+    const protectedFiles = ["config.js", "app.json", "data"];
+    const basePath = `${repoName}-main/`;
     
-    // 3. Clean any untracked files
-    execSync('git clean -fd', { stdio: 'inherit' });
+    await reply("```🔄 Applying updates...```");
     
+    for (const entry of zipEntries) {
+      if (entry.isDirectory) continue;
+      
+      const relativePath = entry.entryName.replace(basePath, '');
+      const destPath = path.join(__dirname, '..', relativePath);
+      
+      // Skip protected files
+      if (protectedFiles.some(f => destPath.includes(f))) continue;
+      
+      // Ensure directory exists
+      const dir = path.dirname(destPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      // Write file directly from ZIP
+      zip.extractEntryTo(entry, dir, false, true, entry.name);
+    }
+
     await reply("```✅ Update complete! Restarting...```");
     setTimeout(() => process.exit(0), 2000);
 
   } catch (error) {
     console.error("Update error:", error);
-    reply(`❌ Update failed: ${error.message}\n\nPlease update manually using:\n\`\`\`git pull ${config.REPO || "https://github.com/mrfraank/SUBZERO"} main\`\`\``);
+    reply(`❌ Update failed: ${error.message}\n\nPlease update manually from:\n${config.REPO || "https://github.com/mrfraank/SUBZERO"}`);
   }
 });
