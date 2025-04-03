@@ -1,4 +1,3 @@
-const converter = require('../lib/converter');
 const { cmd } = require('../command');
 const fs = require('fs');
 const path = require('path');
@@ -6,34 +5,67 @@ const axios = require('axios');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const { spawn } = require('child_process');
 
-// Cover image configuration
+// Configuration
 const COVER_URL = 'https://files.catbox.moe/18il7k.jpg';
-let coverImagePath = null;
+const TEMP_DIR = path.join(__dirname, '../temp');
+const MAX_RETRIES = 3;
 
-// Utility functions
-function getRandomString() {
-    return Math.random().toString(36).substring(2, 15);
+// Ensure temp directory exists
+if (!fs.existsSync(TEMP_DIR)) {
+    fs.mkdirSync(TEMP_DIR, { recursive: true });
 }
 
-async function ensureCoverImage() {
-    if (!coverImagePath || !fs.existsSync(coverImagePath)) {
-        coverImagePath = path.join(converter.tempDir, `cover_${getRandomString()}.jpg`);
+// Utility functions
+function getRandomFileName(ext) {
+    return `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+}
+
+async function downloadWithRetry(url, path, retries = MAX_RETRIES) {
+    while (retries > 0) {
         try {
-            const response = await axios.get(COVER_URL, { 
-                responseType: 'arraybuffer',
-                timeout: 10000
-            });
-            await fs.promises.writeFile(coverImagePath, response.data);
-        } catch (e) {
-            console.error('Cover image download failed:', e.message);
-            throw new Error('Failed to download cover image');
+            const response = await axios.get(url, { responseType: 'arraybuffer' });
+            await fs.promises.writeFile(path, response.data);
+            return true;
+        } catch (err) {
+            retries--;
+            if (retries === 0) throw err;
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
     }
-    return coverImagePath;
+}
+
+async function runFFmpeg(args, timeout = 60000) {
+    return new Promise((resolve, reject) => {
+        const ffmpeg = spawn(ffmpegPath, args);
+        let stderrData = '';
+
+        const timer = setTimeout(() => {
+            ffmpeg.kill();
+            reject(new Error('FFmpeg timeout'));
+        }, timeout);
+
+        ffmpeg.stderr.on('data', (data) => {
+            stderrData += data.toString();
+        });
+
+        ffmpeg.on('close', (code) => {
+            clearTimeout(timer);
+            if (code === 0) {
+                resolve(stderrData);
+            } else {
+                reject(new Error(`FFmpeg error ${code}\n${stderrData}`));
+            }
+        });
+
+        ffmpeg.on('error', (err) => {
+            clearTimeout(timer);
+            reject(err);
+        });
+    });
 }
 
 cmd({
-    pattern: 'tovideo2',
+    pattern: 'tovideo',
     desc: 'Convert audio to video with cover image',
     category: 'media',
     react: '🎬',
@@ -52,67 +84,60 @@ cmd({
         }, { quoted: message });
     }
 
-    // Send processing message
-    const processingMsg = await client.sendMessage(from, {
-        text: "*🔄 Preparing video conversion...*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
-    }, { quoted: message });
+    // File paths
+    const coverPath = path.join(TEMP_DIR, getRandomFileName('jpg'));
+    const audioPath = path.join(TEMP_DIR, getRandomFileName('mp3'));
+    const outputPath = path.join(TEMP_DIR, getRandomFileName('mp4'));
 
-    let audioPath, outputPath;
     try {
-        // Prepare files
-        const imagePath = await ensureCoverImage();
-        const buffer = await match.quoted.download();
-        audioPath = path.join(converter.tempDir, `audio_${getRandomString()}.mp3`);
-        outputPath = path.join(converter.tempDir, `video_${getRandomString()}.mp4`);
+        // Send initial processing message
+        const processingMsg = await client.sendMessage(from, {
+            text: "*🔄 Starting conversion process...*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
+        }, { quoted: message });
 
-        await fs.promises.writeFile(audioPath, buffer);
-
-        // Update processing status
+        // Step 1: Download cover image
         await client.sendMessage(from, {
-            text: "*🔄 Converting audio to video...*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ",
+            text: "*⬇️ Downloading cover image...*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ",
+            edit: processingMsg.key
+        });
+        await downloadWithRetry(COVER_URL, coverPath);
+
+        // Step 2: Save audio file
+        await client.sendMessage(from, {
+            text: "*💾 Saving audio file...*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ",
+            edit: processingMsg.key
+        });
+        const audioBuffer = await match.quoted.download();
+        await fs.promises.writeFile(audioPath, audioBuffer);
+
+        // Step 3: Convert to video
+        await client.sendMessage(from, {
+            text: "*🎥 Converting to video...*\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ",
             edit: processingMsg.key
         });
 
-        // FFmpeg conversion with error handling
         const ffmpegArgs = [
             '-y',
             '-loop', '1',
-            '-i', imagePath,
+            '-i', coverPath,
             '-i', audioPath,
             '-c:v', 'libx264',
-            '-preset', 'fast',
+            '-preset', 'ultrafast',  // Changed to ultrafast for better compatibility
             '-crf', '23',
             '-c:a', 'aac',
             '-b:a', '128k',
             '-pix_fmt', 'yuv420p',
             '-shortest',
-            '-vf', 'scale=640:-2',
+            '-vf', 'scale=640:640:force_original_aspect_ratio=increase',  // Square format
             '-movflags', '+faststart',
             outputPath
         ];
 
-        const ffmpeg = spawn(ffmpegPath, ffmpegArgs);
-        
-        let errorOutput = '';
-        ffmpeg.stderr.on('data', (data) => {
-            errorOutput += data.toString();
-        });
-
-        await new Promise((resolve, reject) => {
-            ffmpeg.on('close', (code) => {
-                if (code !== 0) {
-                    console.error('FFmpeg error:', errorOutput);
-                    reject(new Error(`FFmpeg process failed with code ${code}`));
-                } else {
-                    resolve();
-                }
-            });
-            ffmpeg.on('error', reject);
-        });
+        await runFFmpeg(ffmpegArgs);
 
         // Verify output
         if (!fs.existsSync(outputPath)) {
-            throw new Error('Output file not created');
+            throw new Error('Output file was not created');
         }
 
         // Send result
@@ -120,19 +145,21 @@ cmd({
         await client.sendMessage(from, {
             video: videoBuffer,
             mimetype: 'video/mp4',
-            caption: "🎵 Audio Visualized\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
+            caption: "🎵 Your Audio Visualized\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ"
         }, { quoted: message });
 
-    } catch (e) {
-        console.error('Conversion error:', e);
+    } catch (error) {
+        console.error('Conversion error:', error);
         await client.sendMessage(from, {
-            text: `*❌ Conversion failed*\n${e.message}\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ`
+            text: `*❌ Conversion failed*\nError: ${error.message}\n\n> © Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ`
         }, { quoted: message });
     } finally {
-        // Cleanup
-        await Promise.all([
-            audioPath && converter.cleanFile(audioPath),
-            outputPath && converter.cleanFile(outputPath)
-        ]);
+        // Cleanup files
+        const filesToDelete = [coverPath, audioPath, outputPath];
+        await Promise.all(
+            filesToDelete.map(file => 
+                fs.promises.unlink(file).catch(() => {})
+            )
+        );
     }
 });
