@@ -1,4 +1,4 @@
-const converter = require('../data/converter');
+//const converter = require('../data/converter');
 const stickerConverter = require('../data/sticker-converter');
 const { cmd } = require('../command');
 
