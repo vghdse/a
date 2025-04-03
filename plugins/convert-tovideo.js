@@ -65,7 +65,7 @@ async function runFFmpeg(args, timeout = 60000) {
 }
 
 cmd({
-    pattern: 'tovideo2',
+    pattern: 'tovideo',
     desc: 'Convert audio to video with cover image',
     category: 'media',
     react: '🎬',
