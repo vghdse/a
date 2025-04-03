@@ -1,93 +1,98 @@
-const { cmd } = require('../command');
-const { getBuffer } = require('../lib/functions');
+ const { cmd } = require('../command');
 
 cmd({
     pattern: "person",
     react: "👤",
     alias: ["userinfo", "profile"],
-    desc: "Get complete user profile information",
+    desc: "Get instant user profile info",
     category: "utility",
-    use: '.person [@tag or reply]',
     filename: __filename
-}, async (conn, mek, m, { from, sender, isGroup, reply, quoted, participants }) => {
+}, async (m, conn) => {
     try {
-        // ─── Determine Target User ──────────────────
-        let userJid = quoted?.sender || 
-                     mek.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0] || 
-                     sender;
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 1. CONSTANT DECLARATIONS (All variables defined at top)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const FALLBACK_IMAGE = 'https://i.ibb.co/KhYC4FY/1221bc0bdd2354b42b293317ff2adbcf-icon.png';
+        const DEFAULT_BIO = 'No bio available';
+        const FOOTER = '> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ғʀᴀɴᴋ';
 
-        // ─── Verify User Exists ────────────────────
-        const [user] = await conn.onWhatsApp(userJid).catch(() => []);
-        if (!user?.exists) return reply("❌ User not found on WhatsApp");
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 2. TARGET USER RESOLUTION (REPLY > MENTION > SENDER)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const targetUser = m.quoted?.sender || m.mentioned[0] || m.sender;
 
-        // ─── Get Profile Picture ───────────────────
-        let ppUrl;
-        try {
-            ppUrl = await conn.profilePictureUrl(userJid, 'image');
-        } catch {
-            ppUrl = 'https://i.ibb.co/KhYC4FY/1221bc0bdd2354b42b293317ff2adbcf-icon.png';
-        }
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 3. PARALLEL DATA FETCHING (FASTEST POSSIBLE)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const [userData, profilePic] = await Promise.all([
+            conn.onWhatsApp(targetUser).then(res => res[0]),
+            conn.profilePictureUrl(targetUser, 'image').catch(() => FALLBACK_IMAGE)
+        ]);
 
-        // ─── Get User Name ─────────────────────────
-        let userName = userJid.split('@')[0];
-        try {
-            const contact = await conn.contactDB.get(userJid).catch(() => null);
-            if (contact?.name) userName = contact.name;
-            else if (isGroup) {
-                const member = participants.find(p => p.id === userJid);
-                if (member?.notify) userName = member.notify;
-            }
-        } catch (e) {
-            console.log("Name fetch error:", e);
-        }
+        if (!userData?.exists) return m.reply("❌ User not found " + FOOTER);
 
-        // ─── Get Bio/Status ───────────────────────
-        let bio = "No bio available";
-        try {
-            const status = await conn.fetchStatus(userJid).catch(() => null);
-            if (status?.status) bio = `📌 Status: ${status.status}\n🕒 Last Updated: ${new Date(status.setAt * 1000).toLocaleString()}`;
-        } catch (e) {
-            console.log("Bio fetch error:", e);
-        }
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 4. NAME RESOLUTION (GROUP > CONTACT > NUMBER)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const contactName = await conn.getName(targetUser).catch(() => null);
+        const groupName = m.isGroup 
+            ? m.groupMetadata.participants.find(p => p.id === targetUser)?.notify 
+            : null;
+        const userName = groupName || contactName || targetUser.split('@')[0];
 
-        // ─── Get Group Role ───────────────────────
-        let groupRole = "";
-        if (isGroup) {
-            const participant = participants.find(p => p.id === userJid);
-            groupRole = participant?.admin ? "👑 Admin" : "👥 Member";
-        }
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 5. BIO/STATUS FETCH (WITH TIMEOUT SAFETY)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const bioFetch = await Promise.race([
+            conn.fetchStatus(targetUser),
+            new Promise(resolve => setTimeout(resolve, 1500))
+        ]);
+        const userBio = bioFetch?.status || DEFAULT_BIO;
+        const bioUpdateTime = bioFetch?.setAt 
+            ? new Date(bioFetch.setAt * 1000).toLocaleString() 
+            : null;
 
-        // ─── Format Output ────────────────────────
-        const userInfo = `
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 6. GROUP ROLE DETECTION (IF IN GROUP)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const userRole = m.isGroup 
+            ? m.groupMetadata.participants.find(p => p.id === targetUser)?.admin 
+                ? "👑 Admin" 
+                : "👥 Member"
+            : null;
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 7. COMPILE FINAL MESSAGE (WITH PERFECT FORMATTING)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const finalMessage = `
 *👤 USER PROFILE INFORMATION*
 
-🆔 *Username:* ${userName}
-📞 *Number:* ${userJid.replace(/@.+/, '')}
-📌 *Account Type:* ${user.isBusiness ? "💼 Business" : "👤 Personal"}
+🆔 *Name:* ${userName}
+📞 *Number:* ${targetUser.replace('@s.whatsapp.net', '')}
+📌 *Account Type:* ${userData.isBusiness ? '💼 Business' : '👤 Personal'}
 
 📝 *Bio/Status:*
-${bio}
+${userBio}
+${bioUpdateTime ? `🕒 *Updated:* ${bioUpdateTime}` : ''}
 
-⚙️ *Account Details:*
-✅ *Registered:* Yes
-🛡️ *Verified:* ${user.verifiedName ? "✅ Yes" : "❌ No"}
-${isGroup ? `👥 *Group Role:* ${groupRole}` : ''}
+${userRole ? `👥 *Group Role:* ${userRole}` : ''}
 
-🌐 *WhatsApp Link:*
-https://wa.me/${userJid.replace('@s.whatsapp.net', '')}
+🌐 *Chat Link:* https://wa.me/${targetUser.replace('@s.whatsapp.net', '')}
 
-> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ғʀᴀɴᴋ
+${FOOTER}
 `.trim();
 
-        // ─── Send Result ──────────────────────────
-        await conn.sendMessage(from, {
-            image: { url: ppUrl },
-            caption: userInfo,
-            mentions: [userJid]
-        }, { quoted: mek });
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 8. SEND FINAL RESULT (WITH PROPER MENTIONS)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        await conn.sendMessage(m.chat, {
+            image: { url: profilePic },
+            caption: finalMessage,
+            mentions: [targetUser]
+        }, { quoted: m });
 
-    } catch (e) {
-        console.error("Person command error:", e);
-        reply(`❌ Error: ${e.message || "Failed to fetch profile"}\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ғʀᴀɴᴋ`);
+    } catch (error) {
+        const errorMessage = `❌ Error: ${error.message}\n${FOOTER}`;
+        m.reply(errorMessage);
     }
 });
