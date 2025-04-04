@@ -11,7 +11,7 @@ module.exports = {
     PREFIX: process.env.PREFIX || ".",         // Command prefix (e.g., "., / ! * - +")
     BOT_NAME: process.env.BOT_NAME || "SUBZERO-MD",  // Bot's display name
     MODE: process.env.MODE || "public",        // Bot mode: public/private/group/inbox
-    REPO: process.env.REPO || "https://github.com/itzfrakaumbadev/SUBZERO.",  // Bot's GitHub repo
+    REPO: process.env.REPO || "https://github.com/mrfrankofcc/SUBZERO-MD",  // Bot's GitHub repo
 
     // ===== OWNER & DEVELOPER SETTINGS =====
     OWNER_NUMBER: process.env.OWNER_NUMBER || "263719647303",  // Owner's WhatsApp number
