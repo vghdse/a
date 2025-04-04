@@ -16,21 +16,13 @@ async (conn, mek, m, { from, reply }) => {
     try {
         // ASCII Art Header
         const subzeroArt = `
-╔════════════════════════════════════════╗
-║                                        ║
-║   ███████╗██╗   ██╗██████╗ ███████╗  ║
-║   ██╔════╝██║   ██║██╔══██╗██╔════╝  ║
-║   ███████╗██║   ██║██████╔╝█████╗    ║
-║   ╚════██║██║   ██║██╔══██╗██╔══╝    ║
-║   ███████║╚██████╔╝██║  ██║███████╗  ║
-║   ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝  ║
-║                                        ║
-╠════════════════════════════════════════╣
-║  🚀 Project: ${config.BOT_NAME || "SubZero MD"}     ║
-║  👨‍💻 Creator: ${config.OWNER_NAME || "Darrell Mucheri"} ║
-║  📦 Version: ${config.VERSION || "3.0.0"}           ║
-║  🌐 Repo: ${config.REPO || "github.com/mrfrank-ofc/SUBZERO-MD"} ║
-╚════════════════════════════════════════╝
+                                    
+╭──┈┈┈┈▢ *sᴜʙᴢᴇʀᴏ ᴍᴅ* ▢
+║  🚀 Project: ${config.BOT_NAME || "SubZero MD"}     
+║  👨‍💻 Creator: ${config.OWNER_NAME || "Darrell Mucheri"} 
+║  📦 Version: ${config.VERSION || "3.0.0"}           
+║  🌐 Repo: ${config.REPO || "github.com/mrfrank-ofc/SUBZERO-MD"} 
+╰╶╶╶╶╶╶╶╶╶▢
 `.trim();
 
         // Initial warning message
