@@ -9,7 +9,7 @@ cmd({
   pattern: "removebg",
   alias: ["rmbg","removeback","removebackground"],
   react: '🖼️',
-  desc: "Remove the background from an image using Catbox upload",
+  desc: "Remove the background from an image using direct upload",
   category: "tools",
   use: ".removebg (reply to an image)",
   filename: __filename
@@ -20,76 +20,105 @@ cmd({
     const mimeType = (quotedMessage.msg || quotedMessage).mimetype || '';
 
     if (!mimeType || !mimeType.startsWith('image')) {
-      return reply("🌻 Please reply to an image.");
+      return reply("🌻 Please reply to an image (JPEG/PNG).");
     }
 
     // Download the media file
     const mediaBuffer = await quotedMessage.download();
-    const tempFilePath = path.join(os.tmpdir(), `subzero_bg_${Date.now()}.jpg`);
+    const tempFilePath = path.join(os.tmpdir(), `subzero_bg_${Date.now()}${mimeType.includes('png') ? '.png' : '.jpg'}`);
     fs.writeFileSync(tempFilePath, mediaBuffer);
 
-    // Upload to Catbox
-    const form = new FormData();
-    form.append('fileToUpload', fs.createReadStream(tempFilePath), 'image.jpg');
-    form.append('reqtype', 'fileupload');
+    // First try direct upload to NexOracle without hosting
+    await reply('```Processing image... Please wait 🕒```');
 
-    const uploadResponse = await axios.post("https://catbox.moe/user/api.php", form, {
-      headers: form.getHeaders()
-    });
+    try {
+      const formData = new FormData();
+      formData.append('image', fs.createReadStream(tempFilePath));
+      
+      const response = await axios.post('https://api.nexoracle.com/image-processing/remove-bg', formData, {
+        headers: {
+          ...formData.getHeaders(),
+          'Accept': 'image/png'
+        },
+        responseType: 'arraybuffer',
+        timeout: 45000
+      });
 
-    if (!uploadResponse.data) {
-      throw new Error("❌ Error uploading to Catbox.");
-    }
-
-    const imageUrl = uploadResponse.data;
-    fs.unlinkSync(tempFilePath);
-
-    // Inform user about background removal
-    await reply('```Subzero Removing Background...🦄```');
-
-    // Prepare the NexOracle API URL
-    const apiUrl = `https://api.nexoracle.com/image-processing/remove-bg`;
-    const params = {
-      apikey: 'free_key@maher_apis',
-      img: imageUrl,
-    };
-
-    // Call the NexOracle API
-    const response = await axios.get(apiUrl, { 
-      params, 
-      responseType: 'arraybuffer',
-      timeout: 30000 // 30 seconds timeout
-    });
-
-    if (!response.data || response.status !== 200) {
-      return reply('❌ Unable to remove the background. Please try again later.');
-    }
-
-    // Save result to temporary file
-    const resultFilePath = path.join(os.tmpdir(), `subzero_removed_bg_${Date.now()}.png`);
-    fs.writeFileSync(resultFilePath, response.data);
-
-    // Send the result
-    await conn.sendMessage(from, {
-      image: fs.readFileSync(resultFilePath),
-      caption: '> 🖼️ *Background Removed Successfully!*\n> 🔗 *Source:* ' + imageUrl,
-      contextInfo: {
-        mentionedJid: [m.sender],
-        forwardingScore: 999,
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: '120363304325601080@newsletter',
-          newsletterName: '『 𝐒𝐔𝐁𝐙𝐄𝐑𝐎 𝐌𝐃 』',
-          serverMessageId: 143
-        }
+      if (response.status !== 200 || !response.data) {
+        throw new Error('API response error');
       }
-    }, { quoted: mek });
 
-    // Clean up
-    fs.unlinkSync(resultFilePath);
+      const resultFilePath = path.join(os.tmpdir(), `subzero_removed_bg_${Date.now()}.png`);
+      fs.writeFileSync(resultFilePath, response.data);
+
+      await conn.sendMessage(from, {
+        image: fs.readFileSync(resultFilePath),
+        caption: '> 🖼️ *Background Removed Successfully!*\n> ✨ Powered by SubZero-MD',
+        contextInfo: {
+          mentionedJid: [m.sender],
+          forwardingScore: 999,
+          isForwarded: true
+        }
+      }, { quoted: mek });
+
+      // Clean up
+      fs.unlinkSync(tempFilePath);
+      fs.unlinkSync(resultFilePath);
+      return;
+
+    } catch (uploadError) {
+      console.log('Direct upload failed, trying fallback method...');
+    }
+
+    // Fallback method using alternative upload
+    await reply('```Using alternative method... 🔄```');
+
+    try {
+      const form = new FormData();
+      form.append('file', fs.createReadStream(tempFilePath), 'image.jpg');
+
+      const uploadResponse = await axios.post("https://tmpfiles.org/api/v1/upload", form, {
+        headers: form.getHeaders(),
+        timeout: 30000
+      });
+
+      if (!uploadResponse.data?.data?.url) {
+        throw new Error("Upload service failed");
+      }
+
+      const imageUrl = uploadResponse.data.data.url;
+      const apiUrl = `https://api.nexoracle.com/image-processing/remove-bg?img=${encodeURIComponent(imageUrl)}`;
+
+      const bgResponse = await axios.get(apiUrl, {
+        responseType: 'arraybuffer',
+        timeout: 45000
+      });
+
+      const resultFilePath = path.join(os.tmpdir(), `subzero_removed_bg_${Date.now()}.png`);
+      fs.writeFileSync(resultFilePath, bgResponse.data);
+
+      await conn.sendMessage(from, {
+        image: fs.readFileSync(resultFilePath),
+        caption: '> 🖼️ *Background Removed Successfully!*\n> 🔗 Temporary URL: ' + imageUrl.split('?')[0],
+        contextInfo: {
+          mentionedJid: [m.sender],
+          forwardingScore: 999,
+          isForwarded: true
+        }
+      }, { quoted: mek });
+
+      // Clean up
+      fs.unlinkSync(tempFilePath);
+      fs.unlinkSync(resultFilePath);
+
+    } catch (error) {
+      console.error('Error in removebg command:', error);
+      fs.unlinkSync(tempFilePath);
+      reply(`❌ Error: ${error.message || 'Failed to process image. Please try again later.'}`);
+    }
 
   } catch (error) {
-    console.error('Error in removebg command:', error);
-    reply(`❌ Error: ${error.message || 'Failed to process image'}`);
+    console.error('Main error in removebg command:', error);
+    reply(`❌ Error: ${error.message || 'An unexpected error occurred'}`);
   }
 });
