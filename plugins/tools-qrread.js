@@ -1,4 +1,4 @@
-const fs = require('fs');
+/*const fs = require('fs');
 const axios = require('axios');
 const FormData = require('form-data');
 const path = require('path');
@@ -54,3 +54,4 @@ cmd({
     reply("❌ Error reading QR code");
   }
 });
+*/
