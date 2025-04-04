@@ -1,56 +1,56 @@
-const { cmd } = require('../command');
-const axios = require('axios');
 const fs = require('fs');
+const axios = require('axios');
+const FormData = require('form-data');
 const path = require('path');
 
 cmd({
-  pattern: 'readqr',
-  alias: ['scanqr', 'qrdecode'],
-  react: '🔍', 
-  desc: 'Read QR codes from images',
-  category: 'utility',
-  use: '<reply to image>',
+  pattern: "readqr",
+  alias: ["scanqr", "qrread"],
+  react: '🔍',
+  desc: "Read QR code from image",
+  category: "tools",
+  use: "Reply to QR image with .readqr",
   filename: __filename
-}, async (client, message, args, { reply, quoted }) => {
+}, async (conn, mek, m, { from, reply }) => {
   try {
-    // Check for media
-    const mediaMsg = quoted || message;
-    if (!mediaMsg.msg?.mimetype?.includes('image')) {
-      return reply('❌ Please reply to a clear image containing a QR code');
+    // Check if replying to image
+    if (!m.quoted || !m.quoted.mimetype || !m.quoted.mimetype.startsWith('image')) {
+      return reply("❌ Please reply to a QR code image");
     }
 
-    // Download image directly to buffer
-    const imageBuffer = await mediaMsg.download();
-    
-    // Use free QR decoding API that accepts direct uploads
+    // Download image
+    const imageBuffer = await m.quoted.download();
+    const tempPath = path.join(__dirname, '../temp/qr_temp.jpg');
+    fs.writeFileSync(tempPath, imageBuffer);
+
+    // Prepare for API
     const form = new FormData();
-    form.append('file', imageBuffer, { 
-      filename: 'qr.jpg',
-      contentType: 'image/jpeg'
+    form.append('file', fs.createReadStream(tempPath));
+
+    // Send to QR API
+    const { data } = await axios.post('https://api.qrserver.com/v1/read-qr-code/', form, {
+      headers: form.getHeaders()
     });
 
-    const response = await axios.post('https://api.qrserver.com/v1/read-qr-code/', form, {
-      headers: {
-        ...form.getHeaders(),
-        'Content-Length': form.getLengthSync()
-      },
-      timeout: 20000
-    });
+    // Clean up
+    fs.unlinkSync(tempPath);
 
-    // Parse response
-    const result = response.data?.[0]?.symbol?.[0];
-    if (!result?.data) {
-      if (result?.error) {
-        throw new Error(`QR API Error: ${result.error}`);
+    // Get result
+    const qrText = data[0]?.symbol[0]?.data;
+    if (!qrText) return reply("🔍 No QR code found");
+
+    // Send result
+    await conn.sendMessage(from, {
+      text: `*QR CODE RESULT:*\n\n${qrText}\n\n📋 _Click to copy_`,
+      contextInfo: {
+        mentionedJid: [m.sender],
+        forwardingScore: 999,
+        isForwarded: true
       }
-      throw new Error('No QR code found in the image');
-    }
-
-    // Send successful result
-    await reply(`*QR Code Content:*\n\n${result.data}\n\n> © SUBZERO QR Scanner`);
+    }, { quoted: mek });
 
   } catch (error) {
-    console.error('QR Scan Error:', error);
-    reply(`❌ Failed to scan QR code:\n${error.message}\n\nPlease try with a clearer image`);
+    console.error('QR Error:', error);
+    reply("❌ Error reading QR code");
   }
 });
