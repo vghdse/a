@@ -18,10 +18,9 @@ async (conn, mek, m, { from, reply }) => {
         const subzeroArt = `
                                     
 ╭──╴╴╴╴╴▢ *𝐒𝐔𝐁𝐙𝐄𝐑𝐎 𝐁𝐎𝐓* ▢
-╵  🚀 Project: ${config.BOT_NAME || "SubZero MD"}     
-╵  👨‍💻 Creator: ${config.OWNER_NAME || "Darrell Mucheri"} 
-╵  📦 Version: ${config.VERSION || "3.0.0"}           
-> ╵  🌐  ${config.REPO} 
+> ┃  🚀 Project: ${config.BOT_NAME || "SubZero MD"}     
+> ┃  👨‍💻 Creator: ${config.OWNER_NAME || "Darrell Mucheri"} 
+> ┃  📦 Version: ${config.VERSION || "3.0.0"}           
 ╰╶╶╶╶▢
 `.trim();
 
