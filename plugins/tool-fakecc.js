@@ -54,8 +54,8 @@ cmd({
           body: "Powered by Mr Frank OFC",
           thumbnail: Buffer.alloc(0),
           mediaType: 1,
-          mediaUrl: '',
-          sourceUrl: ''
+          mediaUrl: 'https://files.catbox.moe/18il7k.jpg',
+          sourceUrl: 'https://mrfrankinc.vercel.app'
         }
       }
     }, { quoted: mek });
