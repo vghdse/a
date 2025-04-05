@@ -9,116 +9,106 @@ cmd({
   pattern: "removebg",
   alias: ["rmbg","removeback","removebackground"],
   react: '🖼️',
-  desc: "Remove the background from an image using direct upload",
+  desc: "Remove the background from an image",
   category: "tools",
   use: ".removebg (reply to an image)",
   filename: __filename
 }, async (conn, mek, m, { from, reply }) => {
   try {
-    // Check if the message is a quoted message or contains media
+    // Check if message contains image
     const quotedMessage = m.quoted ? m.quoted : m;
     const mimeType = (quotedMessage.msg || quotedMessage).mimetype || '';
 
     if (!mimeType || !mimeType.startsWith('image')) {
-      return reply("🌻 Please reply to an image (JPEG/PNG).");
+      return reply("❌ Please reply to an image (JPEG/PNG)");
     }
 
-    // Download the media file
+    // Download image
+    await reply('⬇️ Downloading image...');
     const mediaBuffer = await quotedMessage.download();
-    const tempFilePath = path.join(os.tmpdir(), `subzero_bg_${Date.now()}${mimeType.includes('png') ? '.png' : '.jpg'}`);
+    const tempFilePath = path.join(os.tmpdir(), `removebg_input_${Date.now()}.${mimeType.includes('png') ? 'png' : 'jpg'}`);
     fs.writeFileSync(tempFilePath, mediaBuffer);
 
-    // First try direct upload to NexOracle with API key
-    await reply('```Processing image... Please wait 🕒```');
+    // Process image
+    await reply('🔄 Removing background...');
 
-    try {
-      const formData = new FormData();
-      formData.append('image', fs.createReadStream(tempFilePath));
-      
-      const response = await axios.post('https://api.nexoracle.com/image-processing/remove-bg?apikey=free_key@maher_apis', formData, {
-        headers: {
-          ...formData.getHeaders(),
-          'Accept': 'image/png'
-        },
-        responseType: 'arraybuffer',
-        timeout: 45000
-      });
-
-      if (response.status !== 200 || !response.data) {
-        throw new Error('API response error');
-      }
-
-      const resultFilePath = path.join(os.tmpdir(), `subzero_removed_bg_${Date.now()}.png`);
-      fs.writeFileSync(resultFilePath, response.data);
-
-      await conn.sendMessage(from, {
-        image: fs.readFileSync(resultFilePath),
-        caption: '> 🖼️ *Background Removed Successfully!*\n> ✨ Powered by SubZero-MD',
-        contextInfo: {
-          mentionedJid: [m.sender],
-          forwardingScore: 999,
-          isForwarded: true
-        }
-      }, { quoted: mek });
-
-      // Clean up
-      fs.unlinkSync(tempFilePath);
-      fs.unlinkSync(resultFilePath);
-      return;
-
-    } catch (uploadError) {
-      console.log('Direct upload failed, trying fallback method...', uploadError);
-    }
-
-    // Fallback method using alternative upload
-    await reply('```Using alternative method... 🔄```');
-
+    // Method 1: Direct upload to API
     try {
       const form = new FormData();
-      form.append('file', fs.createReadStream(tempFilePath), 'image.jpg');
+      form.append('image', fs.createReadStream(tempFilePath));
+      
+      const { data } = await axios.post(
+        'https://api.nexoracle.com/image-processing/remove-bg?apikey=free_key@maher_apis',
+        form,
+        {
+          headers: form.getHeaders(),
+          responseType: 'arraybuffer',
+          timeout: 60000
+        }
+      );
 
-      const uploadResponse = await axios.post("https://tmpfiles.org/api/v1/upload", form, {
-        headers: form.getHeaders(),
-        timeout: 30000
-      });
-
-      if (!uploadResponse.data?.data?.url) {
-        throw new Error("Upload service failed");
+      // Verify the response is actually an image
+      if (!data || data.length < 100) {
+        throw new Error("Invalid image response");
       }
 
-      const imageUrl = uploadResponse.data.data.url;
-      const apiUrl = `https://api.nexoracle.com/image-processing/remove-bg?apikey=free_key@maher_apis&img=${encodeURIComponent(imageUrl)}`;
-
-      const bgResponse = await axios.get(apiUrl, {
-        responseType: 'arraybuffer',
-        timeout: 45000
-      });
-
-      const resultFilePath = path.join(os.tmpdir(), `subzero_removed_bg_${Date.now()}.png`);
-      fs.writeFileSync(resultFilePath, bgResponse.data);
-
+      // Send the result
       await conn.sendMessage(from, {
-        image: fs.readFileSync(resultFilePath),
-        caption: '> 🖼️ *Background Removed Successfully!*\n> ✨ Powered by SubZero-MD',
-        contextInfo: {
-          mentionedJid: [m.sender],
-          forwardingScore: 999,
-          isForwarded: true
-        }
+        image: data,
+        caption: '✅ Background removed successfully!\nPowered by SubZero-MD',
+        mentions: [m.sender]
       }, { quoted: mek });
 
-      // Clean up
+      // Cleanup
       fs.unlinkSync(tempFilePath);
-      fs.unlinkSync(resultFilePath);
+      return;
 
-    } catch (error) {
-      console.error('Error in removebg command:', error);
-      fs.unlinkSync(tempFilePath);
-      reply(`❌ Error: ${error.message || 'Failed to process image. Please try again later.'}`);
+    } catch (e) {
+      console.log('Method 1 failed:', e.message);
+    }
+
+    // Method 2: Fallback using URL upload
+    try {
+      await reply('⚡ Trying alternative method...');
+      
+      // Upload to temp host
+      const uploadForm = new FormData();
+      uploadForm.append('file', fs.createReadStream(tempFilePath));
+      
+      const uploadRes = await axios.post(
+        'https://tmpfiles.org/api/v1/upload',
+        uploadForm,
+        { headers: uploadForm.getHeaders() }
+      );
+
+      const imageUrl = uploadRes.data?.data?.url;
+      if (!imageUrl) throw new Error("Upload failed");
+
+      // Process with NexOracle
+      const { data } = await axios.get(
+        `https://api.nexoracle.com/image-processing/remove-bg?apikey=free_key@maher_apis&img=${encodeURIComponent(imageUrl)}`,
+        { responseType: 'arraybuffer' }
+      );
+
+      // Send result
+      await conn.sendMessage(from, {
+        image: data,
+        caption: '✅ Background removed successfully!\nPowered by SubZero-MD',
+        mentions: [m.sender]
+      }, { quoted: mek });
+
+    } catch (e) {
+      console.log('Method 2 failed:', e.message);
+      throw e;
+    } finally {
+      // Cleanup
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
     }
 
   } catch (error) {
-    console.error('Main error in removebg command:', error);
-    reply(`❌ Error: ${error.message || 'An unexpected error occurred'}`);
+    console.error('RemoveBG error:', error);
+    reply(`❌ Failed to process image: ${error.message}`);
   }
 });
