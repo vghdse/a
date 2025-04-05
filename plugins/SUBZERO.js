@@ -170,14 +170,14 @@ cmd(
             // Send the video file
             await conn.sendMessage(mek.chat, { 
                 video: videoBuffer,
-                caption: `🎬 *${videoData.title}*\n\nDownloaded via Dracula API`,
+                caption: `🎬 *${videoData.title}*\n\nDownloaded By Subzero`,
                 thumbnail: thumbnailBuffer,
                 fileName: `${videoData.title}.mp4`,
                 mimetype: 'video/mp4',
                 contextInfo: {
                     externalAdReply: {
                         title: videoData.title,
-                        body: 'YouTube Video Download',
+                        body: 'Subzero YT Video Download',
                         thumbnail: thumbnailBuffer,
                         mediaType: 2,
                         mediaUrl: videoUrl,
