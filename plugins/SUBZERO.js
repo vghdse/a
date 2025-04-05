@@ -26,8 +26,8 @@ const Config = require('../config');
 
 cmd(
     {
-        pattern: 'ytsongm',
-        alias: ['songm', 'ytmusicm'],
+        pattern: 'play',
+        alias: ['song', 'ytmp3'],
         desc: 'Download YouTube songs',
         category: 'media',
         use: '<song name or YouTube URL>',
@@ -77,7 +77,7 @@ cmd(
                 contextInfo: {
                     externalAdReply: {
                         title: songData.title,
-                        body: 'Downloaded via Dracula API',
+                        body: '⟡ 𝙶𝙴𝙽𝙴𝚁𝙰𝚃𝙴𝙳 𝙱𝚈 𝚂𝚄𝙱𝚉𝙴𝚁𝙾 ⟡',
                         thumbnail: await getThumbnailBuffer(videoUrl),
                         mediaType: 2,
                         mediaUrl: videoUrl,
