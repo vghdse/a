@@ -15,7 +15,7 @@ cmd({
               
       *⟣┈───────────────⟢*
             🗂️ *REPOSITORY*
-       https://github.com/mrfraank/SUBZERO
+       https://github.com/mrfrankofcc/SUBZERO-MD
       
       *⟣┈───────────────•*
             🔗 *PROJECT NAME*
@@ -23,7 +23,7 @@ cmd({
       
       *⟣┈───────────────•*
              👨‍💻 *DEVELOPER*
-     https://github.com/mrfraank
+     https://github.com/mrfrankofcc
        
       *⟣┈───────────────•*
              🧮 *RELEASE DATE*
