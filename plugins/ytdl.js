@@ -19,7 +19,7 @@ function replaceYouTubeID(url) {
 }
 
 cmd({
-    pattern: "play",
+    pattern: "play3",
     alias: ["p", "ytmp3"],
     react: "🎵",
     desc: "Download Ytmp3",
@@ -125,7 +125,7 @@ cmd({
 cmd(
     {
         pattern: "song3",
-        alias: ["song2", "songx"],
+        alias: ["song4", "songx"],
         desc: "Download a song from YouTube as MP3.",
         category: "download",
         use: "<song name or YouTube URL>\nExample: .song faded\nExample: .song https://youtu.be/UDSYAD1sQuE",
@@ -191,7 +191,7 @@ cmd(
 // Video Downloader Command
 cmd(
     {
-        pattern: "video2",
+        pattern: "video3",
         alias: ["ytvideo2"],
         desc: "Download a video from YouTube.",
         category: "download",
@@ -260,7 +260,7 @@ cmd(
     }
 );
 cmd({
-  pattern: "song",
+  pattern: "song2",
   react: '🚀',
   desc: "Download audio from YouTube",
   category: "music",
@@ -327,7 +327,7 @@ cmd({
 });
 
 cmd({
-  pattern: "video",
+  pattern: "video2",
   alias: ["ytmp4"],
   react: '🚀',
   desc: "Download video from YouTube",
