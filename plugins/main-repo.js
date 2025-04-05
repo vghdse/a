@@ -14,9 +14,9 @@ cmd({
     await reply('⏳ Fetching SubZero repository data...');
 
     // Fetch from BK9 API
-    const { data } = await axios.get('https://bk9.fun/stalk/githubrepo?url=https://github.com/itzfrakaumbadev/SUBZERO', {
-      timeout: 10000
-    });
+    const { data } = await axios.get(`https://bk9.fun/stalk/githubrepo?url=${config.REPO}`, {
+  timeout: 10000
+});
 
     if (!data?.status || !data?.BK9) throw new Error('Invalid API response');
 
