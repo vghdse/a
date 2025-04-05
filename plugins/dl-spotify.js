@@ -1,4 +1,78 @@
+
 const axios = require("axios");
+const { cmd } = require("../command");
+
+cmd({
+  pattern: "spotify",
+  alias: ["sp", "spotifydl"],
+  react: '🎵',
+  desc: "Search and download Spotify tracks",
+  category: "music",
+  use: ".spotify <song name>",
+  filename: __filename
+}, async (client, message, { reply, quoted, args }) => {
+  try {
+    const q = args.join(" ");
+    if (!q) return reply("Please provide a song name. Example: `.spotify Hannah Montana by Ice Spice`");
+
+    // Search for track
+    const searchApiUrl = `https://draculazxy-xyzdrac.hf.space/api/Spotify?q=${encodeURIComponent(q)}`;
+    const searchResponse = await axios.get(searchApiUrl, { timeout: 10000 });
+    const searchData = searchResponse.data;
+
+    if (searchData.STATUS !== 200) {
+      return reply(`❌ Spotify search failed: ${searchData.message || 'Unknown error'}`);
+    }
+
+    // Extract song data
+    const { title, artist, album, release_date, spotify_url, cover_art } = searchData.SONG;
+    const spotifyInfo = `
+🎵 *Track:* ${title}
+🎤 *Artist:* ${artist}
+💿 *Album:* ${album}
+📅 *Release Date:* ${release_date}
+🔗 *Spotify URL:* ${spotify_url}
+`;
+
+    // Send track info with cover art
+    await client.sendMessage(message.chat, { 
+      image: { url: cover_art }, 
+      caption: spotifyInfo 
+    }, { quoted: message });
+
+    // Download track if URL available
+    if (!spotify_url) return reply("⚠️ No Spotify URL found - cannot download");
+
+    try {
+      const downloadApiUrl = `https://apis.davidcyriltech.my.id/spotifydl?url=${encodeURIComponent(spotify_url)}`;
+      const downloadResponse = await axios.get(downloadApiUrl, { timeout: 15000 });
+      const downloadData = downloadResponse.data;
+
+      if (downloadData.status !== 200 || !downloadData.success) {
+        return reply(`❌ Download failed: ${downloadData.message || 'No download link available'}`);
+      }
+
+      // Send audio file
+      await client.sendMessage(message.chat, {
+        audio: { url: downloadData.DownloadLink },
+        mimetype: 'audio/mpeg',
+        ptt: false
+      }, { quoted: message });
+
+    } catch (downloadError) {
+      console.error('Spotify DL Error:', downloadError);
+      reply(`⚠️ Download error: ${downloadError.message || 'Check console for details'}`);
+    }
+
+  } catch (error) {
+    console.error('Spotify CMD Error:', error);
+    reply(`❌ Command failed: ${error.message || 'Unknown error occurred'}`);
+  }
+});
+
+
+
+/*const axios = require("axios");
 const yts = require("yt-search");
 const { youtube } = require("btch-downloader");
 const { cmd } = require('../command');
@@ -91,3 +165,4 @@ cmd({
     reply("An error occurred while fetching audio.");
   }
 });
+*/
