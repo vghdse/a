@@ -28,14 +28,14 @@ cmd({
     const tempFilePath = path.join(os.tmpdir(), `subzero_bg_${Date.now()}${mimeType.includes('png') ? '.png' : '.jpg'}`);
     fs.writeFileSync(tempFilePath, mediaBuffer);
 
-    // First try direct upload to NexOracle without hosting
+    // First try direct upload to NexOracle with API key
     await reply('```Processing image... Please wait 🕒```');
 
     try {
       const formData = new FormData();
       formData.append('image', fs.createReadStream(tempFilePath));
       
-      const response = await axios.post('https://api.nexoracle.com/image-processing/remove-bg', formData, {
+      const response = await axios.post('https://api.nexoracle.com/image-processing/remove-bg?apikey=free_key@maher_apis', formData, {
         headers: {
           ...formData.getHeaders(),
           'Accept': 'image/png'
@@ -67,7 +67,7 @@ cmd({
       return;
 
     } catch (uploadError) {
-      console.log('Direct upload failed, trying fallback method...');
+      console.log('Direct upload failed, trying fallback method...', uploadError);
     }
 
     // Fallback method using alternative upload
@@ -87,7 +87,7 @@ cmd({
       }
 
       const imageUrl = uploadResponse.data.data.url;
-      const apiUrl = `https://api.nexoracle.com/image-processing/remove-bg?img=${encodeURIComponent(imageUrl)}`;
+      const apiUrl = `https://api.nexoracle.com/image-processing/remove-bg?apikey=free_key@maher_apis&img=${encodeURIComponent(imageUrl)}`;
 
       const bgResponse = await axios.get(apiUrl, {
         responseType: 'arraybuffer',
@@ -99,7 +99,7 @@ cmd({
 
       await conn.sendMessage(from, {
         image: fs.readFileSync(resultFilePath),
-        caption: '> 🖼️ *Background Removed Successfully!*\n> 🔗 Temporary URL: ' + imageUrl.split('?')[0],
+        caption: '> 🖼️ *Background Removed Successfully!*\n> ✨ Powered by SubZero-MD',
         contextInfo: {
           mentionedJid: [m.sender],
           forwardingScore: 999,
