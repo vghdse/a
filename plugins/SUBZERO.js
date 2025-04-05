@@ -170,7 +170,7 @@ cmd(
             // Send the video file
             await conn.sendMessage(mek.chat, { 
                 video: videoBuffer,
-                caption: `🎬 *${videoData.title}*\n\nDownloaded By Subzero`,
+                caption: `🎬 *${videoData.title}*\n\n> Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ`,
                 thumbnail: thumbnailBuffer,
                 fileName: `${videoData.title}.mp4`,
                 mimetype: 'video/mp4',
