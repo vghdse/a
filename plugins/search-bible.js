@@ -2,14 +2,23 @@ const { cmd } = require('../command');
 const axios = require('axios');
 const Config = require('../config');
 
+// Default verses to show when no reference is given
+const DEFAULT_VERSES = [
+    "John 3:16",
+    "Psalm 23:1",
+    "Philippians 4:13",
+    "Proverbs 3:5",
+    "Romans 8:28"
+];
+
 cmd(
     {
         pattern: 'bible',
         alias: ['verse', 'scripture'],
-        desc: 'Fetch random Bible verses or search specific ones',
+        desc: 'Fetch Bible verses - works with or without reference',
         category: 'utility',
         react: '📖',
-        use: '[book chapter:verse] or [search term] (leave empty for random)',
+        use: '[reference] (leave empty for default verse)',
         filename: __filename,
     },
     async (conn, mek, m, { quoted, args, q, reply, from }) => {
@@ -17,74 +26,39 @@ cmd(
             // Send processing reaction
             await conn.sendMessage(mek.chat, { react: { text: "⏳", key: mek.key } });
 
-            let apiUrl;
-            if (!q) {
-                // If no query, fetch a random verse
-                apiUrl = 'https://kaiz-apis.gleeze.com/api/bible';
-            } else {
-                // If query provided, search for specific verse
-                apiUrl = `https://kaiz-apis.gleeze.com/api/bible?q=${encodeURIComponent(q)}`;
-            }
+            // Select a random default verse if none provided
+            const reference = q || DEFAULT_VERSES[Math.floor(Math.random() * DEFAULT_VERSES.length)];
+            const apiUrl = `https://kaiz-apis.gleeze.com/api/bible?q=${encodeURIComponent(reference)}`;
 
             const response = await axios.get(apiUrl);
             
             if (!response.data || !response.data.verse || !response.data.verse.length) {
-                return reply('❌ *No results found* - Please try again.');
+                return reply('❌ No results found for this reference');
             }
 
             const verseData = response.data.verse[0];
-            const reference = `${verseData.book_name} ${verseData.chapter}:${verseData.verse}`;
+            const verseReference = `${verseData.book_name} ${verseData.chapter}:${verseData.verse}`;
 
-            // Format with beautiful emojis
+            // Simple formatted output
             const message = `
-✨ *Bible Verse* ✨
+📖 *${verseReference}*
 
-📜 *Reference:* ${reference}
-🙏 *Text:* ${verseData.text.trim()}
+${verseData.text.trim()}
 
-${q ? '' : '🎲 *Random Verse Selected*'}
-📖 *Full Reference:* ${response.data.reference || reference}
-✍️ *Author:* Mr Frank
-
-🕊️ May this verse bless your day! 🕊️
+${q ? '' : '✨ *Here\'s a verse for you today!* ✨'}
             `;
 
             await conn.sendMessage(mek.chat, { 
-                text: message,
-                contextInfo: {
-                    externalAdReply: {
-                        title: `Bible Verse: ${reference}`,
-                        body: q ? 'Requested Verse' : 'Random Verse',
-                        mediaType: 1,
-                        thumbnail: await getBibleImage(),
-                        sourceUrl: 'https://www.bible.com'
-                    }
-                }
+                text: message
             }, { quoted: mek });
 
             // Send success reaction
             await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
 
         } catch (error) {
-            console.error('Error in bible command:', error);
+            console.error('Error:', error);
             await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
-            reply('⛔ *Error fetching verse* - Please try again later.');
+            reply('Error fetching verse. Please try again.');
         }
     }
 );
-
-// Helper function to get a Bible-related image
-async function getBibleImage() {
-    try {
-        const bibleImages = [
-            'https://images.unsplash.com/photo-1589998059171-988d887df646',
-            'https://images.unsplash.com/photo-1506459225024-1428097a7e18',
-            'https://images.unsplash.com/photo-1532012197267-da84d127e765'
-        ];
-        const randomImage = bibleImages[Math.floor(Math.random() * bibleImages.length)];
-        const response = await axios.get(randomImage, { responseType: 'arraybuffer' });
-        return Buffer.from(response.data, 'binary');
-    } catch {
-        return null;
-    }
-}
