@@ -14,8 +14,8 @@ const DEFAULT_VERSES = [
 // Bible-related images for attachments
 const BIBLE_IMAGES = [
     "https://files.catbox.moe/vlplwr.jpg",
-    "https://i.imgur.com/9JZ8Z0q.jpg",
-    "https://i.imgur.com/1JZ8Z0q.jpg"
+    "https://files.catbox.moe/vlplwr.jpg",
+    "https://files.catbox.moe/vlplwr.jpg"
 ];
 
 cmd(
