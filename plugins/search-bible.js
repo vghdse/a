@@ -1,216 +1,3 @@
-/*
-
-$$$$$$\            $$\                                               
-$$  __$$\           $$ |                                              
-$$ /  \__|$$\   $$\ $$$$$$$\  $$$$$$$$\  $$$$$$\   $$$$$$\   $$$$$$\  
-\$$$$$$\  $$ |  $$ |$$  __$$\ \____$$  |$$  __$$\ $$  __$$\ $$  __$$\ 
- \____$$\ $$ |  $$ |$$ |  $$ |  $$$$ _/ $$$$$$$$ |$$ |  \__|$$ /  $$ |
-$$\   $$ |$$ |  $$ |$$ |  $$ | $$  _/   $$   ____|$$ |      $$ |  $$ |
-\$$$$$$  |\$$$$$$  |$$$$$$$  |$$$$$$$$\ \$$$$$$$\ $$ |      \$$$$$$  |
- \______/  \______/ \_______/ \________| \_______|\__|       \______/
-
-Project Name : SubZero MD
-Creator      : Darrell Mucheri ( Mr Frank OFC )
-Repo         : https//github.com/mrfrank-ofc/SUBZERO-MD
-Support      : wa.me/18062212660
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const { cmd } = require('../command');
 const axios = require('axios');
 const Config = require('../config');
@@ -219,25 +6,30 @@ cmd(
     {
         pattern: 'bible',
         alias: ['verse', 'scripture'],
-        desc: 'Fetch Bible verses with beautiful formatting',
+        desc: 'Fetch random Bible verses or search specific ones',
         category: 'utility',
         react: '📖',
-        use: '<book> <chapter>:<verse> or <search term>',
+        use: '[book chapter:verse] or [search term] (leave empty for random)',
         filename: __filename,
     },
     async (conn, mek, m, { quoted, args, q, reply, from }) => {
         try {
-            if (!q) return reply(`📖 *Please specify a Bible reference*\nExample: .bible John 3:16\nOr: .bible love`);
-
             // Send processing reaction
             await conn.sendMessage(mek.chat, { react: { text: "⏳", key: mek.key } });
 
-            // Call Kaizenji Bible API
-            const apiUrl = `https://kaiz-apis.gleeze.com/api/bible?q=${encodeURIComponent(q)}`;
+            let apiUrl;
+            if (!q) {
+                // If no query, fetch a random verse
+                apiUrl = 'https://kaiz-apis.gleeze.com/api/bible/random';
+            } else {
+                // If query provided, search for specific verse
+                apiUrl = `https://kaiz-apis.gleeze.com/api/bible?q=${encodeURIComponent(q)}`;
+            }
+
             const response = await axios.get(apiUrl);
             
             if (!response.data || !response.data.verse || !response.data.verse.length) {
-                return reply('❌ *No results found* - Please check your reference and try again.');
+                return reply('❌ *No results found* - Please try again.');
             }
 
             const verseData = response.data.verse[0];
@@ -250,7 +42,8 @@ cmd(
 📜 *Reference:* ${reference}
 🙏 *Text:* ${verseData.text.trim()}
 
-📖 *Full Reference:* ${response.data.reference}
+${q ? '' : '🎲 *Random Verse Selected*'}
+📖 *Full Reference:* ${response.data.reference || reference}
 ✍️ *Author:* Mr Frank
 
 🕊️ May this verse bless your day! 🕊️
@@ -261,7 +54,7 @@ cmd(
                 contextInfo: {
                     externalAdReply: {
                         title: `Bible Verse: ${reference}`,
-                        body: 'Delivered By Subzero',
+                        body: q ? 'Requested Verse' : 'Random Verse',
                         mediaType: 1,
                         thumbnail: await getBibleImage(),
                         sourceUrl: 'https://www.bible.com'
@@ -283,53 +76,15 @@ cmd(
 // Helper function to get a Bible-related image
 async function getBibleImage() {
     try {
-        // You can replace this with any Bible-related image URL
-        const imageUrl = 'https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';
-        const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+        const bibleImages = [
+            'https://images.unsplash.com/photo-1589998059171-988d887df646',
+            'https://images.unsplash.com/photo-1506459225024-1428097a7e18',
+            'https://images.unsplash.com/photo-1532012197267-da84d127e765'
+        ];
+        const randomImage = bibleImages[Math.floor(Math.random() * bibleImages.length)];
+        const response = await axios.get(randomImage, { responseType: 'arraybuffer' });
         return Buffer.from(response.data, 'binary');
     } catch {
         return null;
     }
 }
-
-// BIBLE SEARCH
-// Command: bible
-cmd({
-    pattern: "biblesearch",
-    desc: "Fetch Bible verses by reference.",
-    category: "fun",
-    react: "📖",
-    filename: __filename
-}, async (conn, mek, m, { args, reply }) => {
-    try {
-        // Vérifiez si une référence est fournie
-        if (args.length === 0) {
-            return reply(`⚠️ *Please provide a Bible reference.*\n\n📝 *Example:*\n.bible John 1:1`);
-        }
-
-        // Joindre les arguments pour former la référence
-        const reference = args.join(" ");
-
-        // Appeler l'API avec la référence
-        const apiUrl = `https://bible-api.com/${encodeURIComponent(reference)}`;
-        const response = await axios.get(apiUrl);
-
-        // Vérifiez si la réponse contient des données
-        if (response.status === 200 && response.data.text) {
-            const { reference: ref, text, translation_name } = response.data;
-
-            // Envoyez la réponse formatée avec des emojis
-            reply(
-                `📜 *Bible Verse Found!*\n\n` +
-                `📖 *Reference:* ${ref}\n` +
-                `📚 *Text:* ${text}\n\n` +
-                `🗂️ *Translation:* ${translation_name}\n\n © SUBZERO BIBLE`
-            );
-        } else {
-            reply("❌ *Verse not found.* Please check the reference and try again.");
-        }
-    } catch (error) {
-        console.error(error);
-        reply("⚠️ *An error occurred while fetching the Bible verse.* Please try again.");
-    }
-});
