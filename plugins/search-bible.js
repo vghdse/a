@@ -20,7 +20,7 @@ cmd(
             let apiUrl;
             if (!q) {
                 // If no query, fetch a random verse
-                apiUrl = 'https://kaiz-apis.gleeze.com/api/bible/random';
+                apiUrl = 'https://kaiz-apis.gleeze.com/api/bible';
             } else {
                 // If query provided, search for specific verse
                 apiUrl = `https://kaiz-apis.gleeze.com/api/bible?q=${encodeURIComponent(q)}`;
