@@ -251,7 +251,7 @@ cmd(
 🙏 *Text:* ${verseData.text.trim()}
 
 📖 *Full Reference:* ${response.data.reference}
-✍️ *Author:* ${response.data.author}
+✍️ *Author:* Mr Frank
 
 🕊️ May this verse bless your day! 🕊️
             `;
@@ -261,7 +261,7 @@ cmd(
                 contextInfo: {
                     externalAdReply: {
                         title: `Bible Verse: ${reference}`,
-                        body: 'Fetched via Kaizenji API',
+                        body: 'Delivered By Subzero',
                         mediaType: 1,
                         thumbnail: await getBibleImage(),
                         sourceUrl: 'https://www.bible.com'
