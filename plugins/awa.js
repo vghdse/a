@@ -1,4 +1,4 @@
-const { cmd } = require('../command');
+/*const { cmd } = require('../command');
 const { getBuffer } = require('../lib/functions');
 
 // Bio Command
@@ -110,3 +110,4 @@ async (Void, citel, text) => {
         citel.reply(`❌ Error: ${e.message || "Failed to fetch profile picture"}`);
     }
 });
+*/
