@@ -1,4 +1,4 @@
-const { cmd } = require('../command');
+/*const { cmd } = require('../command');
 const { initializeApp } = require('firebase/app');
 const { getFirestore, collection, getDocs, query, orderBy } = require('firebase/firestore');
 const Config = require('../config');
@@ -102,3 +102,4 @@ ${formattedMessages}
         }
     }
 );
+*/
