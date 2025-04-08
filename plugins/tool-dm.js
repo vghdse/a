@@ -1,3 +1,62 @@
+const axios = require("axios");
+const { cmd } = require("../command");
+
+cmd({
+  pattern: "songt",
+  alias: ["ytmp3t", "musict", "mp3t"],
+  react: '🎧',
+  desc: "Download songs from YouTube",
+  category: "music",
+  use: ".song <YouTube URL or search query>",
+  filename: __filename
+}, async (client, message, { reply, args }) => {
+  try {
+    const query = args.join(" ");
+    if (!query) return reply("Please provide a YouTube URL or search query.\nExample: *.song Eminem Godzilla*");
+
+    // Check if it's a URL or search query
+    let youtubeUrl = query;
+    if (!query.match(/youtube\.com|youtu\.be/)) {
+      // Search for video if not a URL
+      const searchResponse = await axios.get(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`);
+      const videoIdMatch = searchResponse.data.match(/"videoId":"([^"]+)"/);
+      if (!videoIdMatch) return reply("❌ No videos found for your search");
+      youtubeUrl = `https://youtube.com/watch?v=${videoIdMatch[1]}`;
+    }
+
+    // Process download
+    const apiUrl = `https://xploader-apis-5f424ea8f0da.herokuapp.com/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
+    const response = await axios.get(apiUrl, { timeout: 30000 });
+
+    if (response.data.status !== "success") {
+      return reply(`❌ Download failed: ${response.data.message || "Unknown error"}`);
+    }
+
+    const { title, thumbnail, downloadLink } = response.data;
+
+    // Send the audio file with metadata
+    await client.sendMessage(message.chat, {
+      audio: { url: downloadLink },
+      mimetype: "audio/mpeg",
+      contextInfo: {
+        externalAdReply: {
+          title: title,
+          body: "Downloaded via YouTube",
+          thumbnail: thumbnail,
+          mediaType: 1,
+          mediaUrl: youtubeUrl,
+          sourceUrl: youtubeUrl
+        }
+      }
+    }, { quoted: message });
+
+  } catch (error) {
+    console.error("Song DL Error:", error);
+    reply(`❌ Error: ${error.message || "Failed to download song"}`);
+  }
+});
+
+
 /*const { cmd } = require('../command');
 const { initializeApp } = require('firebase/app');
 const { getFirestore, collection, getDocs, query, orderBy } = require('firebase/firestore');
