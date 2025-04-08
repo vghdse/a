@@ -55,7 +55,7 @@ cmd(
             }
 
             // Call Dracula API
-            const apiUrl = `https://draculazxy-xyzdrac.hf.space/api/Ytmp3?url=${encodeURIComponent(videoUrl)}`;
+            const apiUrl = `https://draculazyx-xyzdrac.hf.space/api/Ytmp3?url=${encodeURIComponent(videoUrl)}`;
             const response = await axios.get(apiUrl);
             
             if (response.data.STATUS !== 200 || !response.data.song?.download_link) {
@@ -144,7 +144,7 @@ cmd(
             }
 
             // Call Dracula API for video
-            const apiUrl = `https://draculazxy-xyzdrac.hf.space/api/Ytmp4?url=${encodeURIComponent(videoUrl)}`;
+            const apiUrl = `https://draculazyx-xyzdrac.hf.space/api/Ytmp4?url=${encodeURIComponent(videoUrl)}`;
             const response = await axios.get(apiUrl);
             
             if (response.data.STATUS !== 200 || !response.data.video?.download_link) {
@@ -158,8 +158,8 @@ cmd(
             const videoResponse = await axios.get(downloadUrl, { 
                 responseType: 'arraybuffer',
                 headers: {
-                    'Referer': 'https://draculazxy-xyzdrac.hf.space/',
-                    'Origin': 'https://draculazxy-xyzdrac.hf.space'
+                    'Referer': 'https://draculazyx-xyzdrac.hf.space',
+                    'Origin': 'https://draculazyx-xyzdrac.hf.space'
                 }
             });
             const videoBuffer = Buffer.from(videoResponse.data, 'binary');
