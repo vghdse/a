@@ -1,70 +1,88 @@
+const { cmd } = require('../command');
 const axios = require('axios');
-const { cmd } = require("../command");
+const Config = require('../config');
 
-cmd({
-  pattern: "wastalk",
-  alias: ["channelstalk", "wastatus"],
-  react: '📢',
-  desc: "Get WhatsApp channel information",
-  category: "utility",
-  use: ".wastalk <channel-invite-link>"
-}, async (client, message, { reply, args }) => {
-  try {
-    // Get the full message text including the command
-    const fullText = message.text || '';
-    
-    // Extract the link (works whether user replies or types normally)
-    const urlMatch = fullText.match(/(https?:\/\/whatsapp\.com\/channel\/[A-Za-z0-9]+)/i);
-    
-    if (!urlMatch) {
-      return reply("❌ Invalid format! Please send:\n.wastalk https://whatsapp.com/channel/...");
+cmd(
+    {
+        pattern: 'channelstalk',
+        alias: ['chstalk', 'wastalk'],
+        desc: 'Get WhatsApp channel information',
+        category: 'utility',
+        react: '🔍',
+        use: '<channel-url>',
+        filename: __filename,
+    },
+    async (conn, mek, m, { quoted, args, q, reply, from }) => {
+        try {
+            if (!q) return reply('🔗 *Please provide a WhatsApp channel URL*\nExample: .channelstalk https://whatsapp.com/channel/0029VaGvk6XId7nHNGfiRs0m');
+
+            // Send processing reaction
+            await conn.sendMessage(mek.chat, { react: { text: "⏳", key: mek.key } });
+
+            // Extract channel ID from URL
+            let channelUrl = q.trim();
+            if (!channelUrl.includes('whatsapp.com/channel/')) {
+                return reply('❌ *Invalid URL* - Must be a WhatsApp channel link');
+            }
+
+            // Call Nexoracle API
+            const apiUrl = `https://api.nexoracle.com/stalking/whatsapp-channel?apikey=e276311658d835109c&url=${encodeURIComponent(channelUrl)}`;
+            const response = await axios.get(apiUrl);
+            
+            if (response.data.status !== 200) {
+                return reply('❌ *Error fetching channel info* - API returned non-200 status');
+            }
+
+            const channelData = response.data.result;
+
+            // Format the response
+            const message = `
+📢 *Channel Stalker* 📢
+
+🏷️ *Title:* ${channelData.title}
+👤 *Owner:* ${response.data.owner}
+👥 *Followers:* ${channelData.followers}
+🖼️ *Channel Image:* ${channelData.image}
+
+📝 *Description:*
+${channelData.description}
+
+🔗 *Link:* ${channelData.link}
+            `;
+
+            // Send message with channel image
+            await conn.sendMessage(mek.chat, { 
+                image: { url: channelData.image },
+                caption: message,
+                contextInfo: {
+                    externalAdReply: {
+                        title: channelData.title,
+                        body: `Channel by ${response.data.owner}`,
+                        thumbnail: await getImageBuffer(channelData.image),
+                        mediaType: 1,
+                        mediaUrl: channelData.link,
+                        sourceUrl: channelData.link
+                    }
+                }
+            }, { quoted: mek });
+
+            // Send success reaction
+            await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
+
+        } catch (error) {
+            console.error('Channel stalk error:', error);
+            await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
+            reply('⚠️ *Error stalking channel* - Please check the URL and try again');
+        }
     }
+);
 
-    const channelUrl = urlMatch[0];
-    const channelId = channelUrl.split('/').pop();
-    
-    if (!channelId || channelId.length < 5) {
-      return reply("❌ Invalid channel ID detected in the URL");
+// Helper function to get image buffer
+async function getImageBuffer(url) {
+    try {
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        return Buffer.from(response.data, 'binary');
+    } catch {
+        return null;
     }
-
-    // Using a more reliable API endpoint
-    const apiUrl = `https://api.maher-zubair.tech/channel_info?id=${channelId}`;
-    
-    const response = await axios.get(apiUrl, { 
-      timeout: 15000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0'
-      }
-    });
-
-    if (!response.data?.status === 200) {
-      return reply("🔴 Channel not found or API error");
-    }
-
-    const channel = response.data.result || {};
-    
-    const infoMsg = `
-📢 *${channel.title || 'Unknown Channel'}*
-
-👥 Followers: ${channel.followers || 'N/A'}
-🔗 Link: ${channel.link || channelUrl}
-
-📝 Description:
-${channel.description || 'No description available'}
-`.trim();
-
-    // Send image if available, otherwise just send info
-    if (channel.image) {
-      await client.sendMessage(message.chat, {
-        image: { url: channel.image },
-        caption: infoMsg
-      }, { quoted: message });
-    } else {
-      await reply(infoMsg);
-    }
-
-  } catch (error) {
-    console.error('Channel Stalk Error:', error);
-    reply(`❌ Error: ${error.message || 'Failed to fetch channel info'}\n\nPlease try a different channel link.`);
-  }
-});
+}
