@@ -10,43 +10,50 @@ cmd({
   use: ".wastalk <channel-invite-link>"
 }, async (client, message, { reply, args }) => {
   try {
-    // Proper args handling
-    if (!args || args.length === 0) {
-      return reply("Please provide a WhatsApp channel invite link\nExample: .wastalk https://whatsapp.com/channel/0029VaGvk6XId7nHNGfiRs0m");
+    // Get the full message text including the command
+    const fullText = message.text || '';
+    
+    // Extract the link (works whether user replies or types normally)
+    const urlMatch = fullText.match(/(https?:\/\/whatsapp\.com\/channel\/[A-Za-z0-9]+)/i);
+    
+    if (!urlMatch) {
+      return reply("❌ Invalid format! Please send:\n.wastalk https://whatsapp.com/channel/...");
     }
 
-    const input = args[0].trim();
-    if (!input) return reply("Please provide a valid WhatsApp channel link");
-
-    // Extract channel ID from various URL formats
-    const channelMatch = input.match(/(?:whatsapp\.com\/channel\/)([A-Za-z0-9_-]+)/i);
-    if (!channelMatch || !channelMatch[1]) {
-      return reply("Invalid WhatsApp channel link format\nPlease provide a full link like: https://whatsapp.com/channel/0029VaGvk6XId7nHNGfiRs0m");
+    const channelUrl = urlMatch[0];
+    const channelId = channelUrl.split('/').pop();
+    
+    if (!channelId || channelId.length < 5) {
+      return reply("❌ Invalid channel ID detected in the URL");
     }
 
-    const channelId = channelMatch[1];
+    // Using a more reliable API endpoint
     const apiUrl = `https://api.maher-zubair.tech/channel_info?id=${channelId}`;
     
-    const response = await axios.get(apiUrl, { timeout: 10000 });
-    
-    if (!response.data || response.data.status !== 200 || !response.data.result) {
-      return reply("Failed to fetch channel information. The channel may not exist or the API is down.");
+    const response = await axios.get(apiUrl, { 
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
+
+    if (!response.data?.status === 200) {
+      return reply("🔴 Channel not found or API error");
     }
 
-    const channel = response.data.result;
+    const channel = response.data.result || {};
+    
     const infoMsg = `
-📢 *${channel.title || 'No Title'}* 📢
+📢 *${channel.title || 'Unknown Channel'}*
 
-👥 *Followers:* ${channel.followers || 'Not Available'}
-🔗 *Link:* ${channel.link || 'Not Available'}
+👥 Followers: ${channel.followers || 'N/A'}
+🔗 Link: ${channel.link || channelUrl}
 
-📝 *Description:*
+📝 Description:
 ${channel.description || 'No description available'}
-
-📸 *Channel Preview:*
 `.trim();
 
-    // Send channel image with caption if available
+    // Send image if available, otherwise just send info
     if (channel.image) {
       await client.sendMessage(message.chat, {
         image: { url: channel.image },
@@ -57,17 +64,7 @@ ${channel.description || 'No description available'}
     }
 
   } catch (error) {
-    console.error('WhatsApp Channel Stalk Error:', error);
-    let errorMsg = "An error occurred while fetching channel information";
-    
-    if (error.response) {
-      errorMsg += `\nAPI Error: ${error.response.status} - ${error.response.data?.message || 'No details'}`;
-    } else if (error.request) {
-      errorMsg += "\nThe request was made but no response was received";
-    } else {
-      errorMsg += `\n${error.message}`;
-    }
-    
-    reply(errorMsg);
+    console.error('Channel Stalk Error:', error);
+    reply(`❌ Error: ${error.message || 'Failed to fetch channel info'}\n\nPlease try a different channel link.`);
   }
 });
