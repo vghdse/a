@@ -5,7 +5,7 @@ const Config = require('../config');
 cmd(
     {
         pattern: 'channelstalk',
-        alias: ['chstalk', 'wastalk'],
+        alias: ['whatsappchannel', 'wastalk'],
         desc: 'Get WhatsApp channel information',
         category: 'utility',
         react: '🔍',
@@ -56,7 +56,7 @@ ${channelData.description}
                 contextInfo: {
                     externalAdReply: {
                         title: channelData.title,
-                        body: `Channel by ${response.data.owner}`,
+                        body: `Powered By Subzero`,
                         thumbnail: await getImageBuffer(channelData.image),
                         mediaType: 1,
                         mediaUrl: channelData.link,
