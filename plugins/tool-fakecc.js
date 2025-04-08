@@ -15,7 +15,7 @@ cmd({
     await reply("🔄 *Generating fake card... Please wait*");
 
     // Call the API
-    const response = await axios.get('https://draculazxy-xyzdrac.hf.space/api/Card');
+    const response = await axios.get('https://draculazyx-xyzdrac.hf.space/api/Card');
     const data = response.data;
 
     // Format the response
