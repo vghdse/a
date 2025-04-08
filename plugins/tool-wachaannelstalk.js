@@ -42,7 +42,6 @@ cmd(
 🏷️ *Title:* ${channelData.title}
 👤 *Owner:* ${response.data.owner}
 👥 *Followers:* ${channelData.followers}
-🖼️ *Channel Image:* ${channelData.image}
 
 📝 *Description:*
 ${channelData.description}
