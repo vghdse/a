@@ -46,6 +46,9 @@ cmd({
 }, 
 async (conn, mek, m, { from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply }) => {
     try {
+        // Show typing indicator
+        await conn.sendPresenceUpdate('composing', from);
+
         // Fetch version dynamically from config.REPO's package.json
         const version = await getBotVersion();
         
@@ -162,8 +165,8 @@ ${readMore}
 *┋* *⬡ ${config.PREFIX}ɢᴘᴛ4ᴏ*
 *┋* *⬡ ${config.PREFIX}ʟʟᴀᴍᴀ2*
 *┋* *⬡ ${config.PREFIX}ʟʟᴀᴍᴀ3*
-*┋* *⬡ ${config.PREFIX}ғʟᴜx*
-*┋* *⬡ ${config.PREFIX}ғʟᴜxᴘʀᴏ*
+*┋* *⬡ ${config.PREFIX}ֆʟᴜx*
+*┋* *⬡ ${config.PREFIX}ֆʟᴜxᴘʀᴏ*
 *┋* *⬡ ${config.PREFIX}ɪᴍᴀɢɪɴᴇ*
 *┋* *⬡ ${config.PREFIX}ᴅᴀʟʟᴇ*
 *┋* *⬡ ${config.PREFIX}sᴛᴀʙʟᴇᴅɪғғᴜsɪᴏɴ*
@@ -290,7 +293,7 @@ ${readMore}
 *┋* *⬡ ${config.PREFIX}ʟᴏɢᴏ*
 *┋* *⬡ ${config.PREFIX}ʀᴇᴍᴏᴠᴇʙɢ*
 *┋* *⬡ ${config.PREFIX}ʀᴇᴍɪɴɪ*
-*┋* *⬡ ${config.PREFIX}ғᴀɴᴄʏ*
+*┋* *⬡ ${config.PREFIX}ֆᴀɴᴄʏ*
 *┋* *⬡ ${config.PREFIX}ϙʀ*
 *┋* *⬡ ${config.PREFIX}ʀᴇᴀᴅϙʀ*
 *┋* *⬡ ${config.PREFIX}ᴛɪɴʏ*
@@ -360,13 +363,13 @@ ${readMore}
 ╭─────────────···◈
 *┋* 
 *┋* *⬡ ${config.PREFIX}ᴢᴇʀᴏᴄʀᴀsʜ*
-*┋* *⬡ ${config.PREFIX}ᴢᴇʀᴏғʀᴇᴇᴢᴇ*
+*┋* *⬡ ${config.PREFIX}ᴢᴇʀᴏֆʀᴇᴇᴢᴇ*
 *┋* *⬡ ${config.PREFIX}ᴢᴇʀᴏʟᴀɢ*
 *┋* *⬡ ${config.PREFIX}ᴢɪᴏs*
 *┋* *⬡ ${config.PREFIX}ᴢᴀɴᴅʀᴏɪᴅ*
 *┋* *⬡ ${config.PREFIX}ᴢᴋɪʟʟ*
 *┋* *⬡ ${config.PREFIX}ᴢsᴘᴀᴍ*
-*┋* *⬡ ${config.PREFIX}ᴢғʟᴏᴏᴅ*
+*┋* *⬡ ${config.PREFIX}ᴢֆʟᴏᴏᴅ*
 *┋* *⬡ ${config.PREFIX}ᴢᴇʀᴏᴇxᴇᴄᴜᴛɪᴏɴ*
 *┋* *⬡ ${config.PREFIX}ᴢʜᴇᴀᴅsʜᴏʀᴛ*
 *┋* *⬡ ${config.PREFIX}ᴢᴜɪ*
@@ -377,6 +380,7 @@ ${readMore}
 *━━━━━━━━━━━━━━━━━━━━━*
 `;
 
+        // Send the menu message
         await conn.sendMessage(
             from,
             {
@@ -402,6 +406,9 @@ ${readMore}
             mimetype: 'audio/mp4',
             ptt: true
         }, { quoted: mek });
+        
+        // Remove typing indicator after all messages have been sent
+        await conn.sendPresenceUpdate('paused', from);
         
     } catch (e) {
         console.log(e);
