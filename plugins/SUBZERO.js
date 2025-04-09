@@ -27,7 +27,7 @@ const Config = require('../config');
 cmd(
     {
         pattern: 'play',
-        alias: ['song', 'ytmp3'],
+        alias: ['song', 'ytaudio'],
         desc: 'Download YouTube songs',
         category: 'media',
         use: '<song name or YouTube URL>',
@@ -77,7 +77,7 @@ cmd(
                 contextInfo: {
                     externalAdReply: {
                         title: songData.title,
-                        body: '⟡ 𝙶𝙴𝙽𝙴𝚁𝙰𝚃𝙴𝙳 𝙱𝚈 𝚂𝚄𝙱𝚉𝙴𝚁𝙾 ⟡',
+                        body: '🍁 𝙶𝙴𝙽𝙴𝚁𝙰𝚃𝙴𝙳 𝙱𝚈 𝚂𝚄𝙱𝚉𝙴𝚁𝙾 🍁',
                         thumbnail: await getThumbnailBuffer(videoUrl),
                         mediaType: 2,
                         mediaUrl: videoUrl,
@@ -216,3 +216,82 @@ async function getThumbnailBuffer(videoUrl) {
         }
     }
 }
+
+cmd(
+    {
+        pattern: 'ytdoc',
+        alias: ['ytmp3', 'mp3'],
+        desc: 'Download YouTube songs as document',
+        category: 'media',
+        react: '📂',
+        use: '<song name or YouTube URL>',
+        filename: __filename,
+    },
+    async (conn, mek, m, { quoted, args, q, reply, from }) => {
+        try {
+            if (!q) return reply('*Please provide a song name or YouTube URL*\nExample: .docplay Alan Walker Lily\nOr: .docplay https://youtu.be/ox4tmEV6-QU');
+
+            // Send processing reaction
+            await conn.sendMessage(mek.chat, { react: { text: "⏳", key: mek.key } });
+
+            let videoUrl = q;
+            
+            // If it's not a URL, search YouTube
+            if (!q.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+/)) {
+                const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+                const searchResponse = await axios.get(searchUrl);
+                
+                // Extract first video ID from search results
+                const videoIdMatch = searchResponse.data.match(/\/watch\?v=([a-zA-Z0-9_-]{11})/);
+                if (!videoIdMatch) return reply('*No results found for your search*');
+                
+                videoUrl = `https://youtube.com/watch?v=${videoIdMatch[1]}`;
+            }
+
+            // Call API for audio
+            const apiUrl = `https://draculazyx-xyzdrac.hf.space/api/Ytmp3?url=${encodeURIComponent(videoUrl)}`;
+            const response = await axios.get(apiUrl);
+            
+            if (response.data.STATUS !== 200 || !response.data.song?.download_link) {
+                return reply('*Failed to download the song*');
+            }
+
+            const songData = response.data.song;
+            const downloadUrl = songData.download_link;
+
+            // Download the audio file
+            const audioResponse = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
+            const audioBuffer = Buffer.from(audioResponse.data, 'binary');
+
+            // Get thumbnail
+            const thumbnailBuffer = await ytUtils.getThumbnailBuffer(videoUrl);
+
+            // Send as document
+            await conn.sendMessage(mek.chat, { 
+                document: audioBuffer,
+                mimetype: 'audio/mpeg',
+                fileName: `${songData.title}.mp3`,
+                caption: `🎵 *${songData.title}*\n\n⬇️ Downloaded as document\n\n> Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ`,
+                thumbnail: thumbnailBuffer,
+                contextInfo: {
+                    externalAdReply: {
+                        title: songData.title,
+                        body: 'Subzero YT MP3 Download',
+                        thumbnail: thumbnailBuffer,
+                        mediaType: 2,
+                        mediaUrl: videoUrl,
+                        sourceUrl: videoUrl
+                    }
+                }
+            }, { quoted: mek });
+
+            // Send success reaction
+            await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
+
+        } catch (error) {
+            console.error('Error in docplay command:', error);
+            await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
+            reply('*Error downloading song. Please try again later.*');
+        }
+    }
+);
