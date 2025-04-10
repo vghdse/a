@@ -1,95 +1,79 @@
-const { cmd } = require('../command');
 const axios = require('axios');
-const Config = require('../config');
+const fs = require('fs');
+const path = require('path');
 
-cmd(
-    {
-        pattern: 'song4',
-        alias: ['ytmusic', 'ytaudio'],
-        desc: 'Download audio from YouTube',
-        category: 'media',
-        react: '🎵',
-        use: '<YouTube URL or search query>',
-        filename: __filename,
-    },
-    async (conn, mek, m, { quoted, args, q, reply, from }) => {
-        try {
-            if (!q) return reply('🎵 *Please provide a YouTube URL or search query*\nExample: .song https://youtu.be/eZskFo64rs8\nOr: .song Sukitte Ii na yo opening');
+cmd({
+  pattern: "song5",
+  alias: ["ytmp3", "ytaudio"],
+  react: "🎵",
+  desc: "Download YouTube audio",
+  category: "media",
+  use: "<song name/url>",
+  filename: __filename
+}, async (conn, mek, m, { from, reply, args, text }) => {
+  try {
+    // Check if input is provided
+    if (!text) return reply("Please provide a YouTube URL or search query");
 
-            // Send processing reaction
-            await conn.sendMessage(mek.chat, { react: { text: "⏳", key: mek.key } });
+    // Show processing message
+    await reply("🔍 Searching for audio... Please wait");
 
-            let videoUrl = q;
-            
-            // If it's not a URL, search YouTube
-            if (!q.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+/)) {
-                const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
-                const searchResponse = await axios.get(searchUrl);
-                
-                // Extract first video ID from search results
-                const videoIdMatch = searchResponse.data.match(/\/watch\?v=([a-zA-Z0-9_-]{11})/);
-                if (!videoIdMatch) return reply('🎵 *No results found for your search*');
-                
-                videoUrl = `https://youtube.com/watch?v=${videoIdMatch[1]}`;
-            }
+    // Extract video ID if URL is provided
+    let videoId = '';
+    if (text.includes('youtube.com') || text.includes('youtu.be')) {
+      const urlMatch = text.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|youtu\.be\/)([^"&?\/\s]{11})/);
+      videoId = urlMatch ? urlMatch[1] : null;
+    }
 
-            // Call Lolhuman API
-            const apiUrl = `https://api.lolhuman.xyz/api/ytaudio2?apikey=e0a6483c508018877ac67326&url=${encodeURIComponent(videoUrl)}`;
-            const response = await axios.get(apiUrl);
-            
-            if (response.data.status !== 200 || !response.data.result?.link) {
-                return reply('🎵 *Failed to fetch audio* - API error');
-            }
+    // If no URL found, search YouTube
+    if (!videoId) {
+      const searchUrl = `https://lolhuman.xyz/api/ytsearch?apikey=${config.LOLHUMAN_API}&query=${encodeURIComponent(text)}`;
+      const searchRes = await axios.get(searchUrl);
+      
+      if (!searchRes.data || !searchRes.data.result || searchRes.data.result.length === 0) {
+        return reply("No results found for your search");
+      }
+      
+      videoId = searchRes.data.result[0].videoId;
+    }
 
-            const songData = response.data.result;
+    // Download audio
+    const apiUrl = `https://lolhuman.xyz/api/ytaudio2?apikey=${config.LOLHUMAN_API}&url=https://www.youtube.com/watch?v=${videoId}`;
+    const response = await axios.get(apiUrl);
+    
+    if (!response.data || !response.data.result || !response.data.result.link) {
+      return reply("Failed to get audio download link");
+    }
 
-            // Download the audio file
-            const audioResponse = await axios.get(songData.link, { 
-                responseType: 'arraybuffer',
-                headers: {
-                    'Referer': 'https://www.youtube.com/',
-                    'Origin': 'https://www.youtube.com'
-                }
-            });
-            const audioBuffer = Buffer.from(audioResponse.data, 'binary');
+    const audioInfo = response.data.result;
+    const audioUrl = audioInfo.link;
 
-            // Get thumbnail
-            const thumbnailBuffer = await getImageBuffer(songData.thumbnail);
+    // Download the audio file
+    const audioRes = await axios.get(audioUrl, { responseType: 'arraybuffer' });
+    const tempPath = path.join(__dirname, '../temp', `yt_audio_${Date.now()}.mp3`);
+    fs.writeFileSync(tempPath, audioRes.data);
 
-            // Send the audio file
-            await conn.sendMessage(mek.chat, { 
-                audio: audioBuffer,
-                mimetype: 'audio/mpeg',
-                fileName: `${songData.title}.mp3`,
-                contextInfo: {
-                    externalAdReply: {
-                        title: songData.title,
-                        body: 'YouTube Audio Download',
-                        thumbnail: thumbnailBuffer,
-                        mediaType: 2,
-                        mediaUrl: videoUrl,
-                        sourceUrl: videoUrl
-                    }
-                }
-            }, { quoted: mek });
-
-            // Send success reaction
-            await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
-
-        } catch (error) {
-            console.error('Song download error:', error);
-            await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
-            reply('🎵 *Error downloading audio* - Please try again later');
+    // Send audio with metadata
+    await conn.sendMessage(from, {
+      audio: { url: tempPath },
+      mimetype: 'audio/mpeg',
+      contextInfo: {
+        externalAdReply: {
+          title: audioInfo.title,
+          body: "YouTube Audio Download",
+          thumbnailUrl: audioInfo.thumbnail,
+          mediaType: 2,
+          mediaUrl: `https://youtu.be/${videoId}`,
+          sourceUrl: `https://youtu.be/${videoId}`
         }
-    }
-);
+      }
+    }, { quoted: mek });
 
-// Helper function to get image buffer
-async function getImageBuffer(url) {
-    try {
-        const response = await axios.get(url, { responseType: 'arraybuffer' });
-        return Buffer.from(response.data, 'binary');
-    } catch {
-        return null;
-    }
-}
+    // Clean up
+    fs.unlinkSync(tempPath);
+
+  } catch (error) {
+    console.error('Song download error:', error);
+    reply("❌ Error downloading audio. Please try again later.");
+  }
+});
