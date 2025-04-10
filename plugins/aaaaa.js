@@ -1,80 +1,71 @@
-/*const axios = require('axios');
+const axios = require('axios');
+const FormData = require('form-data');
 const fs = require('fs');
-const path = require('path');
+const { cmd } = require("../command");
 
 cmd({
-  pattern: "song5",
-  alias: ["ytmp3", "ytaudio"],
-  react: "🎵",
-  desc: "Download YouTube audio",
-  category: "media",
-  use: "<song name/url>",
+  pattern: "ghibli",
+  alias: ["ghiblify", "studioghibli"],
+  react: '🎨',
+  desc: "Transform images into Ghibli-style artwork",
+  category: "image",
+  use: "Reply to an image with .ghibli or upload with caption",
   filename: __filename
-}, async (conn, mek, m, { from, reply, args, text }) => {
+}, async (client, message, { reply, quoted }) => {
   try {
-    // Check if input is provided
-    if (!text) return reply("Please provide a YouTube URL or search query");
+    // Check for media in quoted message or current message
+    const media = quoted ? quoted : message;
+    const mimeType = media.mimetype || '';
+
+    if (!mimeType.startsWith('image/')) {
+      return reply("❌ Please reply to an image (JPEG/PNG)");
+    }
+
+    // Download the image
+    const imageBuffer = await media.download();
+    const tempPath = `./temp/ghibli_${Date.now()}.jpg`;
+    fs.writeFileSync(tempPath, imageBuffer);
+
+    // Prepare form data
+    const form = new FormData();
+    form.append('image', fs.createReadStream(tempPath), {
+      filename: 'input.jpg',
+      contentType: 'image/jpeg'
+    };
 
     // Show processing message
-    await reply("🔍 Searching for audio... Please wait");
+    await reply("🔄 Transforming your image into Ghibli art...");
 
-    // Extract video ID if URL is provided
-    let videoId = '';
-    if (text.includes('youtube.com') || text.includes('youtu.be')) {
-      const urlMatch = text.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|youtu\.be\/)([^"&?\/\s]{11})/);
-      videoId = urlMatch ? urlMatch[1] : null;
-    }
-
-    // If no URL found, search YouTube
-    if (!videoId) {
-      const searchUrl = `https://lolhuman.xyz/api/ytsearch?apikey=${config.LOLHUMAN_API}&query=${encodeURIComponent(text)}`;
-      const searchRes = await axios.get(searchUrl);
-      
-      if (!searchRes.data || !searchRes.data.result || searchRes.data.result.length === 0) {
-        return reply("No results found for your search");
+    // Call Ghibli AI API
+    const response = await axios.post(
+      'https://ghibliai-worker.ahmadjandal.workers.dev/generate',
+      form,
+      {
+        headers: {
+          ...form.getHeaders(),
+          'Accept': 'application/json'
+        },
+        responseType: 'arraybuffer',
+        timeout: 60000
       }
-      
-      videoId = searchRes.data.result[0].videoId;
-    }
+    );
 
-    // Download audio
-    const apiUrl = `https://lolhuman.xyz/api/ytaudio2?apikey=${config.LOLHUMAN_API}&url=https://www.youtube.com/watch?v=${videoId}`;
-    const response = await axios.get(apiUrl);
-    
-    if (!response.data || !response.data.result || !response.data.result.link) {
-      return reply("Failed to get audio download link");
-    }
+    // Save the transformed image
+    const outputPath = `./temp/ghibli_output_${Date.now()}.png`;
+    fs.writeFileSync(outputPath, response.data);
 
-    const audioInfo = response.data.result;
-    const audioUrl = audioInfo.link;
-
-    // Download the audio file
-    const audioRes = await axios.get(audioUrl, { responseType: 'arraybuffer' });
-    const tempPath = path.join(__dirname, '../temp', `yt_audio_${Date.now()}.mp3`);
-    fs.writeFileSync(tempPath, audioRes.data);
-
-    // Send audio with metadata
-    await conn.sendMessage(from, {
-      audio: { url: tempPath },
-      mimetype: 'audio/mpeg',
-      contextInfo: {
-        externalAdReply: {
-          title: audioInfo.title,
-          body: "YouTube Audio Download",
-          thumbnailUrl: audioInfo.thumbnail,
-          mediaType: 2,
-          mediaUrl: `https://youtu.be/${videoId}`,
-          sourceUrl: `https://youtu.be/${videoId}`
-        }
-      }
-    }, { quoted: mek });
+    // Send the result
+    await client.sendMessage(message.chat, {
+      image: fs.readFileSync(outputPath),
+      caption: "✨ Your Ghibli-style artwork!"
+    }, { quoted: message });
 
     // Clean up
     fs.unlinkSync(tempPath);
+    fs.unlinkSync(outputPath);
 
   } catch (error) {
-    console.error('Song download error:', error);
-    reply("❌ Error downloading audio. Please try again later.");
+    console.error('Ghibli Error:', error);
+    reply(`❌ Failed to transform image: ${error.message || 'Server error'}`);
   }
 });
-*/
