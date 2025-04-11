@@ -1,4 +1,4 @@
-const axios = require('axios');
+/*const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
 const { cmd } = require("../command");
@@ -69,3 +69,4 @@ cmd({
     reply(`❌ Failed to transform image: ${error.message || 'Server error'}`);
   }
 });
+*/
