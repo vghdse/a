@@ -21,22 +21,11 @@
         
       },
 
-
-    "AUTO_STATUS_REACT": {
-      "description": "true/ false",
-      "required": true,
-      "value": "true"
-    }, 
-
-
-
     "OWNER_NUMBER": {
       "description": "Enter owner number",
       "required": false,
       "value": "263719646303"
 
-    }
-
-    
+    }  
   }
 }
