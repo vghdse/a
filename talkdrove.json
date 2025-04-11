@@ -20,23 +20,6 @@
         "required": true
         
       },
-    
-      
-    
-    
-    "MODE": {
-      "description": "public/ private/ inbox/ group.",
-      "required": false,
-      "value": "public"
-      
-    },
-    
-    
-    "ALWAYS_ONLINE": {
-      "description": "true / false",
-      "required": false,
-      "value": "false"  
-    },    
 
 
     "AUTO_STATUS_REACT": {
@@ -52,21 +35,8 @@
       "required": false,
       "value": "263719646303"
 
-    }, 
-
-    "BOT_NAME": {
-      "description": "Enter Bot name.",
-      "required": false,
-      "value": "SUBZERO-MD"
-
-      }, 
+    }
 
     
-
-    "READ_MESSAGE": {
-      "description": "true / false.",
-      "required": false,
-      "value": "false"
-    }
   }
 }
