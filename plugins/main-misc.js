@@ -19,7 +19,7 @@ async (conn, mek, m, { from, reply, q, text, isCreator, fromMe }) => {
         const command = q?.toLowerCase();
 
         switch (command) {
-            case 'on':
+            case 'set all':
                 await setAnti('gc', false);
                 await setAnti('dm', false);
                 return reply('_AntiDelete is now off for Group Chats and Direct Messages._');
@@ -42,7 +42,7 @@ async (conn, mek, m, { from, reply, q, text, isCreator, fromMe }) => {
                 await setAnti('dm', !dmStatus);
                 return reply(`_AntiDelete for Direct Messages ${!dmStatus ? 'enabled' : 'disabled'}._`);
 
-            case 'set all':
+            case 'on':
                 await setAnti('gc', true);
                 await setAnti('dm', true);
                 return reply('_AntiDelete set for all chats._');
