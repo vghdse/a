@@ -31,7 +31,7 @@ cmd({
  
 🔧 *1. Mode*
    - Current Status: ${config.MODE || "public"}
-   - Usage: ${config.PREFIX}mode private/public
+   - Usage.: ${config.PREFIX}mode private/public
 
 🎯 *2. Auto Typing*
    - Current Status: ${config.AUTO_TYPING || "off"}
