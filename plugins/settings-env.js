@@ -134,9 +134,8 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
 //--------------------------------------------
 cmd({
     pattern: "autoreadstatus",
-    alias: ["setautoreadstatus"],
+    alias: ["setautoreadstatus","autoviewstatus","autostatusreact"],
     react: "🫟",
-    alias: ["autostatusreact"],
     desc: "Enable or disable auto-viewing of statuses",
     category: "settings",
     filename: __filename
@@ -613,7 +612,7 @@ cmd({
 //--------------------------------------------
 //  EXIT COMMANDS
 //--------------------------------------------
-cmd({
+/*cmd({
   pattern: "exit",
   react: "🫟",
   desc: "Leaves the current group",
@@ -627,7 +626,7 @@ cmd({
     console.error(error);
     reply("Failed to leave the group.🤦🏽‍♂️");
   }
-});
+});*/
 //--------------------------------------------
 //  AUTO_RECORDING COMMANDS
 //--------------------------------------------
