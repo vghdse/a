@@ -49,9 +49,6 @@
     "sqlite3": "^5.1.7",
     "adm-zip": "^0.5.16",
     "api-dylux":"1.8.5",
-    "@mrnima/tiktok-downloader":"1.0.0",
-    "@mrnima/facebook-downloader":"1.0.0",
-    "mrnima-moviedl":"1.0.0",
     "acrcloud": "^1.4.0",
     "mongoose": "^8.0.0",
     "node-cache" :"^5.1.1",
@@ -61,13 +58,10 @@
     "telegraph": "^0.8.22",
     "qrcode-reader": "^1.0.4",
     "jimp": "^0.16.13",
-    "imgur": "^2.1.0",
     "lyrics-finder": "^1.0.5",
     "songlyrics": "^2.4.8",
     "pdfkit": "^0.14.0",
     "node-webpmux": "^3.1.0",
-    "firebase": "^9.22.2",
-    "@firebase/firestore": "^9.22.2",
     "dotenv": "^16.0.0"
     
   }
