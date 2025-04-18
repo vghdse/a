@@ -1,57 +1,77 @@
-const { cmd, commands } = require('../command');
-const config = require('../config');
+// ===== CORE DEPENDENCIES =====
 const fs = require('fs');
 const path = require('path');
+const { cmd } = require('../command');
+const config = require('../config');
 
-cmd({
-    pattern: "setprefix",
-    alias: ["prefix"],
-    react: "🔧",
-    desc: "Change the bot's command prefix",
-    category: "settings",
-    filename: __filename
-}, async (conn, mek, m, { from, args, isOwner, reply }) => {
-    if (!isOwner) return reply("*📛 Only the owner can use this command!*");
-
-    const newPrefix = args[0]?.trim();
-    
-    if (!newPrefix) {
-        return reply(`📌 Current prefix: *${config.PREFIX}*\n\nUsage: *${config.PREFIX}setprefix !*`);
-    }
-
-    if (newPrefix.length > 3 || /\s/.test(newPrefix)) {
-        return reply("❌ Prefix must be 1-3 characters with no spaces");
-    }
-
-    // 1. Update config file permanently
-    const configPath = path.join(__dirname, '../config.js');
-    let configFile = fs.readFileSync(configPath, 'utf8');
-    configFile = configFile.replace(
-        /(PREFIX\s*:\s*['"`]).*?(['"`])/,
-        `$1${newPrefix}$2`
-    );
-    fs.writeFileSync(configPath, configFile);
-
-    // 2. Update in-memory config
-    config.PREFIX = newPrefix;
-
-    // 3. Update command handler prefix
-    const cmdHandler = require('../command');
-    cmdHandler.prefix = newPrefix;
-
-    // 4. Update all registered commands
-    Object.keys(commands).forEach(oldPattern => {
-        // Remove old command
-        const cmdObj = commands[oldPattern];
-        delete commands[oldPattern];
-        
-        // Register with new prefix
-        const newPattern = oldPattern.replace(
-            new RegExp(`^\\${config.PREFIX}`), 
-            newPrefix
-        );
-        commands[newPattern] = cmdObj;
+// ===== UTILITY FUNCTIONS =====
+function formatTime(timestamp) {
+    if (!timestamp) return "Unknown";
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
     });
+}
 
-    return reply(`✅ Prefix changed to *${newPrefix}*\n\nExample: *${newPrefix}menu*`);
+// ===== ACTIVE GROUP MEMBERS PLUGIN =====
+cmd({
+    pattern: "active",
+    alias: ["activelist"],
+    desc: "List all active group members",
+    category: "group",
+    react: "👥",
+    filename: __filename
+}, async (conn, mek, m, { groupMetadata, reply }) => {
+    if (!m.isGroup) return reply("❌ Group command only");
+    
+    const activeMembers = groupMetadata.participants
+        .sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0))
+        .map((p, i) => `${i+1}. @${p.id.split('@')[0]} ${p.isAdmin ? '👑' : ''} (Last: ${formatTime(p.lastSeen)})`);
+
+    await reply(`🔄 *Active Members* (${activeMembers.length})\n\n${activeMembers.join('\n')}`);
 });
+
+// ===== ONLINE CONTACTS TRACKER PLUGIN =====
+cmd({
+    pattern: "online",
+    alias: ["whosonline"],
+    desc: "Check who's online in your contacts",
+    category: "utility",
+    react: "🟢",
+    filename: __filename
+}, async (conn, mek, m, { reply }) => {
+    await reply("🔍 Scanning online contacts (30 seconds)...");
+    
+    const onlineUsers = new Set();
+    const startTime = Date.now();
+    
+    const statusHandler = (update) => {
+        if (update.status === "online" && update.id !== conn.user.id) {
+            onlineUsers.add(update.id);
+        }
+    };
+    
+    conn.ev.on('presence.update', statusHandler);
+    
+    await new Promise(resolve => setTimeout(resolve, 30000));
+    conn.ev.off('presence.update', statusHandler);
+    
+    const results = [];
+    for (const id of onlineUsers) {
+        try {
+            const contact = await conn.getContactById(id);
+            results.push(`• ${contact?.notify || id.split('@')[0]}`);
+        } catch (e) {
+            results.push(`• ${id.split('@')[0]}`);
+        }
+    }
+    
+    await reply(`🟢 *Online Contacts* (${results.length})\n\n${results.join('\n') || "None detected"}\n\n⏳ Scanned for 30 seconds`);
+});
+
+// ===== EXPORTS =====
+module.exports = {
+    formatTime
+};
