@@ -1,3 +1,52 @@
+
+const { cmd } = require('../command');
+const config = require('../config');
+const levenshtein = require('fast-levenshtein');
+
+// Store all registered commands
+const commandList = Object.values(require('../command').commands)
+    .map(cmd => cmd.pattern)
+    .filter(Boolean);
+
+cmd({
+    pattern: null, // Catch-all handler
+    dontAddCommandList: true,
+    filename: __filename
+}, async (conn, mek, m, { body, reply }) => {
+    try {
+        if (!body?.startsWith(config.PREFIX)) return;
+        
+        const typedCmd = body.trim().split(/\s+/)[0].toLowerCase();
+        const pureCmd = typedCmd.slice(config.PREFIX.length);
+        
+        // Skip if it's a valid command
+        if (commandList.includes(pureCmd)) return;
+        
+        // Find closest matching command
+        const suggestions = commandList
+            .map(cmd => ({
+                cmd,
+                distance: levenshtein.get(pureCmd, cmd)
+            }))
+            .filter(({ distance }) => distance <= 2) // Max 2 character differences
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 3); // Top 3 suggestions
+        
+        if (suggestions.length > 0) {
+            const suggestionText = suggestions
+                .map(s => `${config.PREFIX}${s.cmd}`)
+                .join('\n• ');
+                
+            await reply(`❌ Command not found. Did you mean:\n• ${suggestionText}`);
+        } else {
+            await reply(`❌ Invalid command. Use *${config.PREFIX}menu* to see available commands.`);
+        }
+    } catch (error) {
+        console.error('TypoHandler Error:', error);
+    }
+});
+
+
 /*const moment = require('moment');
 const reminders = {};
 
