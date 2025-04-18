@@ -42,7 +42,11 @@ const {
   const Crypto = require('crypto')
   const path = require('path')
   const prefix = config.PREFIX
-  
+  const leven = require('fast-levenshtein');
+const config = require('./config');
+const { commands } = require('./command');
+
+
   const ownerNumber = ['263719647303']
   
   const tempDir = path.join(os.tmpdir(), 'cache-temp')
@@ -131,7 +135,41 @@ const port = process.env.PORT || 9090;
     }
   });
   //============================== 
-          
+// ========== PASTE THIS AT THE TOP OF YOUR IMPORTS ==========
+// ========== PASTE THIS RIGHT AFTER YOUR 'messages.upsert' HANDLER STARTS ==========
+conn.ev.on('messages.upsert', async ({ messages }) => {
+    const m = messages[0];
+    if (!m.message) return;
+    
+    // 1. Typo Correction Handler (PASTE THIS FIRST)
+    const body = m.message.conversation || m.message.extendedTextMessage?.text || '';
+    if (body.startsWith(config.PREFIX)) {
+        const typedCmd = body.trim().split(/\s+/)[0].slice(config.PREFIX.length).toLowerCase();
+        const availableCommands = Object.keys(commands);
+        
+        if (!availableCommands.includes(typedCmd)) {
+            const suggestions = availableCommands
+                .map(cmd => ({ cmd, score: leven.get(typedCmd, cmd) }))
+                .filter(({ score }) => score <= 2)
+                .sort((a, b) => a.score - b.score)
+                .slice(0, 3)
+                .map(s => `${config.PREFIX}${s.cmd}`);
+            
+            if (suggestions.length) {
+                await conn.sendMessage(
+                    m.key.remoteJid, 
+                    { text: `❌ Unknown command. Did you mean:\n• ${suggestions.join('\n• ')}` },
+                    { quoted: m }
+                );
+                return; // Stop processing invalid commands
+            }
+        }
+    }
+
+    // 2. YOUR EXISTING MESSAGE HANDLING CODE BELOW
+    // ... (keep all your current code here)
+});
+	 
   //=============readstatus=======
         
   conn.ev.on('messages.upsert', async(mek) => {
