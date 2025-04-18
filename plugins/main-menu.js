@@ -36,6 +36,8 @@ async function getBotVersion() {
     }
 }
 
+const imageUrl = process.env.BOT_IMAGE || 'https://i.postimg.cc/WpQLCg85/White-and-Green-Simple-Professional-Business-Project-Presentation.jpg';
+
 cmd({
     pattern: "menu",
     desc: "subzero menu",
@@ -384,7 +386,7 @@ ${readMore}
         await conn.sendMessage(
             from,
             {
-                image: { url: `https://i.postimg.cc/WpQLCg85/White-and-Green-Simple-Professional-Business-Project-Presentation.jpg` },
+                image: { url: imageUrl },
                 caption: dec,
                 contextInfo: {
                     mentionedJid: [m.sender],
