@@ -5,7 +5,7 @@ const os = require("os");
 const { runtime } = require('../lib/functions');
 let botStartTime = Date.now();
 
-const ALIVE_IMG = "https://i.postimg.cc/3RgPr15t/IMG-20250305-WA0008.jpg";
+const ALIVE_IMG = config.BOT_IMAGE || "https://i.postimg.cc/3RgPr15t/IMG-20250305-WA0008.jpg" ;
 
 cmd({
   pattern: "alive",
@@ -30,7 +30,7 @@ cmd({
  *⏰ Time: ${harareTime}*
  *📆 Date: ${harareDate}*
  *🔋 Uptime: ${runtimeHours} hours, ${runtimeMinutes} minutes, ${runtimeSeconds} seconds*
- *📀 Ram Usage* : ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB 
+ *🔮 Ram Usage : ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB*
 
 
  \`Status\`: *Subzero is online! 🤗🚀*
