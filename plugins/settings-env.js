@@ -136,7 +136,7 @@ cmd({
 
 // SETTINGS OVER
 
-
+/*
 cmd({
     pattern: "setprefix",
     alias: ["prefix"],
@@ -155,6 +155,45 @@ cmd({
 
     return reply(`✅ Prefix successfully changed to *${newPrefix}*`);
 });
+*/
+
+cmd({
+    pattern: "setprefix",
+    alias: ["prefix"],
+    react: "🔧",
+    desc: "Change the bot's command prefix",
+    category: "settings",
+    filename: __filename
+}, async (conn, mek, m, { from, args, isOwner, reply }) => {
+    if (!isOwner) return reply("*📛 Only the owner can use this command!*");
+
+    const newPrefix = args[0]?.trim();
+    
+    // Show current prefix if no argument
+    if (!newPrefix) {
+        return reply(`📌 Current prefix: *${config.PREFIX}*\n\nUsage: *${config.PREFIX}setprefix !*`);
+    }
+
+    // Validate prefix (1-3 characters, no spaces)
+    if (newPrefix.length > 3 || /\s/.test(newPrefix)) {
+        return reply("❌ Prefix must be 1-3 characters with no spaces");
+    }
+
+    // Special characters that might break the bot
+    const forbiddenChars = ["\\", "/", "'", '"', "`"];
+    if (forbiddenChars.some(char => newPrefix.includes(char))) {
+        return reply("❌ Invalid prefix character (avoid \\ / ' \" `)");
+    }
+
+    // Update prefix in memory
+    config.PREFIX = newPrefix;
+    
+    // Update in commands collection (critical!)
+    require('../command').prefix = newPrefix;
+
+    return reply(`✅ Prefix changed to *${newPrefix}*\n\nExample: *${newPrefix}menu*`);
+});
+
 
 cmd({
     pattern: "mode",
