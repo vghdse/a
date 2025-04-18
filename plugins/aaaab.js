@@ -1,89 +1,64 @@
 const config = require('../config');
 const axios = require('axios');
 const { cmd } = require('../command');
-const FormData = require('form-data'); // Add this at top
+const FormData = require('form-data');
 
 cmd({
     pattern: "updatebotimage",
-    desc: "Update the bot image URL used in menu command",
+    desc: "Update the bot image URL for menu",
     alias: ["setbotimage", "changebotimage"],
     category: "Owner",
     react: "🖼️",
     filename: __filename
 }, async (conn, mek, m, { from, quoted, isOwner, reply }) => {
     try {
-        if (!isOwner) return reply('Sorry, only the bot owner can use this command.');
+        if (!isOwner) return reply('❌ Owner only command!');
 
+        // Check for quoted image or URL
         if (!quoted?.image && !m.text) {
-            return reply(`Please provide either:
-1. An image URL: *${config.PREFIX}updatebotimage [url]*
-2. Or quote an image with the command`);
+            return reply(`📌 How to use:
+• Send ${config.PREFIX}updatebotimage [image-url]
+• Or reply to an image with this command`);
         }
 
         let imageUrl = m.text?.trim();
 
         // Handle quoted image
         if (quoted?.image) {
+            reply('⬆️ Uploading image...');
             const buffer = await conn.downloadMediaMessage(quoted);
-            const uploaded = await uploadImage(buffer);
-            if (!uploaded) return reply('Failed to upload image');
-            imageUrl = uploaded;
+            imageUrl = await uploadImage(buffer);
+            if (!imageUrl) return reply('❌ Image upload failed!');
         }
 
-        // Improved URL validation
-        if (!isValidImageUrl(imageUrl)) {
-            return reply('❌ Invalid image URL! Must be direct image link (jpg/png/gif/webp)');
+        // Basic URL format check
+        if (!imageUrl.startsWith('http')) {
+            return reply('❌ Invalid URL format! Must start with http/https');
         }
 
-        // Verify the image exists
-        try {
-            const head = await axios.head(imageUrl);
-            if (!head.headers['content-type']?.startsWith('image/')) {
-                return reply('❌ URL does not point to a valid image');
-            }
-        } catch (e) {
-            return reply('❌ Could not verify image URL. Please check the link');
-        }
-
-        // Update in-memory config
+        // Update config
         config.BOT_IMAGE = imageUrl;
         process.env.BOT_IMAGE = imageUrl;
 
-        reply(`✅ *Bot Menu Image Updated Successfully!*\n\nNew Image URL: ${imageUrl}`);
+        reply(`✅ *Bot image updated!*\n\nNew image: ${imageUrl}`);
 
     } catch (error) {
-        console.error('UpdateBotImage Error:', error);
-        reply('❌ Failed to update image. Error: ' + error.message);
+        console.error('Update error:', error);
+        reply(`❌ Error: ${error.message}`);
     }
 });
 
-// Better URL validation function
-function isValidImageUrl(url) {
-    try {
-        new URL(url); // First validate it's a proper URL
-        
-        // Check for image extensions (case insensitive)
-        const imageExtensions = /\.(jpg|jpeg|png|gif|webp)(?:$|\?)/i;
-        return imageExtensions.test(url);
-    } catch {
-        return false;
-    }
-}
-
-// Improved upload function
+// Simple image uploader
 async function uploadImage(buffer) {
     try {
         const form = new FormData();
         form.append('image', buffer.toString('base64'));
         
-        // Using free image hosting service (replace with your own if needed)
-        const { data } = await axios.post('https://api.imgbb.com/1/upload?key=YOUR_API_KEY', form, {
-            headers: form.getHeaders()
-        });
-        
+        // Using free image host (replace with your own)
+        const { data } = await axios.post('https://api.imgbb.com/1/upload?key=YOUR_API_KEY', form);
         return data.data.url || data.data.display_url;
     } catch (e) {
-        console.error('Upload failed:', e);
+        console.error('Upload error:', e);
         return null;
     }
 }
