@@ -42,9 +42,9 @@ const {
   const Crypto = require('crypto')
   const path = require('path')
   const prefix = config.PREFIX
-  const leven = require('fast-levenshtein');
-const config = require('./config');
-const { commands } = require('./command');
+  // const leven = require('fast-levenshtein');
+// const config = require('./config');
+// const { commands } = require('./command');
 
 
   const ownerNumber = ['263719647303']
@@ -137,7 +137,7 @@ const port = process.env.PORT || 9090;
   //============================== 
 // ========== PASTE THIS AT THE TOP OF YOUR IMPORTS ==========
 // ========== PASTE THIS RIGHT AFTER YOUR 'messages.upsert' HANDLER STARTS ==========
-conn.ev.on('messages.upsert', async ({ messages }) => {
+/* conn.ev.on('messages.upsert', async ({ messages }) => {
     const m = messages[0];
     if (!m.message) return;
     
@@ -169,7 +169,7 @@ conn.ev.on('messages.upsert', async ({ messages }) => {
     // 2. YOUR EXISTING MESSAGE HANDLING CODE BELOW
     // ... (keep all your current code here)
 });
-	 
+*/	 
   //=============readstatus=======
         
   conn.ev.on('messages.upsert', async(mek) => {
