@@ -1,4 +1,4 @@
-const { cmd } = require('../command');
+/*const { cmd } = require('../command');
 const Jimp = require('jimp');
 const axios = require('axios');
 const FormData = require('form-data');
@@ -203,3 +203,4 @@ cmd({
         reply("Detection service unavailable");
     }
 });
+*/
