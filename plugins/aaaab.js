@@ -1,8 +1,7 @@
 const config = require('../config');
-const fs = require('fs');
-const path = require('path');
 const axios = require('axios');
 const { cmd } = require('../command');
+const FormData = require('form-data'); // Add this at top
 
 cmd({
     pattern: "updatebotimage",
@@ -15,7 +14,6 @@ cmd({
     try {
         if (!isOwner) return reply('Sorry, only the bot owner can use this command.');
 
-        // Check if there's a quoted image or URL provided
         if (!quoted?.image && !m.text) {
             return reply(`Please provide either:
 1. An image URL: *${config.PREFIX}updatebotimage [url]*
@@ -27,15 +25,13 @@ cmd({
         // Handle quoted image
         if (quoted?.image) {
             const buffer = await conn.downloadMediaMessage(quoted);
-            
-            // Upload to temporary host (implement your preferred service)
             const uploaded = await uploadImage(buffer);
             if (!uploaded) return reply('Failed to upload image');
             imageUrl = uploaded;
         }
 
-        // Validate URL
-        if (!imageUrl.match(/^https?:\/\/.+\/.+\.(jpg|jpeg|png|gif|webp)/i)) {
+        // Improved URL validation
+        if (!isValidImageUrl(imageUrl)) {
             return reply('❌ Invalid image URL! Must be direct image link (jpg/png/gif/webp)');
         }
 
@@ -61,18 +57,31 @@ cmd({
     }
 });
 
-// Implement your preferred image upload service
+// Better URL validation function
+function isValidImageUrl(url) {
+    try {
+        new URL(url); // First validate it's a proper URL
+        
+        // Check for image extensions (case insensitive)
+        const imageExtensions = /\.(jpg|jpeg|png|gif|webp)(?:$|\?)/i;
+        return imageExtensions.test(url);
+    } catch {
+        return false;
+    }
+}
+
+// Improved upload function
 async function uploadImage(buffer) {
     try {
-        // Example using ImgBB (replace with your preferred service)
         const form = new FormData();
         form.append('image', buffer.toString('base64'));
         
+        // Using free image hosting service (replace with your own if needed)
         const { data } = await axios.post('https://api.imgbb.com/1/upload?key=YOUR_API_KEY', form, {
             headers: form.getHeaders()
         });
         
-        return data.data.url;
+        return data.data.url || data.data.display_url;
     } catch (e) {
         console.error('Upload failed:', e);
         return null;
