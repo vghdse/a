@@ -32,3 +32,30 @@ cmd({
     reply(`✅ Reminder set for ${moment(remindTime).format('LLL')}`);
 });
 */
+const pdf = require('pdf-parse');
+const fs = require('fs');
+
+cmd({
+    pattern: "pdftext",
+    alias: ["extracttext"],
+    desc: "Extract text from PDFs",
+    category: "utility",
+    react: "📄",
+    filename: __filename
+}, async (conn, mek, m, { quoted, reply }) => {
+    if (!quoted?.document || !quoted.mimetype.includes('pdf')) {
+        return reply("❌ Reply to a PDF file");
+    }
+
+    const buffer = await quoted.download();
+    const tempPath = './temp.pdf';
+    fs.writeFileSync(tempPath, buffer);
+
+    try {
+        const data = await pdf(fs.readFileSync(tempPath));
+        const text = data.text.slice(0, 2000); // Limit to 2000 chars
+        reply(`📄 Extracted Text:\n\n${text || "No text found"}`);
+    } finally {
+        fs.unlinkSync(tempPath);
+    }
+});
