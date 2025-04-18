@@ -35,11 +35,11 @@ cmd({
         // Send the meme image
         await conn.sendMessage(from, {
             image: { url: data.url },
-            caption: `*${data.title}*\n_From r/${data.subreddit}_`,
+            caption: `*${data.title}*\n\n> _From r/${data.subreddit}_`,
             contextInfo: {
                 externalAdReply: {
                     title: "Random Meme Generator",
-                    body: "Powered by meme-api.com",
+                    body: "Powered by Mr Frank 🦋",
                     thumbnail: { url: data.url }
                 }
             }
