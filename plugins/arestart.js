@@ -1,3 +1,8 @@
+const { cmd, commands } = require('../command');
+const config = require('../config');
+const fs = require('fs');
+const path = require('path');
+
 cmd({
     pattern: "setprefix",
     alias: ["prefix"],
@@ -18,23 +23,35 @@ cmd({
         return reply("❌ Prefix must be 1-3 characters with no spaces");
     }
 
-    // Update in THREE places:
-    // 1. Config
+    // 1. Update config file permanently
+    const configPath = path.join(__dirname, '../config.js');
+    let configFile = fs.readFileSync(configPath, 'utf8');
+    configFile = configFile.replace(
+        /(PREFIX\s*:\s*['"`]).*?(['"`])/,
+        `$1${newPrefix}$2`
+    );
+    fs.writeFileSync(configPath, configFile);
+
+    // 2. Update in-memory config
     config.PREFIX = newPrefix;
-    
-    // 2. Command handler (critical!)
+
+    // 3. Update command handler prefix
     const cmdHandler = require('../command');
     cmdHandler.prefix = newPrefix;
-    
-    // 3. Command collection (if exists)
-    if (cmdHandler.commands) {
-        cmdHandler.commands.prefix = newPrefix;
-    }
 
-    // Force reload commands (if needed)
-    if (cmdHandler.loadCommands) {
-        cmdHandler.loadCommands(newPrefix);
-    }
+    // 4. Update all registered commands
+    Object.keys(commands).forEach(oldPattern => {
+        // Remove old command
+        const cmdObj = commands[oldPattern];
+        delete commands[oldPattern];
+        
+        // Register with new prefix
+        const newPattern = oldPattern.replace(
+            new RegExp(`^\\${config.PREFIX}`), 
+            newPrefix
+        );
+        commands[newPattern] = cmdObj;
+    });
 
-    return reply(`✅ Prefix changed to *${newPrefix}*\n\nExample: *${newPrefix}menu*\n\n⚠️ Restarting bot may be required for full effect`);
+    return reply(`✅ Prefix changed to *${newPrefix}*\n\nExample: *${newPrefix}menu*`);
 });
