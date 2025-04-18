@@ -169,29 +169,33 @@ cmd({
 
     const newPrefix = args[0]?.trim();
     
-    // Show current prefix if no argument
     if (!newPrefix) {
         return reply(`📌 Current prefix: *${config.PREFIX}*\n\nUsage: *${config.PREFIX}setprefix !*`);
     }
 
-    // Validate prefix (1-3 characters, no spaces)
     if (newPrefix.length > 3 || /\s/.test(newPrefix)) {
         return reply("❌ Prefix must be 1-3 characters with no spaces");
     }
 
-    // Special characters that might break the bot
-    const forbiddenChars = ["\\", "/", "'", '"', "`"];
-    if (forbiddenChars.some(char => newPrefix.includes(char))) {
-        return reply("❌ Invalid prefix character (avoid \\ / ' \" `)");
-    }
-
-    // Update prefix in memory
+    // Update in THREE places:
+    // 1. Config
     config.PREFIX = newPrefix;
     
-    // Update in commands collection (critical!)
-    require('../command').prefix = newPrefix;
+    // 2. Command handler (critical!)
+    const cmdHandler = require('../command');
+    cmdHandler.prefix = newPrefix;
+    
+    // 3. Command collection (if exists)
+    if (cmdHandler.commands) {
+        cmdHandler.commands.prefix = newPrefix;
+    }
 
-    return reply(`✅ Prefix changed to *${newPrefix}*\n\nExample: *${newPrefix}menu*`);
+    // Force reload commands (if needed)
+    if (cmdHandler.loadCommands) {
+        cmdHandler.loadCommands(newPrefix);
+    }
+
+    return reply(`✅ Prefix changed to *${newPrefix}*\n\nExample: *${newPrefix}menu*\n\n⚠️ Restarting bot may be required for full effect`);
 });
 
 
