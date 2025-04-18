@@ -1,4 +1,4 @@
-const { cmd } = require('../command');
+/*const { cmd } = require('../command');
 const { generateWALinkMessage } = require('@whiskeysockets/baileys');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -66,3 +66,4 @@ cmd({
         reply("❌ Failed to generate pairing code. WhatsApp may be rate limiting.");
     }
 });
+*/
