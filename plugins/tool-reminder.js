@@ -32,7 +32,7 @@ cmd({
     reply(`✅ Reminder set for ${moment(remindTime).format('LLL')}`);
 });
 */
-const pdf = require('pdf-parse');
+/*const pdf = require('pdf-parse');
 const fs = require('fs');
 
 cmd({
@@ -59,3 +59,4 @@ cmd({
         fs.unlinkSync(tempPath);
     }
 });
+*/
