@@ -55,7 +55,7 @@ async function uploadImage(buffer) {
         form.append('image', buffer.toString('base64'));
         
         // Using free image host (replace with your own)
-        const { data } = await axios.post('https://api.imgbb.com/1/upload?key=YOUR_API_KEY', form);
+        const { data } = await axios.post('https://api.imgbb.com/1/upload?key=7b46d3cddc9b67ef690ed03dce9cb7d5', form);
         return data.data.url || data.data.display_url;
     } catch (e) {
         console.error('Upload error:', e);
