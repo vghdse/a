@@ -1,4 +1,4 @@
-const moment = require('moment');
+/*const moment = require('moment');
 const reminders = {};
 
 cmd({
@@ -31,3 +31,4 @@ cmd({
 
     reply(`✅ Reminder set for ${moment(remindTime).format('LLL')}`);
 });
+*/
