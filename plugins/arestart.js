@@ -4,74 +4,87 @@ const path = require('path');
 const { cmd } = require('../command');
 const config = require('../config');
 
-// ===== UTILITY FUNCTIONS =====
-function formatTime(timestamp) {
-    if (!timestamp) return "Unknown";
-    const date = new Date(timestamp);
-    return date.toLocaleString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    });
-}
+//const { cmd } = require('../command');
 
-// ===== ACTIVE GROUP MEMBERS PLUGIN =====
 cmd({
     pattern: "active",
-    alias: ["activelist"],
-    desc: "List all active group members",
+    desc: "List members by last interaction time",
     category: "group",
-    react: "👥",
+    react: "🕒",
     filename: __filename
 }, async (conn, mek, m, { groupMetadata, reply }) => {
-    if (!m.isGroup) return reply("❌ Group command only");
+    if (!m.isGroup) return reply("❌ Group only command");
     
-    const activeMembers = groupMetadata.participants
-        .sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0))
-        .map((p, i) => `${i+1}. @${p.id.split('@')[0]} ${p.isAdmin ? '👑' : ''} (Last: ${formatTime(p.lastSeen)})`);
+    // Get members with last message timestamps
+    const members = await Promise.all(
+        groupMetadata.participants.map(async p => {
+            const msgs = await conn.loadMessages(m.chat, { limit: 1, fromMe: false, userId: p.id });
+            return {
+                id: p.id,
+                admin: p.isAdmin,
+                lastActive: msgs[0]?.messageTimestamp || 0
+            };
+        })
+    );
 
-    await reply(`🔄 *Active Members* (${activeMembers.length})\n\n${activeMembers.join('\n')}`);
+    // Sort by last activity
+    const sorted = members.sort((a,b) => b.lastActive - a.lastActive);
+    
+    // Format output
+    const list = sorted.map((p,i) => 
+        `${i+1}. @${p.id.split('@')[0]}${p.admin ? ' 👑' : ''} - ${p.lastActive ? 
+        new Date(p.lastActive * 1000).toLocaleString() : 'Never'}`);
+    
+    reply(`🕒 *Last Active Members*\n\n${list.join('\n')}`);
 });
 
-// ===== ONLINE CONTACTS TRACKER PLUGIN =====
 cmd({
     pattern: "online",
-    alias: ["whosonline"],
-    desc: "Check who's online in your contacts",
+    desc: "Detect currently online users",
     category: "utility",
     react: "🟢",
     filename: __filename
 }, async (conn, mek, m, { reply }) => {
-    await reply("🔍 Scanning online contacts (30 seconds)...");
+    await reply("🕵️ Scanning online status for 60 seconds...");
     
-    const onlineUsers = new Set();
-    const startTime = Date.now();
+    const onlineUsers = new Map(); // Store with last seen timestamp
     
-    const statusHandler = (update) => {
-        if (update.status === "online" && update.id !== conn.user.id) {
-            onlineUsers.add(update.id);
+    const presenceHandler = ({ id, status }) => {
+        if (id !== conn.user.id) {
+            onlineUsers.set(id, { 
+                status,
+                lastUpdated: Date.now() 
+            });
         }
     };
     
-    conn.ev.on('presence.update', statusHandler);
+    // Start listening
+    conn.ev.on('presence-update', presenceHandler);
     
-    await new Promise(resolve => setTimeout(resolve, 30000));
-    conn.ev.off('presence.update', statusHandler);
+    // Scan for 60 seconds
+    await new Promise(resolve => setTimeout(resolve, 60000));
     
-    const results = [];
-    for (const id of onlineUsers) {
-        try {
-            const contact = await conn.getContactById(id);
-            results.push(`• ${contact?.notify || id.split('@')[0]}`);
-        } catch (e) {
-            results.push(`• ${id.split('@')[0]}`);
-        }
-    }
+    // Stop listening
+    conn.ev.off('presence-update', presenceHandler);
     
-    await reply(`🟢 *Online Contacts* (${results.length})\n\n${results.join('\n') || "None detected"}\n\n⏳ Scanned for 30 seconds`);
+    // Filter users seen online in last 2 minutes
+    const recentlyOnline = Array.from(onlineUsers.entries())
+        .filter(([_, data]) => 
+            data.status === 'online' || 
+            (data.status === 'available' && Date.now() - data.lastUpdated < 120000)
+        );
+    
+    // Get contact details
+    const results = await Promise.all(
+        recentlyOnline.map(async ([id]) => {
+            try {
+                const contact = await conn.getContactById(id);
+                return `• ${contact?.notify || id.split('@')[0]}`;
+            } catch {
+                return `• ${id.split('@')[0]}`;
+            }
+        })
+    );
+    
+    reply(`🟢 *Recently Online* (${results.length})\n\n${results.join('\n') || "None"}\n\nScan duration: 60s`);
 });
-
-// ===== EXPORTS =====
-module.exports = {
-    formatTime
-};
