@@ -1,4 +1,4 @@
-// *▧ ᴛɪᴍᴇ* : ${getHarareTime()} ⌛
+  // *▧ ᴛɪᴍᴇ* : ${getHarareTime()} ⌛
 const config = require('../config');
 const { cmd, commands } = require('../command');
 const os = require("os");
@@ -36,7 +36,7 @@ async function getBotVersion() {
     }
 }
 
-const imageUrl = config.BOT_IMAGE || process.env.BOT_IMAGE || 'https://i.postimg.cc/WpQLCg85/White-and-Green-Simple-Professional-Business-Project-Presentation.jpg';
+const imageUrl = process.env.BOT_IMAGE || config.BOT_IMAGE ||  'https://i.postimg.cc/WpQLCg85/White-and-Green-Simple-Professional-Business-Project-Presentation.jpg';
 
 cmd({
     pattern: "menu",
