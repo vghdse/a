@@ -22,121 +22,100 @@ cmd({
     category: "settings",
     filename: __filename,
 }, async (conn, mek, m, { from, isOwner, reply }) => {
-    if (!isOwner) return reply("*📛 Only the owner can use this command!*");
+    // if (!isOwner) return reply("*📛 Only the owner can use this command!*");
 
     const cmdList = `
     ----------------------------------------
     \`\`\`SUBZERO SETTINGS\`\`\`
- -----------------------------------------
- 
-🔧 *1. Mode*
+    -----------------------------------------
+    
+🔧 *1. \`Mode\`*
    - Current Status: ${config.MODE || "public"}
-   - Usage.: ${config.PREFIX}mode private/public
+   - Usage: ${config.PREFIX}mode private/public
 
-🎯 *2. Auto Typing*
+🎯 *2. \`Auto Typing\`*
    - Current Status: ${config.AUTO_TYPING || "off"}
    - Usage: ${config.PREFIX}autotyping on/off
 
-🌐 *3. Always Online*
+🌐 *3. \`Always Online\`*
    - Current Status: ${config.ALWAYS_ONLINE || "off"}
    - Usage: ${config.PREFIX}alwaysonline on/off
 
-🎙️ *4. Auto Recording*
+🎙️ *4. \`Auto Recording\`*
    - Current Status: ${config.AUTO_RECORDING || "off"}
    - Usage: ${config.PREFIX}autorecording on/off
 
-📖 *5. Auto Read Status*
+📖 *5. \`Auto Read Status\`*
    - Current Status: ${config.AUTO_STATUS_REACT || "off"}
    - Usage: ${config.PREFIX}autoreadstatus on/off
 
-🚫 *6. Anti Bad Word*
+🚫 *6. \`Anti Bad Word\`*
    - Current Status: ${config.ANTI_BAD_WORD || "off"}
    - Usage: ${config.PREFIX}antibad on/off
 
-🗑️ *#. Anti Delete*
-   - Current Status: ${config.ANTI_BAD_WORD || "off"}
+🗑️ *7. \`Anti Delete\`*
+   - Current Status: ${config.ANTI_DELETE || "off"}
    - Usage: ${config.PREFIX}antidelete on/off
 
-
-🖼️ *7. Auto Sticker*
+🖼️ *8. \`Auto Sticker\`*
    - Current Status: ${config.AUTO_STICKER || "off"}
    - Usage: ${config.PREFIX}autosticker on/off
 
-💬 *8. Auto Reply*
+💬 *9. \`Auto Reply\`*
    - Current Status: ${config.AUTO_REPLY || "off"}
    - Usage: ${config.PREFIX}autoreply on/off
 
-❤️ *9. Auto React*
+❤️ *10. \`Auto React\`*
    - Current Status: ${config.AUTO_REACT || "off"}
    - Usage: ${config.PREFIX}autoreact on/off
 
-📢 *10. Status Reply*
+📢 *11. \`Status Reply\`*
    - Current Status: ${config.AUTO_STATUS_REPLY || "off"}
    - Usage: ${config.PREFIX}autostatusreply on/off
 
-🔗 *11. Anti Link*
+🔗 *12. \`Anti Link\`*
    - Current Status: ${config.ANTI_LINK || "off"}
    - Usage: ${config.PREFIX}antilink on/off
 
-🤖 *12. Anti Bot*
-   - Current Status: ${antibotAction || "off"}
+🤖 *13. \`Anti Bot\`*
+   - Current Status: ${config.ANTI_BOT || "off"}
    - Usage: ${config.PREFIX}antibot off/warn/delete/kick
 
-💖 *13. Heart React*
+💖 *14. \`Heart React\`*
    - Current Status: ${config.HEART_REACT || "off"}
    - Usage: ${config.PREFIX}heartreact on/off
 
-🔧 *14. Set Prefix*
+🔧 *15. \`Set Prefix\`*
    - Current Prefix: ${config.PREFIX || "."}
    - Usage: ${config.PREFIX}setprefix <new_prefix>
 
-📊 *15. Poll*
-   - Usage: ${config.PREFIX}poll question;option1,option2,...
-
-💞 *16. Random Ship*
-   - Usage: ${config.PREFIX}randomship
-
-👥 *17. New Group*
-   - Usage: ${config.PREFIX}newgc group_name;number1,number2,...
-
-🚪 *18. Exit Group*
-   - Usage: ${config.PREFIX}exit
-
-🔗 *19. Group Invite Link*
-   - Usage: ${config.PREFIX}invite2
-
-📢 *20. Broadcast*
-   - Usage: ${config.PREFIX}broadcast <text>
-
-🖼️ *21. Set Group Profile Picture*
-   - Usage: ${config.PREFIX}setgrouppp (reply to an image)
-
-📌 *Note*: Replace "on/off" with the desired state to enable or disable a feature.
+📌 *Note*: Replace \`"on/off"\` with the desired state to enable or disable a feature.
 `;
 
     try {
-        // Download the image
-        const imageResponse = await axios.get('https://files.catbox.moe/18il7k.jpg', {
-            responseType: 'arraybuffer'
-        });
-        const imageBuffer = Buffer.from(imageResponse.data, 'binary');
-
-        // Send message with image and your original text
+        // First try to send with image attachment
         await conn.sendMessage(from, {
-            image: imageBuffer,
+            image: { url: 'https://files.catbox.moe/18il7k.jpg' },
             caption: cmdList
         }, { quoted: mek });
-
-    } catch (error) {
-        console.error('Image load error:', error);
-        // Fallback to text-only if image fails
-        return reply(cmdList);
+    } catch (e) {
+        console.error('Error sending with image:', e);
+        try {
+            // Fallback to text only if image fails
+            await conn.sendMessage(from, { 
+                text: cmdList 
+            }, { quoted: mek });
+        } catch (error) {
+            console.error('Error sending text:', error);
+            // Final fallback to simple reply
+            await reply(cmdList);
+        }
     }
 });
 
 // SETTINGS OVER
 
-/*
+
 cmd({
     pattern: "setprefix",
     alias: ["prefix"],
@@ -155,49 +134,9 @@ cmd({
 
     return reply(`✅ Prefix successfully changed to *${newPrefix}*`);
 });
-*/
 
-cmd({
-    pattern: "setprefix",
-    alias: ["prefix"],
-    react: "🔧",
-    desc: "Change the bot's command prefix",
-    category: "settings",
-    filename: __filename
-}, async (conn, mek, m, { from, args, isOwner, reply }) => {
-    if (!isOwner) return reply("*📛 Only the owner can use this command!*");
 
-    const newPrefix = args[0]?.trim();
-    
-    if (!newPrefix) {
-        return reply(`📌 Current prefix: *${config.PREFIX}*\n\nUsage: *${config.PREFIX}setprefix !*`);
-    }
-
-    if (newPrefix.length > 3 || /\s/.test(newPrefix)) {
-        return reply("❌ Prefix must be 1-3 characters with no spaces");
-    }
-
-    // Update in THREE places:
-    // 1. Config
-    config.PREFIX = newPrefix;
-    
-    // 2. Command handler (critical!)
-    const cmdHandler = require('../command');
-    cmdHandler.prefix = newPrefix;
-    
-    // 3. Command collection (if exists)
-    if (cmdHandler.commands) {
-        cmdHandler.commands.prefix = newPrefix;
-    }
-
-    // Force reload commands (if needed)
-    if (cmdHandler.loadCommands) {
-        cmdHandler.loadCommands(newPrefix);
-    }
-
-    return reply(`✅ Prefix changed to *${newPrefix}*\n\nExample: *${newPrefix}menu*\n\n⚠️ Restarting bot may be required for full effect`);
-});
-
+// ===========
 
 cmd({
     pattern: "mode",
@@ -923,4 +862,3 @@ cmd({
         return reply("*🔥 Example: .heartreact on* or *[.heartreact off]*");
     }
 });
-
