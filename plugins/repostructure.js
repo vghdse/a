@@ -12,7 +12,7 @@ cmd({
 }, async (conn, mek, m, { reply }) => {
     try {
         // Get repo from config or use default
-        const repoUrl = config.REPO || "https://github.com/mrfr4nkk/SUBZERO";
+        const repoUrl =  "https://github.com/takudzwa07/SB" || config.REPO ;
         const repoPath = repoUrl.replace('https://github.com/', '');
         const [owner, repo] = repoPath.split('/');
         
