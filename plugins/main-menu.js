@@ -36,7 +36,7 @@ async function getBotVersion() {
     }
 }
 
-const imageUrl = process.env.BOT_IMAGE || config.BOT_IMAGE ||  'https://i.postimg.cc/WpQLCg85/White-and-Green-Simple-Professional-Business-Project-Presentation.jpg';
+const imageUrl = config.BOT_IMAGE ||  'https://i.postimg.cc/WpQLCg85/White-and-Green-Simple-Professional-Business-Project-Presentation.jpg';
 
 cmd({
     pattern: "menu",
