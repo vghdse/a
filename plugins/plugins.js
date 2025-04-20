@@ -16,7 +16,7 @@ cmd({
 }, async (conn, mek, m, { reply }) => {
     try {
         // Get repo from config or use default
-        const repoUrl = config.REPO || "https://github.com/mrfrank-ofc/SUBZERO";
+        const repoUrl = config.REPO || "https://github.com/takudzwa07/SB";
         const repoPath = repoUrl.replace('https://github.com/', '');
         const [owner, repo] = repoPath.split('/');
         
@@ -41,7 +41,7 @@ cmd({
         pluginCache = plugins;
 
         // Format list
-        let list = "📂 *Available Plugins:*\n\n";
+        let list = "📂 *Subzero Available Plugins:*\n\n";
         plugins.forEach((plugin, i) => {
             list += `${i+1}. ${plugin.name}\n`;
         });
