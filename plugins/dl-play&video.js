@@ -27,7 +27,7 @@ const Config = require('../config');
 cmd(
     {
         pattern: 'play',
-        alias: ['song', 'ytaudio'],
+        alias: ['ytmp3', 'ytaudio','yta'],
         desc: 'Download YouTube songs',
         category: 'media',
         use: '<song name or YouTube URL>',
