@@ -45,10 +45,9 @@ const {
   // const leven = require('fast-levenshtein');
 // const config = require('./config');
 // const { commands } = require('./command');
-
-
   const ownerNumber = ['263719647303']
-  
+
+  //=============================================
   const tempDir = path.join(os.tmpdir(), 'cache-temp')
   if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir)
@@ -64,68 +63,240 @@ const {
           }
       });
   }
-  
+//=============================================
   // Clear the temp directory every 5 minutes
   setInterval(clearTempDir, 5 * 60 * 1000);
-  
-  //===================SESSION-AUTH============================
-if (!fs.existsSync(__dirname + '/sessions/creds.json')) {
-if(!config.SESSION_ID) return console.log('Please add your Subzero session to SESSION_ID env !!')
-const sessdata = config.SESSION_ID.replace("SUBZERO-MD~", '');
-const filer = File.fromURL(`https://mega.nz/file/${sessdata}`)
-filer.download((err, data) => {
-if(err) throw err
-fs.writeFile(__dirname + '/sessions/creds.json', data, () => {
-console.log("Session downloaded ✅")
-})})}
+
+//=============================================
 
 const express = require("express");
 const app = express();
-const port = process.env.PORT || 9090;
+const port = process.env.PORT || 7860;
   
-  //=============================================
-  
- async function connectToWA() {
-  console.log("[❄️] SubZero Connecting to WhatsApp ⏳️...");
-  const { state, saveCreds } = await useMultiFileAuthState(__dirname + '/sessions/')
-  var { version } = await fetchLatestBaileysVersion()
-  
-  const conn = makeWASocket({
-          logger: P({ level: 'silent' }),
-          printQRInTerminal: false,
-          browser: Browsers.macOS("Firefox"),
-          syncFullHistory: true,
-          auth: state,
-          version
-          })
-      
-  conn.ev.on('connection.update', (update) => {
-  const { connection, lastDisconnect } = update
-  if (connection === 'close') {
-  if (lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut) {
-  connectToWA()
-  }
-  } else if (connection === 'open') {
-  console.log('[❄️] SubZero MD connected to whatsapp ✅')
- // console.log('[❄️]  Installing  Subzero Plugins.')
-  const path = require('path');
-  fs.readdirSync("./plugins/").forEach((plugin) => {
-  if (path.extname(plugin).toLowerCase() == ".js") {
-  require("./plugins/" + plugin);
-  }
-  });
-  console.log('[❄️] Plugins installed successful ✅')
-  console.log('[❄️] SubZero MD connected to whatsapp ✅')
-  
-  let up = `\`SubZero Bot Connected !\` ✅
-  \n\n> _Light, Cold, Icy, Fast & Rich Loaded With Features, SubZero W.A Bot._\n\n────────────────\n> ᴄʜᴀɴɴᴇʟ 🖇️:\n https://whatsapp.com/channel/0029VagQEmB002T7MWo3Sj1D\n\n> ᴅᴇᴠᴇʟᴏᴘᴇʀ 🧑‍💻:\n ${config.REPO}\n\n────────────────\n❆ *𝙋𝙍𝙀𝙁𝙄𝙓 ➜*  ${prefix}\n────────────────\n\n> © ᴘϙᴡᴇʀᴇᴅ ʙʏ ᴍʀ ꜰʀᴀɴᴋ ᴏꜰᴄ  🎐`;
-  conn.sendMessage(conn.user.id, { image: { url: `https://i.postimg.cc/G365KsMt/IMG-20250224-WA0005.jpg` }, caption: up })
-  }
-  })
- conn.ev.on('creds.update', saveCreds)  
   
 
-	 //======{={{=
+//===================SESSION-AUTH============================
+
+const sessionDir = path.join(__dirname, 'sessions');
+const credsPath = path.join(sessionDir, 'creds.json');
+
+// Create session directory if it doesn't exist
+if (!fs.existsSync(sessionDir)) {
+    fs.mkdirSync(sessionDir, { recursive: true });
+}
+
+const SESSIONS_BASE_URL = 'https://subzero-md.koyeb.app'; // Your Backend URL
+const SESSIONS_API_KEY = 'subzero-md'; // Your API Key
+
+async function loadSession() {
+    try {
+        if (!config.SESSION_ID) {
+            console.log('No SESSION_ID provided - Please put one');
+            return null;
+        }
+
+        const credsId = config.SESSION_ID;
+
+        if (!credsId.startsWith('SUBZERO-MD~')) {
+            console.log('Invalid SESSION_ID format - Must start with "SUBZERO-MD~"');
+            return null;
+        }
+
+        console.log('⏳ Downloading session credentials...');
+        
+            
+	    const response = await axios.get(`${SESSIONS_BASE_URL}/api/downloadCreds.php/${credsId}`, {
+            headers: {
+                'x-api-key': SESSIONS_API_KEY
+            }
+        });
+
+        if (!response.data.credsData) {
+            throw new Error('No credential data received from server. Re-pair for New Session ID.');
+        }
+
+        fs.writeFileSync(credsPath, JSON.stringify(response.data.credsData), 'utf8');
+       console.log('✅ Session credentials loaded successfully');
+       
+            
+	    return response.data.credsData;
+    } catch (error) {
+        console.error('❌ Error loading session:', error.response?.data || error.message);
+        return null;
+    }
+}
+
+//=============================================
+
+
+
+
+
+async function connectToWA() {
+   console.log("[❄️] SubZero Connecting to WhatsApp ⏳️...");
+    
+            
+    // Load session if available
+    await loadSession();
+    
+    const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, 'sessions'));
+    const { version } = await fetchLatestBaileysVersion();
+    
+    const conn = makeWASocket({
+    logger: P({ level: 'silent' }),
+    printQRInTerminal: !config.SESSION_ID, // Only show QR if no SESSION_ID
+    browser: Browsers.macOS("Firefox"),
+    syncFullHistory: true,
+    auth: state,
+    version,
+    getMessage: async () => ({}) // Empty message handler
+});
+	
+    conn.ev.on('connection.update', async (update) => {
+        const { connection, lastDisconnect, qr } = update;
+        
+        if (connection === 'close') {
+            if (lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut) {
+                console.log('[❄️] Connection lost, reconnecting...');
+                setTimeout(connectToWA, 5000);
+            } else {
+                console.log('[❄️] Connection closed, please change session ID');
+            }
+        } else if (connection === 'open') {
+            console.log('[❄️] SubZero MD connected to WhatsApp ✅');
+            
+            
+            // Load plugins
+            const pluginPath = path.join(__dirname, 'plugins');
+            fs.readdirSync(pluginPath).forEach((plugin) => {
+                if (path.extname(plugin).toLowerCase() === ".js") {
+                    require(path.join(pluginPath, plugin));
+                }
+            });
+            console.log('[❄️] Plugins installed successfully ✅');
+
+            
+                // Send connection message
+     	
+                try {
+		const username = config.REPO.split('/').slice(3, 4)[0];
+                const mrfrank = `https://github.com/${username}`;
+		
+                    const upMessage = `\`SubZero Bot Connected!\` ✅
+\n\n> _Light, Cold, Icy, Fast & Rich Loaded With Features, SubZero W.A Bot._\n\n────────────────
+> 🌟 \`Star Repo\` : 
+${config.REPO}\n
+> 🎀 \`Follow Us\` :
+${mrfrank}\n
+> ⛔  \`Bot Prefix\` ${prefix}
+────────────────
+\n> © ᴘϙᴡᴇʀᴇᴅ ʙʏ ᴍʀ ꜰʀᴀɴᴋ ᴏꜰᴄ  🎐`;
+                    
+                    await conn.sendMessage(conn.user.id, { 
+                        image: { url: `https://i.postimg.cc/rFTsg8qP/Black-and-Green-Modern-Finance-Business-Report-Presentation.png` }, 
+                        caption: upMessage 
+                    });
+			// https://i.postimg.cc/Pr77rxj0/Blue-and-White-Simple-Business-Plan-Presentation.png
+			// https://i.postimg.cc/G365KsMt/IMG-20250224-WA0005.jpg
+
+                    // Send settings menu after connection message
+                    const cmdList = ` ----------------------------------------
+    \`\`\`SUBZERO BOT SETTINGS\`\`\`
+    -----------------------------------------
+    
+🔧 *1. \`Mode\`*
+   - Current Status: ${config.MODE || "public"}
+   - Usage: ${config.PREFIX}mode private/public
+
+🎯 *2. \`Auto Typing\`*
+   - Current Status: ${config.AUTO_TYPING || "off"}
+   - Usage: ${config.PREFIX}autotyping on/off
+
+🌐 *3. \`Always Online\`*
+   - Current Status: ${config.ALWAYS_ONLINE || "off"}
+   - Usage: ${config.PREFIX}alwaysonline on/off
+
+🎙️ *4. \`Auto Recording\`*
+   - Current Status: ${config.AUTO_RECORDING || "off"}
+   - Usage: ${config.PREFIX}autorecording on/off
+
+📖 *5. \`Auto Read Status\`*
+   - Current Status: ${config.AUTO_STATUS_REACT || "off"}
+   - Usage: ${config.PREFIX}autoreadstatus on/off
+
+👀 *#. \`Auto View Status\`*
+   - Current Status: ${config.AUTO_STATUS_VIEW || "off"}
+   - Usage: ${config.PREFIX}autoviewstatus on/off
+
+🚫 *6. \`Anti Bad Word\`*
+   - Current Status: ${config.ANTI_BAD_WORD || "off"}
+   - Usage: ${config.PREFIX}antibad on/off
+
+🗑️ *7. \`Anti Delete\`*
+   - Current Status: ${config.ANTI_DELETE || "off"}
+   - Usage: ${config.PREFIX}antidelete on/off
+
+🖼️ *8. \`Auto Sticker\`*
+   - Current Status: ${config.AUTO_STICKER || "off"}
+   - Usage: ${config.PREFIX}autosticker on/off
+
+💬 *9. \`Auto Reply\`*
+   - Current Status: ${config.AUTO_REPLY || "off"}
+   - Usage: ${config.PREFIX}autoreply on/off
+
+❤️ *10. \`Auto React\`*
+   - Current Status: ${config.AUTO_REACT || "off"}
+   - Usage: ${config.PREFIX}autoreact on/off
+
+📢 *11. \`Status Reply\`*
+   - Current Status: ${config.AUTO_STATUS_REPLY || "off"}
+   - Usage: ${config.PREFIX}autostatusreply on/off
+
+🔗 *12. \`Anti Link\`*
+   - Current Status: ${config.ANTI_LINK || "off"}
+   - Usage: ${config.PREFIX}antilink on/off
+
+🤖 *13. \`Anti Bot\`*
+   - Current Status: ${config.ANTI_BOT || "off"}
+   - Usage: ${config.PREFIX}antibot off/warn/delete/kick
+
+💖 *14. \`Heart React\`*
+   - Current Status: ${config.HEART_REACT || "off"}
+   - Usage: ${config.PREFIX}heartreact on/off
+
+🔧 *15. \`Set Prefix\`*
+   - Current Prefix: ${config.PREFIX || "."}
+   - Usage: ${config.PREFIX}setprefix <new_prefix>
+
+🔄 *16. \`Auto Bio\`*
+   - Current Status: ${config.AUTO_BIO || "off"}
+   - Usage: ${config.PREFIX}autobio on/off [custom text]
+
+📌 *Note*: Replace \`"on/off"\` with the desired state to enable or disable a feature.
+                    `;
+
+                    await conn.sendMessage(conn.user.id, {
+                        image: { url: 'https://i.postimg.cc/3wRtHQyn/Dark-Blue-and-White-Simple-Thesis-Defense-Presentation.png' },
+                        caption: cmdList
+                    });
+                    
+                } catch (sendError) {
+                    console.error('[❄️] Error sending messages:', sendError);
+                }
+            }
+
+        if (qr) {
+            console.log('[❄️] Scan the QR code to connect or use session ID');
+        }
+    });
+
+    conn.ev.on('creds.update', saveCreds);
+
+    
+
+
+// =====================================
+	 
   conn.ev.on('messages.update', async updates => {
     for (const update of updates) {
       if (update.update.message === null) {
@@ -134,43 +305,9 @@ const port = process.env.PORT || 9090;
       }
     }
   });
-  //============================== 
-// ========== PASTE THIS AT THE TOP OF YOUR IMPORTS ==========
-// ========== PASTE THIS RIGHT AFTER YOUR 'messages.upsert' HANDLER STARTS ==========
-/* conn.ev.on('messages.upsert', async ({ messages }) => {
-    const m = messages[0];
-    if (!m.message) return;
-    
-    // 1. Typo Correction Handler (PASTE THIS FIRST)
-    const body = m.message.conversation || m.message.extendedTextMessage?.text || '';
-    if (body.startsWith(config.PREFIX)) {
-        const typedCmd = body.trim().split(/\s+/)[0].slice(config.PREFIX.length).toLowerCase();
-        const availableCommands = Object.keys(commands);
-        
-        if (!availableCommands.includes(typedCmd)) {
-            const suggestions = availableCommands
-                .map(cmd => ({ cmd, score: leven.get(typedCmd, cmd) }))
-                .filter(({ score }) => score <= 2)
-                .sort((a, b) => a.score - b.score)
-                .slice(0, 3)
-                .map(s => `${config.PREFIX}${s.cmd}`);
-            
-            if (suggestions.length) {
-                await conn.sendMessage(
-                    m.key.remoteJid, 
-                    { text: `❌ Unknown command. Did you mean:\n• ${suggestions.join('\n• ')}` },
-                    { quoted: m }
-                );
-                return; // Stop processing invalid commands
-            }
-        }
-    }
+	
 
-    // 2. YOUR EXISTING MESSAGE HANDLING CODE BELOW
-    // ... (keep all your current code here)
-});
-*/	 
-  //=============readstatus=======
+  //=============READSTATUS================
         
   conn.ev.on('messages.upsert', async(mek) => {
     mek = mek.messages[0]
@@ -274,47 +411,7 @@ const port = process.env.PORT || 9090;
 
    //=========BAN SUDO=============
 	// --- Ban and Sudo Utility Code for index.js ---
-
-
-// Define paths to your JSON database files (adjust as needed)
-const banPath = path.join(__dirname, 'lib', 'ban.json');
-const sudoPath = path.join(__dirname, 'lib', 'sudo.json');
-
-// Utility function to load JSON data from a file
-const loadJSON = (filePath) => {
-  if (!fs.existsSync(filePath)) return [];
-  try {
-    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-  } catch (err) {
-    console.error(`Error reading ${filePath}: ${err}`);
-    return [];
-  }
-};
-
-// Utility function to save JSON data to a file
-const saveJSON = (filePath, data) => {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-};
-
-// Check if a user (by JID) is banned
-const isBanned = (userJid) => {
-  const banList = loadJSON(banPath);
-  return banList.includes(userJid);
-};
-
-// Check if a user (by JID) is a sudo user (i.e. has owner-level privileges)
-const isSudo = (userJid) => {
-  const sudoList = loadJSON(sudoPath);
-  return sudoList.includes(userJid);
-};
-
-// Export the functions so they can be used in your plugins
-module.exports = {
-  loadJSON,
-  saveJSON,
-  isBanned,
-  isSudo,
-};  
+ 
  //================ownerreact==============
     
   if(senderNumber.includes("18062212660")){
@@ -334,7 +431,7 @@ module.exports = {
   
   // Owner React
   if (!isReact && senderNumber === botNumber) {
-      if (config.AUTO_REACT === 'true') {
+      if (config.OWNER_REACT === 'true') {
           const reactions = ['😊', '👍', '😂', '💯', '🔥', '🙏', '🎉', '👏', '😎', '🤖', '👫', '👭', '👬', '👮', "🕴️", '💼', '📊', '📈', '📉', '📊', '📝', '📚', '📰', '📱', '💻', '📻', '📺', '🎬', "📽️", '📸', '📷', "🕯️", '💡', '🔦', '🔧', '🔨', '🔩', '🔪', '🔫', '👑', '👸', '🤴', '👹', '🤺', '🤻', '👺', '🤼', '🤽', '🤾', '🤿', '🦁', '🐴', '🦊', '🐺', '🐼', '🐾', '🐿', '🦄', '🦅', '🦆', '🦇', '🦈', '🐳', '🐋', '🐟', '🐠', '🐡', '🐙', '🐚', '🐜', '🐝', '🐞', "🕷️", '🦋', '🐛', '🐌', '🐚', '🌿', '🌸', '💐', '🌹', '🌺', '🌻', '🌴', '🏵', '🏰', '🏠', '🏡', '🏢', '🏣', '🏥', '🏦', '🏧', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏮', '🏯', '🚣', '🛥', '🚂', '🚁', '🚀', '🛸', '🛹', '🚴', '🚲', '🛺', '🚮', '🚯', '🚱', '🚫', '🚽', "🕳️", '💣', '🔫', "🕷️", "🕸️", '💀', '👻', '🕺', '💃', "🕴️", '👶', '👵', '👴', '👱', '👨', '👩', '👧', '👦', '👪', '👫', '👭', '👬', '👮', "🕴️", '💼', '📊', '📈', '📉', '📊', '📝', '📚', '📰', '📱', '💻', '📻', '📺', '🎬', "📽️", '📸', '📷', "🕯️", '💡', '🔦', '🔧', '🔨', '🔩', '🔪', '🔫', '👑', '👸', '🤴', '👹', '🤺', '🤻', '👺', '🤼', '🤽', '🤾', '🤿', '🦁', '🐴', '🦊', '🐺', '🐼', '🐾', '🐿', '🦄', '🦅', '🦆', '🦇', '🦈', '🐳', '🐋', '🐟', '🐠', '🐡', '🐙', '🐚', '🐜', '🐝', '🐞', "🕷️", '🦋', '🐛', '🐌', '🐚', '🌿', '🌸', '💐', '🌹', '🌺', '🌻', '🌴', '🏵', '🏰', '🏠', '🏡', '🏢', '🏠', '🏡', '🏢', '🏣', '🏥', '🏦', '🏧', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏮', '🏯', '🚣', '🛥', '🚂', '🚁', '🚀', '🛸', '🛹', '🚴', '🚲', '🛺', '🚮', '🚯', '🚱', '🚫', '🚽', "🕳️", '💣', '🔫', "🕷️", "🕸️", '💀', '👻', '🕺', '💃', "🕴️", '👶', '👵', '👴', '👱', '👨', '👩', '👧', '👦', '👪', '👫', '👭', '👬', '👮', "🕴️", '💼', '📊', '📈', '📉', '📊', '📝', '📚', '📰', '📱', '💻', '📻', '📺', '🎬', "📽️", '📸', '📷', "🕯️", '💡', '🔦', '🔧', '🔨', '🔩', '🔪', '🔫', '👑', '👸', '🤴', '👹', '🤺', '🤻', '👺', '🤼', '🤽', '🤾', '🤿', '🦁', '🐴', '🦊', '🐺', '🐼', '🐾', '🐿', '🦄', '🦅', '🦆', '🦇', '🦈', '🐳', '🐋', '🐟', '🐠', '🐡', '🐙', '🐚', '🐜', '🐝', '🐞', "🕷️", '🦋', '🐛', '🐌', '🐚', '🌿', '🌸', '💐', '🌹', '🌺', '🌻', '🌴', '🏵', '🏰', '🏠', '🏡', '🏢', '🏣', '🏥', '🏦', '🏧', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏮', '🏯', '🚣', '🛥', '🚂', '🚁', '🚀', '🛸', '🛹', '🚴', '🚲', '🛺', '🚮', '🚯', '🚱', '🚫', '🚽', "🕳️", '💣', '🔫', "🕷️", "🕸️", '💀', '👻', '🕺', '💃', "🕴️", '👶', '👵', '👴', '👱', '👨', '👩', '👧', '👦', '👪', '🙂', '😑', '🤣', '😍', '😘', '😗', '😙', '😚', '😛', '😝', '😞', '😟', '😠', '😡', '😢', '😭', '😓', '😳', '😴', '😌', '😆', '😂', '🤔', '😒', '😓', '😶', '🙄', '🐶', '🐱', '🐔', '🐷', '🐴', '🐲', '🐸', '🐳', '🐋', '🐒', '🐑', '🐕', '🐩', '🍔', '🍕', '🥤', '🍣', '🍲', '🍴', '🍽', '🍹', '🍸', '🎂', '📱', '📺', '📻', '🎤', '📚', '💻', '📸', '📷', '❤️', '💔', '❣️', '☀️', '🌙', '🌃', '🏠', '🚪', "🇺🇸", "🇬🇧", "🇨🇦", "🇦🇺", "🇯🇵", "🇫🇷", "🇪🇸", '👍', '👎', '👏', '👫', '👭', '👬', '👮', '🤝', '🙏', '👑', '🌻', '🌺', '🌸', '🌹', '🌴', "🏞️", '🌊', '🚗', '🚌', "🛣️", "🛫️", "🛬️", '🚣', '🛥', '🚂', '🚁', '🚀', "🏃‍♂️", "🏋️‍♀️", "🏊‍♂️", "🏄‍♂️", '🎾', '🏀', '🏈', '🎯', '🏆', '??', '⬆️', '⬇️', '⇒', '⇐', '↩️', '↪️', 'ℹ️', '‼️', '⁉️', '‽️', '©️', '®️', '™️', '🔴', '🔵', '🟢', '🔹', '🔺', '💯', '👑', '🤣', "🤷‍♂️", "🤷‍♀️", "🙅‍♂️", "🙅‍♀️", "🙆‍♂️", "🙆‍♀️", "🤦‍♂️", "🤦‍♀️", '🏻', '💆‍♂️', "💆‍♀️", "🕴‍♂️", "🕴‍♀️", "💇‍♂️", "💇‍♀️", '🚫', '🚽', "🕳️", '💣', '🔫', "🕷️", "🕸️", '💀', '👻', '🕺', '💃', "🕴️", '👶', '👵', '👴', '👱', '👨', '👩', '👧', '👦', '👪', '👫', '👭', '👬', '👮', "🕴️", '💼', '📊', '📈', '📉', '📊', '📝', '📚', '📰', '📱', '💻', '📻', '📺', '🎬', "📽️", '📸', '📷', "🕯️", '💡', '🔦', '�', '🏯', '🏰', '🏠', '🏡', '🏢', '🏣', '🏥', '🏦', '🏧', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏮', '🏯', '🚣', '🛥', '🚂', '🚁', '🚀', '🛸', '🛹', '🚴', '🚲', '🛺', '🚮', '🚯', '🚱', '🚫', '🚽', "🕳️", '💣', '🔫', "🕷️", "🕸️", '💀', '👻', '🕺', '💃', "🕴️", '👶', '👵', '👴', '👱', '👨', '👩', '👧', '👦', '👪', '👫', '👭', '👬', '👮', "🕴️", '💼', '📊', '📈', '📉', '📊', '📝', '📚', '📰', '📱', '💻', '📻', '📺', '🎬', "📽️", '📸', '📷', "🕯️", '💡', '🔦', '🔧', '🔨', '🔩', '🔪', '🔫', '👑', '👑', '👸', '🤴', '👹', '🤺', '🤻', '👺', '🤼', '🤽', '🤾', '🤿', '🦁', '🐴', '🦊', '🐺', '🐼', '🐾', '🐿', '🦄', '🦅', '🦆', '🦇', '🦈', '🐳', '🐋', '🐟', '🐠', '🐡', '🐙', '🐚', '🐜', '🐝', '🐞', "🕷️", '🦋', '🐛', '🐌', '🐚', '🌿', '🌸', '💐', '🌹', '🌺', '🌻', '🌴', '🌳', '🌲', '🌾', '🌿', '🍃', '🍂', '🍃', '🌻', '💐', '🌹', '🌺', '🌸', '🌴', '🏵', '🎀', '🏆', '🏈', '🏉', '🎯', '🏀', '🏊', '🏋', '🏌', '🎲', '📚', '📖', '📜', '📝', '💭', '💬', '🗣', '💫', '🌟', '🌠', '🎉', '🎊', '👏', '💥', '🔥', '💥', '🌪', '💨', '🌫', '🌬', '🌩', '🌨', '🌧', '🌦', '🌥', '🌡', '🌪', '🌫', '🌬', '🌩', '🌨', '🌧', '🌦', '🌥', '🌡', '🌪', '🌫', '🌬', '🌩', '🌨', '🌧', '🌦', '🌥', '🌡', '🌱', '🌿', '🍃', '🍂', '🌻', '💐', '🌹', '🌺', '🌸', '🌴', '🏵', '🎀', '🏆', '🏈', '🏉', '🎯', '🏀', '🏊', '🏋', '🏌', '🎲', '📚', '📖', '📜', '📝', '💭', '💬', '🗣', '💫', '🌟', '🌠', '🎉', '🎊', '👏', '💥', '🔥', '💥', '🌪', '💨', '🌫', '🌬', '🌩', '🌨', '🌧', '🌦', '🌥', '🌡', '🌪', '🌫', '🌬', '🌩', '🌨', '🌧', '🌦', '🌥', '🌡', "🕯️", '💡', '🔦', '🔧', '🔨', '🔩', '🔪', '🔫', '👑', '👸', '🤴', '👹', '🤺', '🤻', '👺', '🤼', '🤽', '🤾', '🤿', '🦁', '🐴', '🦊', '🐺', '🐼', '🐾', '🐿', '🦄', '🦅', '🦆', '🦇', '🦈', '🐳', '🐋', '🐟', '🐠', '🐡', '🐙', '🐚', '🐜', '🐝', '🐞', "🕷️", '🦋', '🐛', '🐌', '🐚', '🌿', '🌸', '💐', '🌹', '🌺', '🌻', '🌴', '🏵', '🏰', '🏠', '🏡', '🏢', '🏣', '🏥', '🏦', '🏧', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏮', '🏯', '🚣', '🛥', '🚂', '🚁', '🚀', '🛸', '🛹', '🚴', '🚲', '🛺', '🚮', '🚯', '🚱', '🚫', '🚽', "🕳️", '💣', '🔫', "🕷️", "🕸️", '💀', '👻', '🕺', '💃', "🕴️", '👶', '👵', '👴', '👱', '👨', '👩', '👧', '👦', '👪', '👫', '👭', '👬', '👮', "🕴️", '💼', '📊', '📈', '📉', '📊', '📝', '📚', '📰', '📱', '💻', '📻', '📺', '🎬', "📽️", '📸', '📷', "🕯️", '💡', '🔦', '🔧', '🔨', '🔩', '🔪', '🔫', '👑', '👸', '🤴', '👹', '🤺', '🤻', '👺', '🤼', '🤽', '🤾', '🤿', '🦁', '🐴', '🦊', '🐺', '🐼', '🐾', '🐿', '🦄', '🦅', '🦆', '🦇', '🦈', '🐳', '🐋', '🐟', '🐠', '🐡', '🐙', '🐚', '🐜', '🐝', '🐞', "🕷️", '🦋', '🐛', '🐌', '🐚', '🌿', '🌸', '💐', '🌹', '🌺', '🌻', '🌴', '🏵', '🏰', '🐒', '🦍', '🦧', '🐶', '🐕', '🦮', "🐕‍🦺", '🐩', '🐺', '🦊', '🦝', '🐱', '🐈', "🐈‍⬛", '🦁', '🐯', '🐅', '🐆', '🐴', '🐎', '🦄', '🦓', '🦌', '🦬', '🐮', '🐂', '🐃', '🐄', '🐷', '🐖', '🐗', '🐽', '🐏', '🐑', '🐐', '🐪', '🐫', '🦙', '🦒', '🐘', '🦣', '🦏', '🦛', '🐭', '🐁', '🐀', '🐹', '🐰', '🐇', "🐿️", '🦫', '🦔', '🦇', '🐻', "🐻‍❄️", '🐨', '🐼', '🦥', '🦦', '🦨', '🦘', '🦡', '🐾', '🦃', '🐔', '🐓', '🐣', '🐤', '🐥', '🐦', '🐧', "🕊️", '🦅', '🦆', '🦢', '🦉', '🦤', '🪶', '🦩', '🦚', '🦜', '🐸', '🐊', '🐢', '🦎', '🐍', '🐲', '🐉', '🦕', '🦖', '🐳', '🐋', '🐬', '🦭', '🐟', '🐠', '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '☺️', '😚', '😙', '🥲', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', "😶‍🌫️", '😏', '😒', '🙄', '😬', "😮‍💨", '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', "😵‍💫", '🤯', '🤠', '🥳', '🥸', '😎', '🤓', '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲', '😳', '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾', '🤖', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾', '🙈', '🙉', '🙊', '💋', '💌', '💘', '💝', '💖', '💗', '💓', '💞', '💕', '💟', '❣️', '💔', "❤️‍🔥", "❤️‍🩹", '❤️', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍', '💯', '💢', '💥', '💫', '💦', '💨', "🕳️", '💣', '💬', "👁️‍🗨️", "🗨️", "🗯️", '💭', '💤', '👋', '🤚', "🖐️", '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', "👁️", '👅', '👄', '👶', '🧒', '👦', '👧', '🧑', '👱', '👨', '🧔', "🧔‍♂️", "🧔‍♀️", "👨‍🦰", "👨‍🦱", "👨‍🦳", "👨‍🦲", '👩', "👩‍🦰", "🧑‍🦰", "👩‍🦱", "🧑‍🦱", "👩‍🦳", "🧑‍🦳", "👩‍🦲", "🧑‍🦲", "👱‍♀️", "👱‍♂️", '🧓', '👴', '👵', '🙍', "🙍‍♂️", "🙍‍♀️", '🙎', "🙎‍♂️", "🙎‍♀️", '🙅', "🙅‍♂️", "🙅‍♀️", '🙆', "🙆‍♂️", "🙆‍♀️", '💁', "💁‍♂️", "💁‍♀️", '🙋', "🙋‍♂️", "🙋‍♀️", '🧏', "🧏‍♂️", "🧏‍♀️", '🙇', "🙇‍♂️", "🙇‍♀️", '🤦', "🤦‍♂️", "🤦‍♀️", '🤷', "🤷‍♂️", "🤷‍♀️", "🧑‍⚕️", "👨‍⚕️", "👩‍⚕️", "🧑‍🎓", "👨‍🎓", "👩‍🎓", "🧑‍🏫", '👨‍🏫', "👩‍🏫", "🧑‍⚖️", "👨‍⚖️", "👩‍⚖️", "🧑‍🌾", "👨‍🌾", "👩‍🌾", "🧑‍🍳", "👨‍🍳", "👩‍🍳", "🧑‍🔧", "👨‍🔧", "👩‍🔧", "🧑‍🏭", "👨‍🏭", "👩‍🏭", "🧑‍💼", "👨‍💼", "👩‍💼", "🧑‍🔬", "👨‍🔬", "👩‍🔬", "🧑‍💻", "👨‍💻", "👩‍💻", "🧑‍🎤", "👨‍🎤", "👩‍🎤", "🧑‍🎨", "👨‍🎨", "👩‍🎨", "🧑‍✈️", "👨‍✈️", "👩‍✈️", "🧑‍🚀", "👨‍🚀", "👩‍🚀", "🧑‍🚒", "👨‍🚒", "👩‍🚒", '👮', "👮‍♂️", "👮‍♀️", "🕵️", "🕵️‍♂️", "🕵️‍♀️", '💂', "💂‍♂️", "💂‍♀️", '🥷', '👷', "👷‍♂️", "👷‍♀️", '🤴', '👸', '👳', "👳‍♂️", "👳‍♀️", '👲', '🧕', '🤵', "🤵‍♂️", "🤵‍♀️", '👰', "👰‍♂️", "👰‍♀️", '🤰', '🤱', "👩‍🍼", "👨‍🍼", "🧑‍🍼", '👼', '🎅', '🤶', "🧑‍🎄", '🦸', "🦸‍♂️", "🦸‍♀️", '🦹', "🦹‍♂️", "🦹‍♀️", '🧙', "🧙‍♂️", "🧙‍♀️", '🧚', "🧚‍♂️", "🧚‍♀️", '🧛', "🧛‍♂️", "🧛‍♀️", '🧜', "🧜‍♂️", "🧜‍♀️", '🧝', "🧝‍♂️", "🧝‍♀️", '🧞', "🧞‍♂️", "🧞‍♀️", '🧟', "🧟‍♂️", "🧟‍♀️", '💆', "💆‍♂️", "💆‍♀️", '💇', "💇‍♂️", "💇‍♀️", '🚶', "🚶‍♂️", "🚶‍♀️", '🧍', "🧍‍♂️", "🧍‍♀️", '🧎', "🧎‍♂️", "🧎‍♀️", "🧑‍🦯", "👨‍🦯", "👩‍🦯", "🧑‍🦼", "👨‍🦼", "👩‍🦼", "🧑‍🦽", "👨‍🦽", "👩‍🦽", '🏃', "🏃‍♂️", "🏃‍♀️", '💃', '🕺', "🕴️", '👯', "👯‍♂️", "👯‍♀️", '🧖', "🧖‍♂️", "🧖‍♀️", '🧗', "🧗‍♂️", "🧗‍♀️", '🤺', '🏇', '⛷️', '🏂', "🏌️", "🏌️‍♂️", "🏌️‍♀️", '🏄', "🏄‍♂️", "🏄‍♀️", '🚣', "🚣‍♂️", "🚣‍♀️", '🏊', "🏊‍♂️", "🏊‍♀️", '⛹️', "⛹️‍♂️", "⛹️‍♀️", "🏋️", "🏋️‍♂️", "🏋️‍♀️", '🚴', "🚴‍♂️", '🚴‍♀️', '🚵', "🚵‍♂️", "🚵‍♀️", '🤸', "🤸‍♂️", "🤸‍♀️", '🤼', "🤼‍♂️", "🤼‍♀️", '🤽', "🤽‍♂️", "🤽‍♀️", '🤾', "🤾‍♂️", "🤾‍♀️", '🤹', "🤹‍♂️", "🤹‍♀️", '🧘', "🧘‍♂️", "🧘‍♀️", '🛀', '🛌', "🧑‍🤝‍🧑", '👭', '👫', '👬', '💏', "👩‍❤️‍💋‍👨", "👨‍❤️‍💋‍👨", "👩‍❤️‍💋‍👩", '💑', "👩‍❤️‍👨", "👨‍❤️‍👨", "👩‍❤️‍👩", '👪', "👨‍👩‍👦", "👨‍👩‍👧", "👨‍👩‍👧‍👦", "👨‍👩‍👦‍👦", "👨‍👩‍👧‍👧", "👨‍👨‍👦", '👨‍👨‍👧', "👨‍👨‍👧‍👦", "👨‍👨‍👦‍👦", "👨‍👨‍👧‍👧", "👩‍👩‍👦", "👩‍👩‍👧", "👩‍👩‍👧‍👦", "👩‍👩‍👦‍👦", "👩‍👩‍👧‍👧", "👨‍👦", "👨‍👦‍👦", "👨‍👧", "👨‍👧‍👦", "👨‍👧‍👧", "👩‍👦", "👩‍👦‍👦", "👩‍👧", "👩‍👧‍👦", "👩‍👧‍👧", "🗣️", '👤', '👥', '🫂', '👣', '🦰', '🦱', '🦳', '🦲', '🐵'];
           const randomOwnerReaction = reactions[Math.floor(Math.random() * reactions.length)]; // 
           m.react(randomOwnerReaction);
@@ -353,9 +450,9 @@ if (!isReact && senderNumber !== botNumber) {
 }
 
 if (!isReact && senderNumber === botNumber) {
-    if (config.CUSTOM_REACT === 'true') {
+    if (config.HEART_REACT === 'true') {
         // Use custom emojis from the configuration
-        const reactions = (config.CUSTOM_REACT_EMOJIS || '🥲,😂,👍🏻,🙂,😔').split(',');
+        const reactions = (config.CUSTOM_REACT_EMOJIS || '❤️,🧡,💛,💚,💚').split(',');
         const randomReaction = reactions[Math.floor(Math.random() * reactions.length)];
         m.react(randomReaction);
     }
