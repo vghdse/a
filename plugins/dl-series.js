@@ -76,7 +76,7 @@ cmd(
                     externalAdReply: {
                         title: cleanTitle,
                         body: `Season ${seasonNum} • Episode ${episodeNum}`,
-                        thumbnailUrl: 'https://i.imgur.com/vROQfKk.jpeg',
+                        thumbnailUrl: 'https://files.catbox.moe/dmwm11.jpg',
                         mediaType: 1,
                         sourceUrl: data.download_link
                     }
