@@ -1,4 +1,4 @@
-const { cmd } = require('../command');
+/*const { cmd } = require('../command');
 
 cmd({
     pattern: "online",
@@ -187,7 +187,7 @@ async (conn, mek, m, { from, sender, isGroup, isAdmins, isCreator, fromMe, reply
 });
 
 
-/*const { cmd } = require('../command');
+*/ const { cmd } = require('../command');
 
 cmd({
     pattern: "online",
@@ -261,7 +261,7 @@ async (conn, mek, m, { from, quoted, isGroup, isAdmins, isCreator, fromMe, reply
                     `${index + 1}. @${member.split('@')[0]}`
                 ).join('\n');
                 
-                const message = `🟢 *Online Members* (${onlineArray.length}/${groupData.participants.length}):\n\n${onlineList}`;
+                const message = `🚦 *Online Members* (${onlineArray.length}/${groupData.participants.length}):\n\n${onlineList}`;
                 
                 await conn.sendMessage(from, { 
                     text: message,
@@ -277,4 +277,4 @@ async (conn, mek, m, { from, quoted, isGroup, isAdmins, isCreator, fromMe, reply
         reply(`An error occurred: ${e.message}`);
     }
 });
-*/
+
