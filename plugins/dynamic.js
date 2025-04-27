@@ -52,12 +52,7 @@ cmd({
                     showAdAttribution: true
                 }
             },
-            templateButtons: [
-                { urlButton: { displayText: "View on NPM", url: pkg.npm_url }},
-                { urlButton: { displayText: "Visit Homepage", url: pkg.homepage }},
-                { urlButton: { displayText: "View Repository", url: pkg.repository }}
-            ]
-        }, { quoted: mek });
+             { quoted: mek });
 
         await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
 
