@@ -1,102 +1,46 @@
-const { cmd, generateWAMessageFromContent, proto } = require('../command');
-const config = require('../config');
+const { cmd } = require('../command');
+const axios = require('axios');
+const Config = require('../config');
 
 cmd({
-    pattern: "buttons",
-    alias: ["btn"],
-    desc: "Show example buttons",
-    category: "utility",
-    react: "🛎️",
-    filename: __filename
-}, async (conn, mek, m, { from, reply, prefix }) => {
+    pattern: "animeart",
+    alias: ["animepic", "animeimage"],
+    desc: "Generate cool anime-style images",
+    category: "fun",
+    react: "🎨",
+    filename: __filename,
+    use: "<text>"
+}, async (conn, mek, m, { text, reply }) => {
     try {
-        // Create the buttons
-        let buttons = [
-            {
-                name: "quick_reply",
-                buttonParamsJson: JSON.stringify({
-                    display_text: "Button 1",
-                    id: `${prefix}button1`
-                })
-            },
-            {
-                name: "quick_reply",
-                buttonParamsJson: JSON.stringify({
-                    display_text: "Button 2",
-                    id: `${prefix}button2`
-                })
-            },
-            {
-                name: "quick_reply",
-                buttonParamsJson: JSON.stringify({
-                    display_text: "Button 3",
-                    id: `${prefix}button3`
-                })
-            }
-        ];
+        if (!text) return reply('🎨 *Please provide text*\nExample: .animeart Dragon Slayer');
 
-        // Create the message with buttons
-        let msg = generateWAMessageFromContent(from, {
-            viewOnceMessage: {
-                message: {
-                    messageContextInfo: {
-                        deviceListMetadata: {},
-                        deviceListMetadataVersion: 2
-                    },
-                    interactiveMessage: proto.Message.InteractiveMessage.create({
-                        body: proto.Message.InteractiveMessage.Body.create({
-                            text: "Here are some example buttons:"
-                        }),
-                        footer: proto.Message.InteractiveMessage.Footer.create({
-                            text: "> SUBZERO-MD"
-                        }),
-                        header: proto.Message.InteractiveMessage.Header.create({
-                            title: "Example Buttons",
-                            subtitle: "Click any button",
-                            hasMediaAttachment: false
-                        }),
-                        nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
-                            buttons: buttons
-                        })
-                    })
+        await conn.sendMessage(mek.chat, { react: { text: "⏳", key: mek.key } });
+
+        // Using free anime image generation API
+        const apiUrl = `https://anime-api-generator.cyclic.app/generate?text=${encodeURIComponent(text)}&theme=samurai`;
+        
+        const response = await axios.get(apiUrl, { responseType: 'arraybuffer' });
+        
+        await conn.sendMessage(mek.chat, { 
+            image: response.data,
+            caption: `🎨 *${text}*\n> ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ғʀᴀɴᴋ`,
+            contextInfo: {
+                externalAdReply: {
+                    title: "Anime Art Generator",
+                    body: "Created with Anime API",
+                    thumbnail: response.data,
+                    mediaType: 1,
+                    mediaUrl: "https://example.com",
+                    sourceUrl: "https://example.com"
                 }
             }
-        }, {});
+        }, { quoted: mek });
 
-        // Send the message
-        await conn.relayMessage(msg.key.remoteJid, msg.message, {
-            messageId: msg.key.id
-        });
+        await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
 
     } catch (error) {
-        console.error(error);
-        reply("❌ Failed to show buttons");
+        console.error('Anime art error:', error);
+        await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
+        reply('🎨 *Error generating image* - Please try again later');
     }
-});
-
-// Button 1 handler
-cmd({
-    pattern: "button1",
-    desc: "Button 1 handler",
-    filename: __filename
-}, async (conn, mek, m, { reply }) => {
-    await reply("You pressed Button 1!");
-});
-
-// Button 2 handler
-cmd({
-    pattern: "button2",
-    desc: "Button 2 handler",
-    filename: __filename
-}, async (conn, mek, m, { reply }) => {
-    await reply("You pressed Button 2!");
-});
-
-// Button 3 handler
-cmd({
-    pattern: "button3",
-    desc: "Button 3 handler",
-    filename: __filename
-}, async (conn, mek, m, { reply }) => {
-    await reply("You pressed Button 3!");
 });
