@@ -32,7 +32,7 @@ module.exports = {
     STICKER_NAME: process.env.STICKER_NAME || "SUBZERO-MD",     // Sticker pack name
     AUTO_STICKER: process.env.AUTO_STICKER || "false",          // Auto-send stickers?
     HEART_REACT: process.env.HEART_REACT || "false",
-    OWNER_REACT: process.env.OWNER_REACT || "true",
+    OWNER_REACT: process.env.OWNER_REACT || "false",
     
     // ===== MEDIA & AUTOMATION =====
     AUTO_VOICE: process.env.AUTO_VOICE || "false",              // Auto-send voice messages?
