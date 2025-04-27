@@ -1,64 +1,104 @@
-const { cmd } = require('../command');
-const axios = require('axios');
+import axios from 'axios';
+import { cmd } from '../command.js';
+import config from '../config.js';
 
 cmd({
-  pattern: "ipstalk",
-  alias: ["iplookup", "ipinfo"],
-  react: "🕵️",
-  desc: "Get detailed information about an IP address",
-  category: "utility",
-  use: '<IP address>',
-  filename: __filename
-}, async (m, { reply, args }) => {
-  try {
-    if (!args[0]) return reply("Please provide an IP address\nExample: .ipstalk 114.142.169.38");
-
-    const ip = args[0];
-    const apiKey = "e0a6483c508018877ac67326"; // Your LolHuman API key
-    const apiUrl = `https://lolhuman.xyz/api/ipaddress/${ip}?apikey=${apiKey}`;
-
-    await reply(`🔍 Tracking IP: ${ip}...`);
-
-    const { data } = await axios.get(apiUrl, { timeout: 10000 });
-
-    if (data.status !== 200 || !data.result) {
-      return reply("❌ Invalid response from API");
-    }
-
-    const info = data.result;
-    const location = `${info.city}, ${info.regionName}, ${info.country}`;
-    const coordinates = `Latitude: ${info.lat}\nLongitude: ${info.lon}`;
-    const network = `ISP: ${info.isp}\nAS: ${info.as}`;
-
-    // Create Google Maps link
-    const mapsUrl = `https://www.google.com/maps?q=${info.lat},${info.lon}`;
-
-    const resultMessage = `
-🕵️ *IP TRACKER RESULTS*
-
-🔢 *IP Address:* ${info.query}
-📍 *Location:* ${location}
-🗺️ *Coordinates:* 
-${coordinates}
-⏰ *Timezone:* ${info.timezone}
-📶 *Network Info:*
-${network}
-
-📌 *Google Maps:* ${mapsUrl}
-`;
-
-    await reply(resultMessage);
-
-    // Optional: Send location thumbnail
+    pattern: "wall",
+    alias: ["wallpapersearch"],
+    desc: "Search anime wallpapers",
+    category: "media",
+    filename: __filename,
+    usage: "wall <query>"
+}, async (m, conn, { args }) => {
     try {
-      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${info.lat},${info.lon}&zoom=13&size=600x300&maptype=roadmap&markers=color:red%7C${info.lat},${info.lon}`;
-      await m.reply({ image: { url: staticMapUrl }, caption: "Approximate location" });
-    } catch (e) {
-      console.log("Failed to send map image");
-    }
+        if (!args[0]) return m.reply("Please provide a search query\nExample: *" + config.PREFIX + "wall kakashi*");
 
-  } catch (error) {
-    console.error("IP Stalk error:", error);
-    reply(`❌ Error: ${error.response?.data?.message || error.message}`);
-  }
+        const apiUrl = `https://draculazyx-xyzdrac.hf.space/api/Wall?q=${encodeURIComponent(args[0])}`;
+        
+        // Show loading message
+        const loadingMsg = await m.reply("🔍 Searching wallpapers...");
+
+        const response = await axios.get(apiUrl);
+        const data = response.data;
+
+        if (!data.STATUS || data.STATUS !== 200 || !data.RESULTS || data.RESULTS.length === 0) {
+            return m.reply("❌ No wallpapers found for your query");
+        }
+
+        const wallpapers = data.RESULTS.slice(0, 10); // Get first 10 results
+        const totalFound = data.RESULTS.length;
+
+        // Prepare selection message
+        let selectionMsg = `🎨 Found ${totalFound} wallpapers for *${data.QUERY}*\n\n`;
+        selectionMsg += `📋 Showing first 10 results:\n\n`;
+        
+        wallpapers.forEach((wall, index) => {
+            selectionMsg += `${index+1}. ${wall.title}\n`;
+        });
+        
+        selectionMsg += `\nReply with:\n`;
+        selectionMsg += `- *all* to send all wallpapers\n`;
+        selectionMsg += `- *number* (1-10) to send specific wallpaper\n`;
+        selectionMsg += `- *cancel* to abort`;
+
+        // Send selection menu
+        await conn.sendMessage(m.chat, { 
+            text: selectionMsg,
+            footer: "Anime Wallpaper Search"
+        }, { quoted: m });
+
+        // Delete loading message
+        await conn.sendMessage(m.chat, { 
+            delete: loadingMsg.key 
+        });
+
+        // Wait for user response
+        const filter = (msg) => 
+            msg.sender === m.sender && 
+            (msg.body.toLowerCase() === 'all' || 
+             msg.body.toLowerCase() === 'cancel' ||
+             (!isNaN(msg.body) && parseInt(msg.body) >= 1 && parseInt(msg.body) <= 10));
+
+        const collector = conn.ev.createPromise({
+            filter,
+            timeout: 60000, // 60 seconds timeout
+            max: 1
+        });
+
+        collector.then(async ([response]) => {
+            const choice = response.body.toLowerCase();
+
+            if (choice === 'cancel') {
+                return m.reply("🚫 Search cancelled");
+            }
+
+            if (choice === 'all') {
+                // Send all wallpapers with 3-second delay between each
+                for (const [index, wall] of wallpapers.entries()) {
+                    await conn.sendMessage(m.chat, { 
+                        image: { url: wall.image },
+                        caption: `🖼️ ${index+1}/${wallpapers.length}: ${wall.title}`
+                    }, { quoted: m });
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                }
+                return;
+            }
+
+            // Send specific wallpaper
+            const selectedIndex = parseInt(choice) - 1;
+            const selectedWall = wallpapers[selectedIndex];
+            
+            await conn.sendMessage(m.chat, { 
+                image: { url: selectedWall.image },
+                caption: `🖼️ ${selectedIndex+1}/${wallpapers.length}: ${selectedWall.title}`
+            }, { quoted: m });
+
+        }).catch(() => {
+            m.reply("⏱️ Selection timed out. Please try the command again.");
+        });
+
+    } catch (error) {
+        console.error("Wallpaper search error:", error);
+        m.reply("❌ Error processing your request. Please try again later.");
+    }
 });
