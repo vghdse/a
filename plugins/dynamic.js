@@ -3,7 +3,7 @@ const { cmd } = require('../command');
 const Config = require('../config');
 
 // NPM Package Search Plugin
-cmd({
+/*cmd({
     pattern: "npm",
     alias: ["npms"],
     desc: "Search for npm packages",
@@ -62,6 +62,7 @@ cmd({
         reply("❌ Error searching for package. Please try again later.");
     }
 });
+*/
 
 // Anime Quotes Plugin
 cmd({
