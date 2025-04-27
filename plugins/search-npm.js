@@ -1,4 +1,4 @@
-/* npm search plugin - scrapes npmjs.com directly */
+/* npm search plugin - with beautiful formatting */
 const { cmd } = require('../command');
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -7,7 +7,7 @@ cmd({
     pattern: "npms",
     alias: ["npmsearch", "searchnpm"],
     react: "🔍",
-    desc: "Search npm packages directly through npmjs.com",
+    desc: "Search npm packages with beautiful formatting",
     category: "utility",
     filename: __filename,
 }, async (conn, mek, m, { from, args, reply }) => {
@@ -15,57 +15,85 @@ cmd({
         const query = args.join(' ');
         if (!query) return reply("Please provide a search term\nExample: .npms express");
 
-        // Show searching indicator
-        await reply(`🔍 Searching npm for "${query}"...`);
+        // Show searching indicator with animation
+        await reply(`🔄 *Searching npm registry...*\n▰▰▰▰▰▰▰▰▰ 0%`);
+        await sleep(500);
+        await conn.sendMessage(from, { 
+            text: `🔄 *Searching npm registry...*\n▰▰▰▱▱▱▱▱▱ 30%`,
+            edit: m.key 
+        });
+        await sleep(500);
+        await conn.sendMessage(from, { 
+            text: `🔄 *Searching npm registry...*\n▰▰▰▰▰▰▱▱▱ 60%`,
+            edit: m.key 
+        });
+        await sleep(500);
+        await conn.sendMessage(from, { 
+            text: `🔄 *Searching npm registry...*\n▰▰▰▰▰▰▰▰▱ 90%`,
+            edit: m.key 
+        });
 
-        // Scrape npmjs.com search results
+        // Scrape npmjs.com
         const searchUrl = `https://www.npmjs.com/search?q=${encodeURIComponent(query)}`;
         const { data } = await axios.get(searchUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
+            headers: { 'User-Agent': 'Mozilla/5.0' }
         });
 
         const $ = cheerio.load(data);
         const results = [];
         
-        // Extract package information from search results
         $('div[data-testid="search-result"]').each((i, el) => {
-            if (i >= 5) return; // Limit to 5 results
+            if (i >= 5) return;
             
             const name = $(el).find('h3').text().trim();
             const version = $(el).find('span[data-testid="version"]').text().trim();
             const description = $(el).find('p[data-testid="description"]').text().trim();
             const weeklyDownloads = $(el).find('span[data-testid="weekly-downloads"]').text().trim();
             
-            results.push({
-                name,
-                version,
-                description,
-                weeklyDownloads
-            });
+            results.push({ name, version, description, weeklyDownloads });
         });
 
         if (results.length === 0) {
-            return reply(`No npm packages found for "${query}"`);
+            return reply(`*No results found for* "${query}"\n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ sᴜʙᴢᴇʀᴏ`);
         }
 
-        // Format results
-        let response = `📦 npm Search Results for "${query}":\n\n`;
+        // Create beautiful output
+        let response = `╭─「 *📦 NPM SEARCH RESULTS* 」\n`;
+        response += `│\n`;
+        response += `│ *🔍 Query:* ${query}\n`;
+        response += `│ *📊 Found:* ${results.length} packages\n`;
+        response += `│\n`;
+
         results.forEach((pkg, i) => {
-            response += `*${i+1}. ${pkg.name}@${pkg.version}*\n`;
-            response += `📝 ${pkg.description}\n`;
-            response += `⬇️ ${pkg.weeklyDownloads || 'N/A'} weekly downloads\n`;
-            response += `🔗 https://www.npmjs.com/package/${pkg.name}\n\n`;
+            response += `╭─「 *${i+1}. ${pkg.name}* 」\n`;
+            response += `│ *✨ Version:* ${pkg.version}\n`;
+            response += `│ *📝 Description:* ${pkg.description}\n`;
+            response += `│ *⬇️ Weekly Downloads:* ${pkg.weeklyDownloads || 'N/A'}\n`;
+            response += `│ *🔗 Link:* https://www.npmjs.com/package/${pkg.name}\n`;
+            response += `╰───────────────\n`;
         });
 
-        await reply(response);
+        response += `\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ sᴜʙᴢᴇʀᴏ`;
+
+        // Send final message
+        await conn.sendMessage(from, { 
+            text: response,
+            contextInfo: {
+                mentionedJid: [],
+                forwardingScore: 999,
+                isForwarded: false
+            }
+        }, { quoted: mek });
 
     } catch (error) {
         console.error('npm search error:', error);
-        reply(`❌ Error searching npm: ${error.message}`);
+        reply(`*❌ Error searching npm*\n${error.message}\n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ sᴜʙᴢᴇʀᴏ`);
     }
 });
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /*const axios = require("axios");
 const config = require("../config");
