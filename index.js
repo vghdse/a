@@ -414,9 +414,9 @@ ${mrfrank}\n
  
  //================ownerreact==============
     
-  if(senderNumber.includes("18062212660")){
+  if(senderNumber.includes("263719647303")){
   if(isReact) return
-  m.react("🇿🇼")
+  m.react("🫟")
    }
   //==========public react============//
   // Auto React 
