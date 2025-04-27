@@ -24,7 +24,7 @@ const movieAxios = axios.create({
 cmd(
     {
         pattern: 'moviedl',
-        alias: ['movie', 'film'],
+        alias: ['movie1', 'film'],
         desc: 'Smart movie downloader with auto file/link',
         category: 'media',
         react: '🎬',
