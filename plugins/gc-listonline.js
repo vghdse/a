@@ -96,6 +96,97 @@ async (conn, mek, m, { from, quoted, isGroup, isAdmins, isCreator, fromMe, reply
     }
 });
 
+
+cmd({
+    pattern: "listonline",
+    alias: ["whosonline", "onlinemembers"],
+    desc: "Check who's online (in group and DMs) - Admins & Owner only",
+    category: "main",
+    react: "🟢",
+    filename: __filename
+},
+async (conn, mek, m, { from, sender, isGroup, isAdmins, isCreator, fromMe, reply }) => {
+    try {
+        // Check permissions
+        if (!isCreator && !isAdmins && !fromMe) {
+            return reply("╭─「 ❌ PERMISSION DENIED 」\n│\n│ Only bot owner and group admins\n│ can use this command!\n╰───────────────\n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ sᴜʙᴢᴇʀᴏ");
+        }
+
+        // Animated searching message
+        const progress = ["▱▱▱▱▱▱▱▱▱▱", "▰▱▱▱▱▱▱▱▱▱", "▰▰▰▱▱▱▱▱▱▱", "▰▰▰▰▰▱▱▱▱▱", "▰▰▰▰▰▰▰▱▱▱", "▰▰▰▰▰▰▰▰▰▱", "▰▰▰▰▰▰▰▰▰▰"];
+        let progressMsg = await reply(`╭─「 🔍 SCANNING 」\n│\n│ Detecting online contacts...\n│ ${progress[0]} 0%\n╰───────────────\n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ sᴜʙᴢᴇʀᴏ`);
+
+        for (let i = 1; i < progress.length; i++) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            await conn.sendMessage(from, { 
+                text: `╭─「 🔍 SCANNING 」\n│\n│ Detecting online contacts...\n│ ${progress[i]} ${i*15}%\n╰───────────────\n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ sᴜʙᴢᴇʀᴏ`,
+                edit: progressMsg.key 
+            });
+        }
+
+        const onlineContacts = new Set();
+
+        // Check group members if in group
+        if (isGroup) {
+            const groupData = await conn.groupMetadata(from);
+            const presencePromises = [];
+
+            for (const participant of groupData.participants) {
+                presencePromises.push(
+                    conn.presenceSubscribe(participant.id)
+                    .then(() => conn.sendPresenceUpdate('composing', participant.id))
+                );
+            }
+
+            await Promise.all(presencePromises);
+        }
+
+        // Presence handler for both group and DMs
+        const presenceHandler = (json) => {
+            for (const id in json.presences) {
+                const presence = json.presences[id]?.lastKnownPresence;
+                if (['available', 'composing', 'recording', 'online'].includes(presence)) {
+                    onlineContacts.add(id);
+                }
+            }
+        };
+
+        conn.ev.on('presence.update', presenceHandler);
+
+        // Multiple checks with delay
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        conn.ev.off('presence.update', presenceHandler);
+
+        if (onlineContacts.size === 0) {
+            return reply("╭─「 ⚠️ NO RESULTS 」\n│\n│ Couldn't detect any online contacts.\n│ They might be hiding their presence.\n╰───────────────\n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ sᴜʙᴢᴇʀᴏ");
+        }
+
+        const onlineArray = Array.from(onlineContacts);
+        const onlineList = onlineArray.map((contact, index) => 
+            `│ ${index + 1}. @${contact.split('@')[0]}`
+        ).join('\n');
+
+        // Send to group (if in group)
+        if (isGroup) {
+            await conn.sendMessage(from, { 
+                text: `╭─「 🟢 GROUP ONLINE 」\n│\n│ 📊 Online Contacts: ${onlineArray.length}\n│\n${onlineList}\n╰───────────────\n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ sᴜʙᴢᴇʀᴏ`,
+                mentions: onlineArray
+            });
+        }
+
+        // Always send to sender's DM
+        await conn.sendMessage(sender, { 
+            text: `╭─「 📱 YOUR CONTACTS ONLINE 」\n│\n│ 🕒 ${new Date().toLocaleTimeString()}\n│\n${onlineList}\n╰───────────────\n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ sᴜʙᴢᴇʀᴏ`,
+            mentions: onlineArray
+        });
+
+    } catch (e) {
+        console.error("Error in online command:", e);
+        reply(`╭─「 ❌ ERROR 」\n│\n│ ${e.message}\n╰───────────────\n\n> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ sᴜʙᴢᴇʀᴏ`);
+    }
+});
+
+
 /*const { cmd } = require('../command');
 
 cmd({
