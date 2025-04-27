@@ -1,4 +1,73 @@
-const axios = require("axios");
+/* npm search plugin - scrapes npmjs.com directly */
+const { cmd } = require('../command');
+const axios = require('axios');
+const cheerio = require('cheerio');
+
+cmd({
+    pattern: "npms",
+    alias: ["npmsearch", "searchnpm"],
+    react: "🔍",
+    desc: "Search npm packages directly through npmjs.com",
+    category: "utility",
+    filename: __filename,
+}, async (conn, mek, m, { from, args, reply }) => {
+    try {
+        const query = args.join(' ');
+        if (!query) return reply("Please provide a search term\nExample: .npms express");
+
+        // Show searching indicator
+        await reply(`🔍 Searching npm for "${query}"...`);
+
+        // Scrape npmjs.com search results
+        const searchUrl = `https://www.npmjs.com/search?q=${encodeURIComponent(query)}`;
+        const { data } = await axios.get(searchUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
+
+        const $ = cheerio.load(data);
+        const results = [];
+        
+        // Extract package information from search results
+        $('div[data-testid="search-result"]').each((i, el) => {
+            if (i >= 5) return; // Limit to 5 results
+            
+            const name = $(el).find('h3').text().trim();
+            const version = $(el).find('span[data-testid="version"]').text().trim();
+            const description = $(el).find('p[data-testid="description"]').text().trim();
+            const weeklyDownloads = $(el).find('span[data-testid="weekly-downloads"]').text().trim();
+            
+            results.push({
+                name,
+                version,
+                description,
+                weeklyDownloads
+            });
+        });
+
+        if (results.length === 0) {
+            return reply(`No npm packages found for "${query}"`);
+        }
+
+        // Format results
+        let response = `📦 npm Search Results for "${query}":\n\n`;
+        results.forEach((pkg, i) => {
+            response += `*${i+1}. ${pkg.name}@${pkg.version}*\n`;
+            response += `📝 ${pkg.description}\n`;
+            response += `⬇️ ${pkg.weeklyDownloads || 'N/A'} weekly downloads\n`;
+            response += `🔗 https://www.npmjs.com/package/${pkg.name}\n\n`;
+        });
+
+        await reply(response);
+
+    } catch (error) {
+        console.error('npm search error:', error);
+        reply(`❌ Error searching npm: ${error.message}`);
+    }
+});
+
+/*const axios = require("axios");
 const config = require("../config");
 const {
   cmd,
@@ -51,3 +120,4 @@ cmd(_0x50a4a6, async (_0x45c3e3, _0x534cf5, _0x3c9af3, {
     _0x5ddb6d("An error occurred: " + _0x5b358e.message);
   }
 });
+*/
