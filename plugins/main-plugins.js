@@ -73,9 +73,8 @@ async function deletePlugin(identifier) {
         };
     }
 }
-
-// Install Plugin Command
-cmd({
+/*
+// Install Plugin Commandcmd({
     pattern: "install",
     alias: ["addplugin"],
     desc: "Install external plugins from GitHub raw URLs",
@@ -113,7 +112,47 @@ cmd({
         await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
         reply('❌ *Error installing plugin* - Please check console');
     }
+}); */
+cmd({
+    pattern: "install",
+    alias: ["addplugin"],
+    desc: "Install external plugins",
+    category: "core",
+    react: "📥",
+    filename: __filename,
+    use: "<github-raw-url>"
+}, async (conn, mek, m, { args, reply }) => {
+    try {
+        if (!args[0]) return reply("📥 *Please provide a GitHub raw URL*");
+
+        const url = args[0];
+        
+        // Verify URL format
+        if (!/^https:\/\/raw\.githubusercontent\.com\/.+\/.+\.js$/.test(url)) {
+            return reply("❌ *Invalid URL*\nMust be GitHub raw JS file URL");
+        }
+
+        await conn.sendMessage(mek.chat, { react: { text: "⏳", key: mek.key } });
+
+        // Download the plugin
+        const response = await axios.get(url);
+        const pluginName = url.split('/').slice(-1)[0].replace('.js', '') || `plugin-${Date.now()}`;
+        const pluginPath = path.join(__dirname, '../plugins', `${pluginName}.js`);
+        
+        // Save file
+        await fs.promises.writeFile(pluginPath, response.data);
+        
+        // Load plugin
+        require(pluginPath);
+        
+        reply(`✅ *Plugin Installed!*\nName: ${pluginName}\n> ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴍʀ ғʀᴀɴᴋ`);
+        
+    } catch (error) {
+        console.error('Install error:', error);
+        reply(`❌ *Install Failed*\n${error.response?.status === 404 ? 'URL not found' : error.message}`);
+    }
 });
+
 
 // Delete Plugin Command
 cmd({
