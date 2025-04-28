@@ -42,9 +42,7 @@ const {
   const Crypto = require('crypto')
   const path = require('path')
   const prefix = config.PREFIX
-  // const leven = require('fast-levenshtein');
-// const config = require('./config');
-// const { commands } = require('./command');
+  const GroupEvents = require('./lib/groupevents');// const { commands } = require('./command');
   const ownerNumber = ['263719647303']
 
   //=============================================
@@ -305,9 +303,11 @@ ${mrfrank}\n
       }
     }
   });
+//=========WELCOME & GOODBYE =======
 	
+conn.ev.on("group-participants.update", (update) => GroupEvents(conn, update));
 
-  //=============READSTATUS================
+//=============READSTATUS=============
         
   conn.ev.on('messages.upsert', async(mek) => {
     mek = mek.messages[0]
