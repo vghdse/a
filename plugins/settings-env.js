@@ -115,6 +115,31 @@ cmd({
 
 // SETTINGS OVER
 
+// WELCOME
+cmd({
+    pattern: "welcome",
+    alias: ["setwelcome"],
+    react: "✅",
+    desc: "Enable or disable welcome messages for new members",
+    category: "settings",
+    filename: __filename
+},
+async (conn, mek, m, { from, args, isCreator, reply }) => {
+    if (!isCreator) return reply("*📛 ᴏɴʟʏ ᴛʜᴇ ᴏᴡɴᴇʀ ᴄᴀɴ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ!*");
+
+    const status = args[0]?.toLowerCase();
+    if (status === "on") {
+        config.WELCOME = "true";
+        return reply("✅ Welcome messages are now enabled.");
+    } else if (status === "off") {
+        config.WELCOME = "false";
+        return reply("❌ Welcome messages are now disabled.");
+    } else {
+        return reply(`Example: .welcome on`);
+    }
+});
+
+
 
 cmd({
     pattern: "setprefix",
