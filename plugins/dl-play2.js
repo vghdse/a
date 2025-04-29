@@ -59,8 +59,8 @@ cmd(
                             `👤 ${songData.metadata.author?.name || 'Unknown'}\n` +
                             `👀 ${songData.metadata.views || 'N/A'} views\n` +
                             `📅 ${songData.metadata.ago || 'Unknown upload date'}\n\n` +
-                            `🔗 ${songData.url}`+
-                            `> ᴘᴏᴡᴇʀᴇᴅ ʙʏ sᴜʙᴢᴇʀᴏ`;
+                            `🔗 ${songData.url}\n\n`+
+                            `> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ sᴜʙᴢᴇʀᴏ`;
 
             // Send song info
             await conn.sendMessage(mek.chat, {
