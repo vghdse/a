@@ -271,6 +271,11 @@ ${mrfrank}\n
    - Current Status: ${config.AUTO_BIO || "off"}
    - Usage: ${config.PREFIX}autobio on/off [custom text]
 
+🫂 *17. \`SEND WELCOME & GOODBYE MSG\`*
+   - Current Status: ${config.WELCOME_GOODBYE || "off"}
+   - Usage: ${config.PREFIX}welcome on/off 
+
+
 📌 *Note*: Replace \`"on/off"\` with the desired state to enable or disable a feature.
                     `;
 
