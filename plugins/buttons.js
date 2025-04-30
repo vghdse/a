@@ -1,56 +1,59 @@
 const { cmd } = require('../command');
 
 cmd({
-    pattern: 'group',
-    alias: ['gp'],
-    desc: 'Group management tools',
-    category: 'admin',
-    react: '👥',
-    use: '<action> (add/remove/promote/demote/info)',
-    filename: __filename
-}, async (message, reply, text) => {
-    if (!message.isGroup) return reply('This command only works in groups');
+    pattern: "setprefixx",
+    alias: ["prefix", "setp"],
+    react: "🔧",
+    desc: "Change the bot's command prefix",
+    category: "settings",
+    filename: __filename,
+}, async (conn, mek, m, { from, args, isCreator, reply }) => {
+    if (!isCreator) return reply("*📛 Only the owner can use this command!*");
 
-    const [action, ...args] = text.split(' ');
-    const participants = message.mentionedJid || [];
+    const newPrefix = args[0];
+    
+    // Validation checks
+    if (!newPrefix) return reply("❌ Please provide a new prefix.\nExample: `.setprefix !`");
+    if (newPrefix.length > 3) return reply("❌ Prefix cannot be longer than 3 characters!");
+    if (newPrefix.includes(" ")) return reply("❌ Prefix cannot contain spaces!");
+    if (newPrefix === config.PREFIX) return reply(`❌ Prefix is already set to *${newPrefix}*`);
+    
+    // Update all three locations
+    const oldPrefix = config.PREFIX;
+    
+    // 1. Update runtime config (immediate effect)
+    config.PREFIX = newPrefix;
+    
+    // 2. Update process.env (for current process)
+    process.env.PREFIX = newPrefix;
     
     try {
-        switch(action?.toLowerCase()) {
-            case 'add':
-                if (participants.length === 0) return reply('Mention users to add');
-                await message.groupParticipantsUpdate(participants, 'add');
-                return reply(`Added ${participants.length} members`);
-                
-            case 'remove':
-                if (participants.length === 0) return reply('Mention users to remove');
-                await message.groupParticipantsUpdate(participants, 'remove');
-                return reply(`Removed ${participants.length} members`);
-                
-            case 'promote':
-                if (participants.length === 0) return reply('Mention users to promote');
-                await message.groupParticipantsUpdate(participants, 'promote');
-                return reply(`Promoted ${participants.length} members to admin`);
-                
-            case 'demote':
-                if (participants.length === 0) return reply('Mention users to demote');
-                await message.groupParticipantsUpdate(participants, 'demote');
-                return reply(`Demoted ${participants.length} admins`);
-                
-            case 'info':
-                const metadata = await message.groupMetadata();
-                return reply(
-                    `*Group Info:*\n` +
-                    `Name: ${metadata.subject}\n` +
-                    `Created: ${new Date(metadata.creation * 1000)}\n` +
-                    `Participants: ${metadata.participants.length}\n` +
-                    `Admins: ${metadata.participants.filter(p => p.admin).length}`
-                );
-                
-            default:
-                return reply('Invalid action. Use add/remove/promote/demote/info');
-        }
-    } catch (e) {
-        console.error(e);
-        return reply('Group operation failed: ' + e.message);
+        // 3. Update .env file (for persistence)
+        await updateEnvFile('PREFIX', newPrefix);
+        
+        return reply(`✅ Prefix changed from *${oldPrefix}* to *${newPrefix}*\n\nNow use commands with *${newPrefix}* (Example: *${newPrefix}ping*)`);
+    } catch (error) {
+        // Revert changes if file update fails
+        config.PREFIX = oldPrefix;
+        process.env.PREFIX = oldPrefix;
+        console.error("Prefix update failed:", error);
+        return reply("❌ Failed to update prefix. All changes reverted.");
     }
 });
+
+// Enhanced env file updater
+async function updateEnvFile(key, value) {
+    const envPath = path.join(process.cwd(), '.env');
+    let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    
+    // Handle both PREFIX=value and PREFIX="value" formats
+    const keyRegex = new RegExp(`^${key}=(?:"|')?(.*?)(?:"|')?$`, 'm');
+    
+    if (keyRegex.test(envContent)) {
+        envContent = envContent.replace(keyRegex, `${key}="${value}"`);
+    } else {
+        envContent += `\n${key}="${value}"\n`;
+    }
+    
+    fs.writeFileSync(envPath, envContent.trim());
+}
