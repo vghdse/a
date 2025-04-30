@@ -1,72 +1,134 @@
-/*const axios = require('axios');
+const { cmd } = require('../command');
+const axios = require('axios');
 const fs = require('fs');
-const path = require('path');
+const { promisify } = require('util');
+const Config = require('../config');
 
-cmd({
-  pattern: "songa",
-  alias: ["ytmp3", "music"],
-  react: "🎵",
-  desc: "Download high quality YouTube audio",
-  category: "media",
-  use: "<song name/url>",
-  filename: __filename
-}, async (conn, mek, m, { from, reply, text }) => {
-  try {
-    if (!text) return reply("Please provide a song name or YouTube link");
+cmd(
+    {
+        pattern: 'songp',
+        alias: ['ytmusic', 'ym'],
+        desc: 'Download YouTube songs using Kaiz API',
+        category: 'media',
+        use: '<song name or YouTube URL>',
+        filename: __filename,
+    },
+    async (conn, mek, m, { quoted, args, q, reply, from }) => {
+        try {
+            if (!q) return reply('*Please provide a song name or YouTube URL*\nExample: .song Alan Walker Lily\nOr: .song https://youtu.be/ox4tmEV6-QU');
 
-    // Show processing message
-    const processingMsg = await reply("⚡ Searching for your song...");
+            // Send processing reaction
+            await conn.sendMessage(mek.chat, { react: { text: "⏳", key: mek.key } });
 
-    // Extract video ID if URL is provided
-    let videoId;
-    const urlRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
-    const urlMatch = text.match(urlRegex);
-    
-    if (urlMatch && urlMatch[1]) {
-      videoId = urlMatch[1];
-    } else {
-      // Search for video if query is provided
-      const searchUrl = `https://kaiz-apis.gleeze.com/api/yts?query=${encodeURIComponent(text)}`;
-      const searchRes = await axios.get(searchUrl);
-      
-      if (!searchRes.data?.result?.length) {
-        await conn.sendMessage(from, { delete: processingMsg.key });
-        return reply("❌ No results found for your search");
-      }
-      videoId = searchRes.data.result[0].id;
-    }
+            let videoUrl = q;
+            
+            // If it's not a URL, search YouTube
+            if (!isValidYouTubeUrl(q)) {
+                videoUrl = await searchYouTube(q);
+                if (!videoUrl) return reply('*No results found for your search*');
+            }
 
-    // Get download link from Kaiz API
-    const apiUrl = `https://kaiz-apis.gleeze.com/api/ytmp3?url=https://youtube.com/watch?v=${videoId}`;
-    const { data } = await axios.get(apiUrl);
-    
-    if (!data?.download_url) {
-      await conn.sendMessage(from, { delete: processingMsg.key });
-      return reply("❌ Failed to get download link");
-    }
+            // Get video ID for thumbnail
+            const videoId = extractVideoId(videoUrl);
+            if (!videoId) return reply('*Invalid YouTube URL*');
 
-    // Delete processing message
-    await conn.sendMessage(from, { delete: processingMsg.key });
+            // Call Kaiz API
+            const apiUrl = `https://kaiz-apis.gleeze.com/api/ytdl?url=${encodeURIComponent(videoUrl)}`;
+            const response = await axios.get(apiUrl, { timeout: 30000 });
+            
+            if (!response.data || !response.data.download_url) {
+                return reply('*Failed to get download link from the API*');
+            }
 
-    // Send audio directly from URL (fastest method)
-    await conn.sendMessage(from, {
-      audio: { url: data.download_url },
-      mimetype: 'audio/mpeg',
-      contextInfo: {
-        externalAdReply: {
-          title: data.title || "YouTube Audio",
-          body: "Downloaded via Kaiz API",
-          thumbnailUrl: data.thumbnail,
-          mediaType: 2,
-          mediaUrl: `https://youtu.be/${videoId}`,
-          sourceUrl: `https://youtu.be/${videoId}`
+            const songData = response.data;
+            const downloadUrl = songData.download_url;
+
+            // Download the audio file and thumbnail in parallel
+            const [audioResponse, thumbnailBuffer] = await Promise.all([
+                axios.get(downloadUrl, { responseType: 'arraybuffer', timeout: 60000 }),
+                getThumbnailBuffer(videoId)
+            ]);
+
+            const audioBuffer = Buffer.from(audioResponse.data, 'binary');
+
+            // Send the audio file
+            await conn.sendMessage(mek.chat, { 
+                audio: audioBuffer,
+                mimetype: 'audio/mpeg',
+                fileName: `${songData.title}.mp3`.replace(/[^\w\s.-]/gi, ''),
+                contextInfo: {
+                    externalAdReply: {
+                        title: songData.title.substring(0, 60),
+                        body: `Duration: ${songData.duration || 'N/A'}`,
+                        thumbnail: thumbnailBuffer,
+                        mediaType: 2,
+                        mediaUrl: videoUrl,
+                        sourceUrl: videoUrl
+                    }
+                }
+            }, { quoted: mek });
+
+            // Send success reaction
+            await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
+
+        } catch (error) {
+            console.error('Error in song command:', error);
+            await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
+            reply('*An error occurred. Please try again later.*');
         }
-      }
-    }, { quoted: mek });
+    }
+);
 
-  } catch (error) {
-    console.error('Song download error:', error);
-    reply("❌ Error processing your request. Please try again.");
-  }
-});
-*/
+// Helper functions
+function isValidYouTubeUrl(url) {
+    const pattern = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+/;
+    return pattern.test(url);
+}
+
+function extractVideoId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+async function searchYouTube(query) {
+    try {
+        const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+        const response = await axios.get(searchUrl, { 
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+            timeout: 10000
+        });
+        
+        const videoIdMatch = response.data.match(/\/watch\?v=([a-zA-Z0-9_-]{11})/);
+        return videoIdMatch ? `https://youtube.com/watch?v=${videoIdMatch[1]}` : null;
+    } catch {
+        return null;
+    }
+}
+
+async function getThumbnailBuffer(videoId) {
+    try {
+        const thumbnailUrls = [
+            `https://files.catbox.moe/m31j88.jpg`,
+            `https://files.catbox.moe/m31j88.jpg`,
+            `https://files.catbox.moe/m31j88.jpg`
+        ];
+        
+        for (const url of thumbnailUrls) {
+            try {
+                const response = await axios.get(url, { 
+                    responseType: 'arraybuffer',
+                    timeout: 5000 
+                });
+                if (response.data) {
+                    return Buffer.from(response.data, 'binary');
+                }
+            } catch {
+                continue;
+            }
+        }
+        return null;
+    } catch {
+        return null;
+    }
+}
