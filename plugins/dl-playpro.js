@@ -1,91 +1,89 @@
 const { cmd } = require('../command');
 const axios = require('axios');
+const config = require('../config');
+
+// Configure axios for faster downloads
+const api = axios.create({
+  timeout: 20000,
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+  }
+});
 
 cmd({
-    pattern: "songp",
-    alias: ["mp3", "music"],
-    desc: "Download songs from YouTube",
-    category: "media",
-    react: "🎵",
+    pattern: 'songp',
+    alias: ['play', 'music'],
+    desc: 'Download high quality YouTube audio',
+    category: 'media',
+    react: '🎵',
+    use: '<URL or search query>',
     filename: __filename
-},
-async (conn, mek, m, { from, args, reply }) => {
+}, async (message, reply, text) => {
     try {
-        // Robust input handling
-        let query = '';
-        if (typeof args === 'string') {
-            query = args.trim();
-        } else if (Array.isArray(args)) {
-            query = args.join(' ').trim();
-        } else if (args && typeof args === 'object') {
-            query = String(args).trim();
-        }
+        if (!text) return reply(`Example: ${config.PREFIX}song https://youtu.be/ox4tmEV6-QU\nOr: ${config.PREFIX}song Alan Walker Lily`);
 
-        if (!query) {
-            return reply("Please provide a song name or YouTube URL\nExample: .song lily\nOr: .song https://youtu.be/ox4tmEV6-QU");
-        }
+        // Show processing indicator
+        await message.react('⏳').catch(() => {});
 
-        // Always show processing message first
-        await reply("⚡ Processing your song request...");
+        // Get video URL (handles both direct links and search queries)
+        const videoUrl = await getVideoUrl(text);
+        if (!videoUrl) return reply('❌ No results found');
 
-        // Determine if it's a URL or search query
-        const isUrl = /(youtube\.com|youtu\.be)/i.test(query);
-        const endpoint = isUrl ? 'ytmp3' : 'ytsearch';
-        const param = isUrl ? 'url' : 'query';
+        // Fetch song data from API
+        const apiUrl = `https://kaiz-apis.gleeze.com/api/ytmp3?url=${encodeURIComponent(videoUrl)}`;
+        const { data } = await api.get(apiUrl);
         
-        // Make API request
-        const apiUrl = `https://kaiz-apis.gleeze.com/api/${endpoint}?${param}=${encodeURIComponent(query)}`;
-        const response = await axios.get(apiUrl, {
-            timeout: 30000 // 30 second timeout
-        });
-        
-        const data = response.data;
-
-        // Handle search results if no direct download
-        if (!data.download_url && data.items?.length > 0) {
-            const firstResult = data.items[0];
-            return reply(
-                `🎵 *Search Result Found*\n\n` +
-                `📌 *Title*: ${firstResult.title}\n` +
-                `👤 *Artist*: ${firstResult.author}\n\n` +
-                `To download, reply with:\n.song ${firstResult.url}`
-            );
-        }
-
-        // Verify we have download URL
         if (!data?.download_url) {
-            throw new Error("No download link found");
+            return reply('❌ Failed to fetch song data');
         }
 
-        // Send the audio file with metadata
-        await conn.sendMessage(from, {
-            audio: { url: data.download_url },
+        // Send metadata first
+        const infoMsg = `🎧 *${data.title}*\n👤 ${data.author}\n\n⬇️ Downloading audio...`;
+        await reply(infoMsg);
+
+        // Download and send audio (streaming for faster delivery)
+        const audioResponse = await api.get(data.download_url, {
+            responseType: 'stream',
+            headers: {
+                'Referer': 'https://www.youtube.com/',
+                'Accept': 'audio/mpeg'
+            }
+        });
+
+        await reply({
+            audio: audioResponse.data,
             mimetype: 'audio/mpeg',
-            ptt: false,
+            fileName: `${data.title}.mp3`.replace(/[<>:"\/\\|?*]/g, ''),
             contextInfo: {
                 externalAdReply: {
-                    title: data.title || 'Audio Download',
-                    body: data.author || 'Unknown Artist',
-                    thumbnailUrl: data.thumbnail || '',
+                    title: data.title,
+                    body: `🎵 ${config.BOT_NAME}`,
+                    thumbnailUrl: data.thumbnail,
                     mediaType: 1,
-                    mediaUrl: ''
+                    mediaUrl: videoUrl
                 }
             }
-        }, { quoted: mek });
+        });
+
+        await message.react('✅').catch(() => {});
 
     } catch (error) {
-        console.error('Song Download Error:', error);
-        
-        // User-friendly error messages
-        let errorMsg = "⚠️ Failed to download song";
-        if (error.response?.status === 404) {
-            errorMsg = "🔍 Song not found, please try another";
-        } else if (error.code === 'ECONNABORTED') {
-            errorMsg = "⏳ Request timed out, please try again";
-        } else if (error.message.includes('No download link')) {
-            errorMsg = "❌ No download link available for this song";
-        }
-        
-        reply(errorMsg);
+        console.error('Song error:', error);
+        await message.react('❌').catch(() => {});
+        reply('❌ Error: ' + (error.message || 'Failed to download song'));
     }
 });
+
+// Helper functions
+async function getVideoUrl(input) {
+    if (input.match(/youtu\.?be/)) return input;
+    
+    try {
+        const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(input)}`;
+        const response = await api.get(searchUrl);
+        const videoId = response.data.match(/\/watch\?v=([a-zA-Z0-9_-]{11})/)?.[1];
+        return videoId ? `https://youtube.com/watch?v=${videoId}` : null;
+    } catch {
+        return null;
+    }
+}
