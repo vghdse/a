@@ -29,14 +29,14 @@ async function getBotVersion() {
         const repoUrl = config.REPO;
         const rawUrl = repoUrl.replace('github.com', 'raw.githubusercontent.com') + '/main/package.json';
         const { data } = await axios.get(rawUrl);
-        return data.version || '3.0.0';
+        return data.version || '1.0.0';
     } catch (error) {
         console.error("Version check error:", error);
         return 'Ultimate';
     }
 }
 
-const imageUrl = config.BOT_IMAGE ||  'https://i.postimg.cc/WpQLCg85/White-and-Green-Simple-Professional-Business-Project-Presentation.jpg';
+const imageUrl = config.BOT_IMAGE ||  'https://i.postimg.cc/XNTmcqZ3/subzero-menu.png';
 
 cmd({
     pattern: "menu",
@@ -79,8 +79,10 @@ ${readMore}
 *🏮 \`SUBZERO DOWNLOADER\` 🏮* 
 
 ╭─────────────···◈
-*┋* *⬡ ${config.PREFIX}ғʙ*
-*┋* *⬡ ${config.PREFIX}ɪɴꜱᴛᴀ*
+*┋* *⬡ ${config.PREFIX}sᴇʀɪᴇs*
+*┋* *⬡ ${config.PREFIX}ᴍᴏᴠɪᴇ*
+*┋* *⬡ ${config.PREFIX}ғᴀᴄᴇʙᴏᴏᴋ*
+*┋* *⬡ ${config.PREFIX}ɪɴꜱᴛᴀɢʀᴀᴍ*
 *┋* *⬡ ${config.PREFIX}sᴘᴏᴛɪғʏ*
 *┋* *⬡ ${config.PREFIX}ᴠɪᴅᴇᴏ*
 *┋* *⬡ ${config.PREFIX}ɢᴅʀɪᴠᴇ*
@@ -102,21 +104,26 @@ ${readMore}
 *┋* *⬡ ${config.PREFIX}ᴘɪɴᴛᴇʀᴇsᴛ*
 *┋* *⬡ ${config.PREFIX}sᴏɴɢx*
 *┋* *⬡ ${config.PREFIX}ᴠɪᴅᴇᴏx*
+*┋* *⬡ ${config.PREFIX}ʙɪʙʟᴇ*
 ╰─────────────╶╶···◈*
 
 *🔎 \`SEARCH-CMD\` 🔍* 
 
 ╭─────────────···◈
+*┋* *⬡ ${config.PREFIX}ɪᴍᴅʙ*
+*┋* *⬡ ${config.PREFIX}ᴡᴇᴇʙ*
+*┋* *⬡ ${config.PREFIX}ᴍᴀʟ*
 *┋* *⬡ ${config.PREFIX}ϙᴜɪᴢ*
 *┋* *⬡ ${config.PREFIX}ʀɪᴅᴅʟᴇ*
 *┋* *⬡ ${config.PREFIX}ϙᴜᴏᴛᴇ*
+*┋* *⬡ ${config.PREFIX}ᴀɴɪᴍᴇϙᴜᴏᴛᴇ*
 *┋* *⬡ ${config.PREFIX}ᴅʏᴋ*
 *┋* *⬡ ${config.PREFIX}ᴇᴘʟ*
 *┋* *⬡ ${config.PREFIX}ᴇᴘʟʀᴇsᴜʟᴛs*
 *┋* *⬡ ${config.PREFIX}ᴇᴘʟᴛᴀʙʟᴇ*
 *┋* *⬡ ${config.PREFIX}ᴘᴇʀᴘʟᴇxɪᴛʏ*
 *┋* *⬡ ${config.PREFIX}ɪɢsᴛᴀʟᴋ*
-*┋* *⬡ ${config.PREFIX}ֆʙsᴛᴀʟᴋ*
+*┋* *⬡ ${config.PREFIX}ғʙsᴛᴀʟᴋ*
 *┋* *⬡ ${config.PREFIX}ᴛᴛsᴛᴀʟᴋ*
 *┋* *⬡ ${config.PREFIX}ᴡᴀsᴛᴀʟᴋ*
 *┋* *⬡ ${config.PREFIX}ɢɪᴛsᴛᴀʟᴋ*
@@ -126,6 +133,7 @@ ${readMore}
 *┋* *⬡ ${config.PREFIX}ʙʙᴄ*
 *┋* *⬡ ${config.PREFIX}ᴛᴇᴄʜɴᴇᴡs*
 *┋* *⬡ ${config.PREFIX}ᴄᴏᴜɴᴛʀʏ*
+*┋* *⬡ ${config.PREFIX}ɪᴘʟᴏᴏᴋᴜᴘ*
 *┋* *⬡ ${config.PREFIX}ʏᴛꜱ*
 *┋* *⬡ ${config.PREFIX}ʏᴛᴀ*
 *┋* *⬡ ${config.PREFIX}ɢᴏᴏɢʟᴇ*
@@ -135,7 +143,6 @@ ${readMore}
 *┋* *⬡ ${config.PREFIX}sʀᴇᴘᴏ*
 *┋* *⬡ ${config.PREFIX}ᴍᴏᴠɪᴇɪɴғᴏ*
 *┋* *⬡ ${config.PREFIX}ɢᴏᴏɢʟᴇ*
-*┋* *⬡ ${config.PREFIX}ʙɪʙʟᴇ*
 *┋* *⬡ ${config.PREFIX}ᴍᴏᴠɪᴇ*
 *┋* *⬡ ${config.PREFIX}ᴡᴇᴀᴛʜᴇʀ*
 *┋* *⬡ ${config.PREFIX}ssᴡᴇʙ*
@@ -158,7 +165,6 @@ ${readMore}
 *┋* *⬡ ${config.PREFIX}ʙɪɴɢ*
 *┋* *⬡ ${config.PREFIX}ᴄᴏᴘɪʟᴏᴛ*
 *┋* *⬡ ${config.PREFIX}ᴄʟᴀᴜᴅᴇᴀɪ*
-*┋* *⬡ ${config.PREFIX}ᴀʀᴛ*
 *┋* *⬡ ${config.PREFIX}ᴍɪsᴛʀᴀᴀɪ*
 *┋* *⬡ ${config.PREFIX}ᴍᴇᴛᴀᴀɪ*
 *┋* *⬡ ${config.PREFIX}ᴄʜᴀᴛɢᴘᴛ*
@@ -167,8 +173,8 @@ ${readMore}
 *┋* *⬡ ${config.PREFIX}ɢᴘᴛ4ᴏ*
 *┋* *⬡ ${config.PREFIX}ʟʟᴀᴍᴀ2*
 *┋* *⬡ ${config.PREFIX}ʟʟᴀᴍᴀ3*
-*┋* *⬡ ${config.PREFIX}ֆʟᴜx*
-*┋* *⬡ ${config.PREFIX}ֆʟᴜxᴘʀᴏ*
+*┋* *⬡ ${config.PREFIX}ғʟᴜx*
+*┋* *⬡ ${config.PREFIX}ғʟᴜxᴘʀᴏ*
 *┋* *⬡ ${config.PREFIX}ɪᴍᴀɢɪɴᴇ*
 *┋* *⬡ ${config.PREFIX}ᴅᴀʟʟᴇ*
 *┋* *⬡ ${config.PREFIX}sᴛᴀʙʟᴇᴅɪғғᴜsɪᴏɴ*
@@ -177,7 +183,15 @@ ${readMore}
 *👨‍💻 \`OWNER-CMD\` 👨‍💻* 
 
 ╭─────────────···◈
-*┋* *⬡ ${config.PREFIX}&*
+*┋* *⬡ ${config.PREFIX}ᴘᴍʙʟᴏᴄᴋᴇʀ*
+*┋* *⬡ ${config.PREFIX}ᴀᴅᴅsᴜᴅᴏ*
+*┋* *⬡ ${config.PREFIX}ᴅᴇʟsᴜᴅᴏ*
+*┋* *⬡ ${config.PREFIX}ʟɪsᴛsᴜᴅᴏ*
+*┋* *⬡ ${config.PREFIX}ʙᴀɴ*
+*┋* *⬡ ${config.PREFIX}ᴜɴʙᴀɴ*
+*┋* *⬡ ${config.PREFIX}ʟɪsᴛʙᴀɴ*
+*┋* *⬡ ${config.PREFIX}ʀᴇᴍɪɴᴅᴇʀ*
+*┋* *⬡ &*
 *┋* *⬡ ${config.PREFIX}ᴠᴠ*
 *┋* *⬡ ${config.PREFIX}ᴠᴠ2*
 *┋* *⬡ ${config.PREFIX}sᴀᴠᴇ*
@@ -219,10 +233,14 @@ ${readMore}
 *👥 \`GROUP-CMD\` 👥* 
 
 ╭─────────────···◈
+*┋* *⬡ ${config.PREFIX}ᴏᴜᴛ*
+*┋* *⬡ ${config.PREFIX}ᴠᴄғ*
+*┋* *⬡ ${config.PREFIX}ᴛᴀɢᴀᴅᴍɪɴ*
 *┋* *⬡ ${config.PREFIX}ʀᴇᴍᴏᴠᴇ*
 *┋* *⬡ ${config.PREFIX}ᴅᴇʟᴇᴛᴇ*
 *┋* *⬡ ${config.PREFIX}ᴀᴅᴅ*
 *┋* *⬡ ${config.PREFIX}ᴋɪᴄᴋ*
+*┋* *⬡ ${config.PREFIX}ᴋɪᴄᴋ2*
 *┋* *⬡ ${config.PREFIX}ᴋɪᴄᴋᴀʟʟ*
 *┋* *⬡ ${config.PREFIX}ᴋɪᴄᴋᴀʟʟ2*
 *┋* *⬡ ${config.PREFIX}sᴇᴛɢᴏᴏᴅʙʏᴇ*
@@ -234,8 +252,8 @@ ${readMore}
 *┋* *⬡ ${config.PREFIX}ɢᴇᴛᴘᴘ*
 *┋* *⬡ ${config.PREFIX}ɪɴᴠɪᴛᴇ*
 *┋* *⬡ ${config.PREFIX}ʀᴇᴠᴏᴋᴇ*
-*┋* *⬡ ${config.PREFIX}ᴊᴏɪɴʀᴇǫᴜᴇsᴛs*
-*┋* *⬡ ${config.PREFIX}ᴀʟʟʀᴇǫ*
+*┋* *⬡ ${config.PREFIX}ᴀᴄᴄᴇᴘᴛʀᴇϙᴜᴇsᴛs*
+*┋* *⬡ ${config.PREFIX}ᴅᴇᴄʟɪɴᴇʀᴇϙᴜᴇsᴛs*
 *┋* *⬡ ${config.PREFIX}ᴍᴜᴛᴇ*
 *┋* *⬡ ${config.PREFIX}ᴜɴᴍᴜᴛᴇ*
 *┋* *⬡ ${config.PREFIX}ᴄʟᴏsᴇ*
@@ -295,7 +313,7 @@ ${readMore}
 *┋* *⬡ ${config.PREFIX}ʟᴏɢᴏ*
 *┋* *⬡ ${config.PREFIX}ʀᴇᴍᴏᴠᴇʙɢ*
 *┋* *⬡ ${config.PREFIX}ʀᴇᴍɪɴɪ*
-*┋* *⬡ ${config.PREFIX}ֆᴀɴᴄʏ*
+*┋* *⬡ ${config.PREFIX}ғᴀɴᴄʏ*
 *┋* *⬡ ${config.PREFIX}ϙʀ*
 *┋* *⬡ ${config.PREFIX}ʀᴇᴀᴅϙʀ*
 *┋* *⬡ ${config.PREFIX}ᴛɪɴʏ*
@@ -306,6 +324,7 @@ ${readMore}
 *┋* *⬡ ${config.PREFIX}ᴅᴇᴄᴏᴅᴇ*
 *┋* *⬡ ${config.PREFIX}ʀɪɴɢᴛᴏɴᴇs*
 *┋* *⬡ ${config.PREFIX}ᴜʀʟ*
+*┋* *⬡ ${config.PREFIX}ᴜʀʟ2ɪᴍᴀɢᴇ*
 *┋* *⬡ ${config.PREFIX}ᴜʀʟ2*
 *┋* *⬡ ${config.PREFIX}ᴜᴘʟᴏᴀᴅ*
 *┋* *⬡ ${config.PREFIX}ᴛᴏᴘᴅғ*
@@ -317,9 +336,10 @@ ${readMore}
 *┋* *⬡ ${config.PREFIX}sᴜʙᴢᴇʀᴏsᴇᴛᴛɪɴɢs*
 *┋* *⬡ ${config.PREFIX}sᴇᴛᴛɪɴɢs*
 *┋* *⬡ ${config.PREFIX}ᴀɴᴛɪᴠɪᴇᴡᴏɴᴄᴇ*
-*┋* *⬡ ${config.PREFIX}ᴀɴᴛɪᴅᴇʟᴇᴛᴇ  sᴇᴛ*
+*┋* *⬡ ${config.PREFIX}ᴀɴᴛɪᴅᴇʟᴇᴛᴇ  ᴏɴ*
 *┋* *⬡ ${config.PREFIX}ᴀɴᴛɪᴅᴇʟᴇᴛᴇ*
 *┋* *⬡ ${config.PREFIX}ᴀɴᴛɪᴄᴀʟʟ*
+*┋* *⬡ ${config.PREFIX}ᴀɴᴛɪʟɪɴᴋ*
 *┋* *⬡ ${config.PREFIX}ᴀᴜᴛᴏʀᴇᴄᴏʀᴅɪɴɢ*
 *┋* *⬡ ${config.PREFIX}ᴀᴜᴛᴏᴛʏᴘɪɴɢ*
 *┋* *⬡ ${config.PREFIX}ᴀᴜᴛᴏsᴛɪᴄᴋᴇʀ*
@@ -358,6 +378,7 @@ ${readMore}
 *┋* *⬡ ${config.PREFIX}sᴜsᴘᴇɴsɪᴏɴ*
 *┋* *⬡ ${config.PREFIX}ᴋɪss*
 *┋* *⬡ ${config.PREFIX}xᴠɪᴅᴇᴏ*
+*┋* *⬡ ${config.PREFIX}xɴxxᴠɪᴅᴇᴏ*
 ╰─────────────╶╶···◈*
 
 *⚠️ \`BUG MENU\` ⚠️* 
@@ -365,20 +386,20 @@ ${readMore}
 ╭─────────────···◈
 *┋* 
 *┋* *⬡ ${config.PREFIX}ᴢᴇʀᴏᴄʀᴀsʜ*
-*┋* *⬡ ${config.PREFIX}ᴢᴇʀᴏֆʀᴇᴇᴢᴇ*
+*┋* *⬡ ${config.PREFIX}ᴢᴇʀᴏғʀᴇᴇᴢᴇ*
 *┋* *⬡ ${config.PREFIX}ᴢᴇʀᴏʟᴀɢ*
 *┋* *⬡ ${config.PREFIX}ᴢɪᴏs*
 *┋* *⬡ ${config.PREFIX}ᴢᴀɴᴅʀᴏɪᴅ*
 *┋* *⬡ ${config.PREFIX}ᴢᴋɪʟʟ*
 *┋* *⬡ ${config.PREFIX}ᴢsᴘᴀᴍ*
-*┋* *⬡ ${config.PREFIX}ᴢֆʟᴏᴏᴅ*
+*┋* *⬡ ${config.PREFIX}ᴢᴢʟᴏᴏᴅ*
 *┋* *⬡ ${config.PREFIX}ᴢᴇʀᴏᴇxᴇᴄᴜᴛɪᴏɴ*
 *┋* *⬡ ${config.PREFIX}ᴢʜᴇᴀᴅsʜᴏʀᴛ*
 *┋* *⬡ ${config.PREFIX}ᴢᴜɪ*
 ╰─────────────╶╶···◈*
 
 *━━━━━━━━━━━━━━━━━━━━*⁠⁠⁠⁠
-> ＭＡＤＥ ＢＹ ＭＲ Ｆʀᴀɴᴋ
+> ＭＡＤＥ ＢＹ ＭＲ ＦＲＡＮＫ
 *━━━━━━━━━━━━━━━━━━━━━*
 `;
 
