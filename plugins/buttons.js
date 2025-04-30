@@ -1,4 +1,5 @@
 const { cmd } = require('../command');
+const Config = require('../config');
 
 cmd({
     pattern: "setprefixx",
