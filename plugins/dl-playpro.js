@@ -1,10 +1,137 @@
+
+const { cmd } = require('../command');
+const axios = require('axios');
+const config = require('../config');
+
+cmd({
+    pattern: "songp",
+    alias: ["mp3", "music"],
+    desc: "Download songs from YouTube",
+    category: "media",
+    react: "🎵",
+    filename: __filename
+},
+async (conn, mek, m, { from, args, reply }) => {
+    try {
+        if (!args) return reply("Please provide a song name or YouTube URL\nExample: .song lily\nOr: .song https://youtu.be/ox4tmEV6-QU");
+
+        // Check if input is URL
+        const isUrl = args.match(/(youtube\.com|youtu\.be)/i);
+        const query = isUrl ? args : `search ${args}`;
+
+        // Show loading message
+        const processingMsg = await reply("🔍 Searching for song... Please wait");
+
+        // Fetch from API
+        const apiUrl = `https://kaiz-apis.gleeze.com/api/${isUrl ? 'ytmp3' : 'ytsearch'}?${isUrl ? 'url=' + encodeURIComponent(args) : 'query=' + encodeURIComponent(args)}`;
+        
+        const response = await axios.get(apiUrl);
+        const data = response.data;
+
+        if (!data.download_url) {
+            // Handle search results
+            if (data.items && data.items.length > 0) {
+                const firstResult = data.items[0];
+                const searchResult = `🎵 *Search Result*\n\n📌 *Title*: ${firstResult.title}\n👤 *Artist*: ${firstResult.author}\n\nReply with:\n.song ${firstResult.url}`;
+                return await conn.sendMessage(from, { 
+                    text: searchResult,
+                    edit: processingMsg.key 
+                });
+            }
+            throw new Error("No results found");
+        }
+
+        // Send the audio file
+        await conn.sendMessage(from, {
+            audio: { url: data.download_url },
+            mimetype: 'audio/mpeg',
+            ptt: false,
+            contextInfo: {
+                externalAdReply: {
+                    title: data.title,
+                    body: data.author,
+                    thumbnailUrl: data.thumbnail,
+                    mediaType: 1,
+                    mediaUrl: ''
+                }
+            }
+        }, { quoted: mek });
+
+    } catch (e) {
+        console.error("Song download error:", e);
+        reply(`⚠️ Error: ${e.message || "Failed to download song"}`);
+    }
+});const { cmd } = require('../command');
+const axios = require('axios');
+const config = require('../config');
+
+cmd({
+    pattern: "song",
+    alias: ["mp3", "music"],
+    desc: "Download songs from YouTube",
+    category: "media",
+    react: "🎵",
+    filename: __filename
+},
+async (conn, mek, m, { from, args, reply }) => {
+    try {
+        if (!args) return reply("Please provide a song name or YouTube URL\nExample: .song lily\nOr: .song https://youtu.be/ox4tmEV6-QU");
+
+        // Check if input is URL
+        const isUrl = args.match(/(youtube\.com|youtu\.be)/i);
+        const query = isUrl ? args : `search ${args}`;
+
+        // Show loading message
+        const processingMsg = await reply("🔍 Searching for song... Please wait");
+
+        // Fetch from API
+        const apiUrl = `https://kaiz-apis.gleeze.com/api/${isUrl ? 'ytmp3' : 'ytsearch'}?${isUrl ? 'url=' + encodeURIComponent(args) : 'query=' + encodeURIComponent(args)}`;
+        
+        const response = await axios.get(apiUrl);
+        const data = response.data;
+
+        if (!data.download_url) {
+            // Handle search results
+            if (data.items && data.items.length > 0) {
+                const firstResult = data.items[0];
+                const searchResult = `🎵 *Search Result*\n\n📌 *Title*: ${firstResult.title}\n👤 *Artist*: ${firstResult.author}\n\nReply with:\n.song ${firstResult.url}`;
+                return await conn.sendMessage(from, { 
+                    text: searchResult,
+                    edit: processingMsg.key 
+                });
+            }
+            throw new Error("No results found");
+        }
+
+        // Send the audio file
+        await conn.sendMessage(from, {
+            audio: { url: data.download_url },
+            mimetype: 'audio/mpeg',
+            ptt: false,
+            contextInfo: {
+                externalAdReply: {
+                    title: data.title,
+                    body: data.author,
+                    thumbnailUrl: data.thumbnail,
+                    mediaType: 1,
+                    mediaUrl: ''
+                }
+            }
+        }, { quoted: mek });
+
+    } catch (e) {
+        console.error("Song download error:", e);
+        reply(`⚠️ Error: ${e.message || "Failed to download song"}`);
+    }
+});
+
 /*
 
 - MADE BY MR FRANK 
 - COPY WITH CREDITS
 
 */
-
+/*
 
 const { cmd } = require("../command");
 const yts = require("yt-search");
@@ -314,3 +441,4 @@ cmd({
     await conn.sendMessage(from, { react: { text: '❌', key: m.key } });
   }
 });
+*/
