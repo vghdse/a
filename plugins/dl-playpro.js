@@ -11,16 +11,18 @@ cmd({
 },
 async (conn, mek, m, { from, args, reply }) => {
     try {
-        if (!args) return reply("Please provide a song name or YouTube URL\nExample: .song lily\nOr: .song https://youtu.be/ox4tmEV6-QU");
+        // Ensure args is a string
+        const input = typeof args === 'string' ? args : '';
+        if (!input.trim()) return reply("Please provide a song name or YouTube URL\nExample: .song lily\nOr: .song https://youtu.be/ox4tmEV6-QU");
 
         // Check if input is URL
-        const isUrl = args.match(/(youtube\.com|youtu\.be)/i);
+        const isUrl = /(youtube\.com|youtu\.be)/i.test(input);
         
         // Show processing message
         await reply("🔍 Processing your request...");
 
         // Fetch from API
-        const apiUrl = `https://kaiz-apis.gleeze.com/api/${isUrl ? 'ytmp3' : 'ytsearch'}?${isUrl ? 'url=' + encodeURIComponent(args) : 'query=' + encodeURIComponent(args)}`;
+        const apiUrl = `https://kaiz-apis.gleeze.com/api/${isUrl ? 'ytmp3' : 'ytsearch'}?${isUrl ? 'url=' + encodeURIComponent(input) : 'query=' + encodeURIComponent(input)}`;
         const response = await axios.get(apiUrl);
         const data = response.data;
 
