@@ -14,23 +14,18 @@ cmd({
 async (conn, mek, m, { from, reply }) => {
     try {
         // Send initial message
-        const msg = await reply("🔄 *Bot Restart Initiated*\n\nRestarting in 3 seconds...");
-
+        await reply("🔄 *Bot Restart Initiated*\n\nRestarting in 3 seconds...");
+        await sleep(1000);
+        
         // Simple countdown
-        const countdown = [3, 2, 1];
-        for (const num of countdown) {
-            await sleep(1000);
-            await conn.sendMessage(from, { 
-                text: `🔃 Restarting in ${num}...`,
-                edit: msg.key 
-            });
-        }
-
-        // Final message before restart
-        await conn.sendMessage(from, { 
-            text: "⚡ *Restarting Now!*\n\nPlease wait 15-20 seconds...",
-            edit: msg.key 
-        });
+        await reply("🔃 Restarting in 2...");
+        await sleep(1000);
+        
+        await reply("🔃 Restarting in 1...");
+        await sleep(1000);
+        
+        // Final message
+        await reply("⚡ *Restarting Now!*\n\nPlease wait 15-20 seconds...");
 
         // Execute restart
         exec("pm2 restart all", (error) => {
@@ -45,7 +40,6 @@ async (conn, mek, m, { from, reply }) => {
         reply(`⚠️ Error: ${e.message}\n\nManual restart required.`);
     }
 });
-
 /*const { cmd } = require('../command');
 const { sleep } = require('../lib/functions');
 const config = require('../config');
