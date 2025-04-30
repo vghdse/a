@@ -2,62 +2,93 @@ const { cmd } = require('../command');
 const axios = require('axios');
 const config = require('../config');
 
-// Configure axios for faster downloads
+// Configure axios with better timeout and headers
 const api = axios.create({
-  timeout: 20000,
+  timeout: 30000,
   headers: {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    'Accept': 'audio/mpeg'
   }
 });
 
 cmd({
-    pattern: 'songp',
+    pattern: 'song',
     alias: ['play', 'music'],
-    desc: 'Download high quality YouTube audio',
+    desc: 'Download YouTube audio',
     category: 'media',
     react: '🎵',
     use: '<URL or search query>',
     filename: __filename
-}, async (message, reply, text) => {
+}, async (message, reply) => {
     try {
-        if (!text) return reply(`Example: ${config.PREFIX}song https://youtu.be/ox4tmEV6-QU\nOr: ${config.PREFIX}song Alan Walker Lily`);
-
-        // Show processing indicator
-        await message.react('⏳').catch(() => {});
-
-        // Get video URL (handles both direct links and search queries)
-        const videoUrl = await getVideoUrl(text);
-        if (!videoUrl) return reply('❌ No results found');
-
-        // Fetch song data from API
-        const apiUrl = `https://kaiz-apis.gleeze.com/api/ytmp3?url=${encodeURIComponent(videoUrl)}`;
-        const { data } = await api.get(apiUrl);
+        console.log('[SONG] Command received'); // Debug log
+        const text = message.body.slice(config.PREFIX.length).split(' ').slice(1).join(' ');
         
-        if (!data?.download_url) {
-            return reply('❌ Failed to fetch song data');
+        if (!text) {
+            console.log('[SONG] No query provided');
+            return reply(`Example:\n${config.PREFIX}song https://youtu.be/ox4tmEV6-QU\n${config.PREFIX}song Alan Walker Lily`);
         }
 
-        // Send metadata first
-        const infoMsg = `🎧 *${data.title}*\n👤 ${data.author}\n\n⬇️ Downloading audio...`;
-        await reply(infoMsg);
+        await message.react('⏳').catch(e => console.log('[SONG] React error:', e));
 
-        // Download and send audio (streaming for faster delivery)
-        const audioResponse = await api.get(data.download_url, {
-            responseType: 'stream',
-            headers: {
-                'Referer': 'https://www.youtube.com/',
-                'Accept': 'audio/mpeg'
-            }
+        // Get video URL
+        const videoUrl = await getVideoUrl(text);
+        if (!videoUrl) {
+            console.log('[SONG] No video found for query:', text);
+            return reply('❌ No results found');
+        }
+
+        console.log('[SONG] Video URL:', videoUrl);
+
+        // Fetch song data
+        const apiUrl = `https://kaiz-apis.gleeze.com/api/ytmp3?url=${encodeURIComponent(videoUrl)}`;
+        console.log('[SONG] API URL:', apiUrl);
+        
+        const { data } = await api.get(apiUrl).catch(e => {
+            console.log('[SONG] API error:', e.message);
+            throw new Error('Failed to fetch song info');
         });
 
+        if (!data?.download_url) {
+            console.log('[SONG] Invalid API response:', data);
+            return reply('❌ Could not get download link');
+        }
+
+        console.log('[SONG] Download URL:', data.download_url);
+
+        // Send metadata first
+        const infoMsg = `🎧 *${data.title || 'Unknown Title'}*\n👤 ${data.author || 'Unknown Artist'}\n\n⬇️ Downloading audio...`;
+        await reply(infoMsg).catch(e => console.log('[SONG] Info message failed:', e));
+
+        // Download audio
+        console.log('[SONG] Starting download...');
+        const audioResponse = await api.get(data.download_url, {
+            responseType: 'arraybuffer',
+            headers: {
+                'Referer': 'https://www.youtube.com/'
+            }
+        }).catch(e => {
+            console.log('[SONG] Download failed:', e.message);
+            throw new Error('Audio download failed');
+        });
+
+        if (!audioResponse.data || audioResponse.data.length < 1000) {
+            console.log('[SONG] Invalid audio data received');
+            throw new Error('Received empty audio file');
+        }
+
+        console.log('[SONG] Audio size:', audioResponse.data.length, 'bytes');
+
+        // Send audio file
+        console.log('[SONG] Attempting to send audio...');
         await reply({
             audio: audioResponse.data,
             mimetype: 'audio/mpeg',
-            fileName: `${data.title}.mp3`.replace(/[<>:"\/\\|?*]/g, ''),
+            fileName: `${(data.title || 'audio').replace(/[^\w\s]/gi, '')}.mp3`,
             contextInfo: {
                 externalAdReply: {
-                    title: data.title,
-                    body: `🎵 ${config.BOT_NAME}`,
+                    title: data.title || 'YouTube Audio',
+                    body: `Powered by ${config.BOT_NAME || 'Bot'}`,
                     thumbnailUrl: data.thumbnail,
                     mediaType: 1,
                     mediaUrl: videoUrl
@@ -65,16 +96,17 @@ cmd({
             }
         });
 
-        await message.react('✅').catch(() => {});
+        console.log('[SONG] Audio sent successfully');
+        await message.react('✅').catch(e => console.log('[SONG] Success react failed:', e));
 
     } catch (error) {
-        console.error('Song error:', error);
+        console.error('[SONG ERROR]', error);
         await message.react('❌').catch(() => {});
-        reply('❌ Error: ' + (error.message || 'Failed to download song'));
+        reply('❌ Error: ' + (error.message || 'Failed to process request'));
     }
 });
 
-// Helper functions
+// Helper to get video URL
 async function getVideoUrl(input) {
     if (input.match(/youtu\.?be/)) return input;
     
@@ -83,7 +115,8 @@ async function getVideoUrl(input) {
         const response = await api.get(searchUrl);
         const videoId = response.data.match(/\/watch\?v=([a-zA-Z0-9_-]{11})/)?.[1];
         return videoId ? `https://youtube.com/watch?v=${videoId}` : null;
-    } catch {
+    } catch (e) {
+        console.log('[SONG] Search error:', e.message);
         return null;
     }
 }
