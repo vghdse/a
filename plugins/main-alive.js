@@ -9,6 +9,7 @@ const ALIVE_IMG = config.BOT_IMAGE || "https://i.postimg.cc/3RgPr15t/IMG-2025030
 
 cmd({
   pattern: "alive",
+  alias: ["uptime","runtime"],
   desc: "Check if the bot is active.",
   category: "info",
   react: "🚀",
