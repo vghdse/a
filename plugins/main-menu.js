@@ -422,14 +422,16 @@ ${readMore}
             },
             { quoted: mek }
         );
-
+      
+        /*
         // Send audio from provided URL
         await conn.sendMessage(from, {
             audio: { url: 'https://files.catbox.moe/qda847.m4a' },
             mimetype: 'audio/mp4',
             ptt: true
         }, { quoted: mek });
-        
+        */
+      
         // Remove typing indicator after all messages have been sent
         await conn.sendPresenceUpdate('paused', from);
         
