@@ -1,5 +1,5 @@
 
-const { cmd } = require('../command');
+/*const { cmd } = require('../command');
 const axios = require('axios');
 const config = require('../config');
 
@@ -124,7 +124,7 @@ async (conn, mek, m, { from, args, reply }) => {
         reply(`⚠️ Error: ${e.message || "Failed to download song"}`);
     }
 });
-
+*/
 /*
 
 - MADE BY MR FRANK 
