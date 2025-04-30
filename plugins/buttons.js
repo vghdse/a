@@ -1,8 +1,10 @@
 const { cmd } = require('../command');
 const Config = require('../config');
+const fs = require('fs');
+const path = require('path');
 
 cmd({
-    pattern: "setprefixx",
+    pattern: "setprefix",
     alias: ["prefix", "setp"],
     react: "🔧",
     desc: "Change the bot's command prefix",
@@ -17,13 +19,13 @@ cmd({
     if (!newPrefix) return reply("❌ Please provide a new prefix.\nExample: `.setprefix !`");
     if (newPrefix.length > 3) return reply("❌ Prefix cannot be longer than 3 characters!");
     if (newPrefix.includes(" ")) return reply("❌ Prefix cannot contain spaces!");
-    if (newPrefix === config.PREFIX) return reply(`❌ Prefix is already set to *${newPrefix}*`);
+    if (newPrefix === Config.PREFIX) return reply(`❌ Prefix is already set to *${newPrefix}*`);
     
     // Update all three locations
-    const oldPrefix = config.PREFIX;
+    const oldPrefix = Config.PREFIX;
     
     // 1. Update runtime config (immediate effect)
-    config.PREFIX = newPrefix;
+    Config.PREFIX = newPrefix;
     
     // 2. Update process.env (for current process)
     process.env.PREFIX = newPrefix;
@@ -35,7 +37,7 @@ cmd({
         return reply(`✅ Prefix changed from *${oldPrefix}* to *${newPrefix}*\n\nNow use commands with *${newPrefix}* (Example: *${newPrefix}ping*)`);
     } catch (error) {
         // Revert changes if file update fails
-        config.PREFIX = oldPrefix;
+        Config.PREFIX = oldPrefix;
         process.env.PREFIX = oldPrefix;
         console.error("Prefix update failed:", error);
         return reply("❌ Failed to update prefix. All changes reverted.");
