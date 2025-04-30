@@ -1,5 +1,53 @@
 const { cmd } = require('../command');
 const { sleep } = require('../lib/functions');
+const { exec } = require('child_process');
+
+cmd({
+    pattern: "restart",
+    alias: ["reboot"],
+    desc: "Restart the bot system",
+    category: "system",
+    react: "🔄",
+    filename: __filename,
+    ownerOnly: true
+},
+async (conn, mek, m, { from, reply }) => {
+    try {
+        // Send initial message
+        const msg = await reply("🔄 *Bot Restart Initiated*\n\nRestarting in 3 seconds...");
+
+        // Simple countdown
+        const countdown = [3, 2, 1];
+        for (const num of countdown) {
+            await sleep(1000);
+            await conn.sendMessage(from, { 
+                text: `🔃 Restarting in ${num}...`,
+                edit: msg.key 
+            });
+        }
+
+        // Final message before restart
+        await conn.sendMessage(from, { 
+            text: "⚡ *Restarting Now!*\n\nPlease wait 15-20 seconds...",
+            edit: msg.key 
+        });
+
+        // Execute restart
+        exec("pm2 restart all", (error) => {
+            if (error) {
+                console.error("Restart failed:", error);
+                reply(`❌ Restart failed:\n${error.message}\n\nTry: pm2 restart all`);
+            }
+        });
+
+    } catch (e) {
+        console.error("Restart error:", e);
+        reply(`⚠️ Error: ${e.message}\n\nManual restart required.`);
+    }
+});
+
+/*const { cmd } = require('../command');
+const { sleep } = require('../lib/functions');
 const config = require('../config');
 const moment = require('moment-timezone');
 
@@ -86,3 +134,4 @@ async (conn, mek, m, { from, reply }) => {
         }
     }
 });
+*/
