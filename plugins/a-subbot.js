@@ -1,131 +1,248 @@
 const { cmd } = require('../command');
-const { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } = require('@whiskeysockets/baileys');
-const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const pino = require('pino');
-const NodeCache = require('node-cache');
 
-// Global to store active subbots
-if (!global.subBots) global.subBots = [];
+// Game database path
+const GAME_DB = path.join(__dirname, '../lib/game.json');
 
-cmd({
-    pattern: 'subbot',
-    react: '🧲',
-    alias: ['serbot', 'jadibot'],
-    desc: 'Create a sub bot instance using phone verification',
-    category: 'bot',
-    filename: __filename,
-}, async (m, conn, args) => {
-    try {
-        if (!m.isOwner) return m.reply('❌ This command is only for bot owners');
-
-        // Create unique auth folder
-        const authFolder = `subbot_${crypto.randomBytes(4).toString('hex')}`;
-        const authPath = path.join(__dirname, '..', 'auth', authFolder);
-        
-        if (!fs.existsSync(authPath)) {
-            fs.mkdirSync(authPath, { recursive: true });
+// Initialize game database
+if (!fs.existsSync(GAME_DB)) {
+    fs.writeFileSync(GAME_DB, JSON.stringify({
+        players: {},
+        jobs: {
+            miner: { income: 50, cooldown: 30 },
+            fisher: { income: 30, cooldown: 20 },
+            thief: { income: 80, cooldown: 60, risk: 0.3 }
+        },
+        shops: {
+            phone: { price: 500, emoji: '📱' },
+            car: { price: 5000, emoji: '🚗' },
+            house: { price: 20000, emoji: '🏠' }
+        },
+        bank: {
+            interestRate: 0.05,
+            loanRate: 0.1
         }
+    }, null, 2));
+}
 
-        // Initialize auth state
-        const { state, saveCreds } = await useMultiFileAuthState(authPath);
-        const msgRetryCounterCache = new NodeCache();
-        const { version } = await fetchLatestBaileysVersion();
+// Helper functions
+const getGameData = () => JSON.parse(fs.readFileSync(GAME_DB));
+const saveGameData = (data) => fs.writeFileSync(GAME_DB, JSON.stringify(data, null, 2));
 
-        // Connection options - explicitly disable QR codes
-        const connectionOptions = {
-            logger: pino({ level: 'silent' }),
-            printQRInTerminal: false, // Disable QR codes
-            mobile: true, // Force mobile mode
-            auth: {
-                creds: state.creds,
-                keys: makeCacheableSignalKeyStore(state.keys, pino()),
-            },
-            markOnlineOnConnect: true,
-            msgRetryCounterCache,
-            version
+// Register player if not exists
+function registerPlayer(userId) {
+    const game = getGameData();
+    if (!game.players[userId]) {
+        game.players[userId] = {
+            wallet: 100,
+            bank: 0,
+            items: [],
+            job: null,
+            lastWorked: 0,
+            debt: 0
         };
-
-        // Create socket
-        const subConn = makeWASocket(connectionOptions);
-
-        // Handle connection updates
-        subConn.ev.on('connection.update', async (update) => {
-            const { connection, lastDisconnect } = update;
-            
-            if (connection === 'close') {
-                const code = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.output?.payload?.statusCode;
-                
-                if (code === DisconnectReason.loggedOut) {
-                    m.reply('🔴 SubBot logged out. Please create a new instance.');
-                } else {
-                    m.reply('🔄 SubBot disconnected. Reconnecting...');
-                    setTimeout(() => initializeSubBot(authPath), 5000);
-                }
-                
-                // Remove from active bots
-                global.subBots = global.subBots.filter(bot => bot !== subConn);
-            }
-
-            if (connection === 'open') {
-                m.reply('✅ SubBot connected successfully!');
-                
-                // Send credentials back to owner
-                try {
-                    const creds = JSON.parse(fs.readFileSync(path.join(authPath, 'creds.json'), 'utf8'));
-                    await m.reply(`🔑 SubBot credentials saved:\n\`\`\`${JSON.stringify(creds, null, 2)}\`\`\``);
-                } catch (err) {
-                    console.error('Failed to read credentials:', err);
-                }
-            }
-        });
-
-        // Save credentials when updated
-        subConn.ev.on('creds.update', saveCreds);
-
-        // Request pairing code for phone number
-        if (!subConn.authState.creds.registered) {
-            const phoneNumber = m.sender.split('@')[0];
-            const cleanedNumber = phoneNumber.replace(/[^0-9]/g, '');
-
-            try {
-                const code = await subConn.requestPairingCode(cleanedNumber);
-                const formattedCode = code.match(/.{1,4}/g)?.join("-") || code;
-                
-                await m.reply(`📱 Pairing code for ${cleanedNumber}:\n\n*${formattedCode}*\n\n` +
-                    'How to link this device:\n' +
-                    '1. Open WhatsApp on your phone\n' +
-                    '2. Go to Settings > Linked Devices\n' +
-                    '3. Tap "Link a Device"\n' +
-                    '4. Select "Link with phone number"\n' +
-                    '5. Enter this code when prompted\n\n' +
-                    '⚠️ Code expires in 2 minutes');
-            } catch (error) {
-                console.error('Pairing code error:', error);
-                await m.reply('❌ Failed to generate pairing code. Error: ' + error.message);
-                
-                // Clean up failed connection
-                try {
-                    subConn.ws.close();
-                    fs.rmdirSync(authPath, { recursive: true });
-                } catch (cleanupErr) {
-                    console.error('Cleanup error:', cleanupErr);
-                }
-            }
-        }
-
-        // Store connection
-        global.subBots.push(subConn);
-
-    } catch (error) {
-        console.error('SubBot creation error:', error);
-        m.reply(`❌ Failed to create SubBot: ${error.message}`);
+        saveGameData(game);
     }
+}
+
+// Economy Game Commands
+cmd({
+    pattern: 'register',
+    alias: ['start'],
+    desc: 'Join the economy game',
+    category: 'game',
+    filename: __filename
+}, async (m, conn) => {
+    registerPlayer(m.sender);
+    m.reply(`🎉 Welcome to the economy game!\n\n`
+        + `💰 You received 100 credits as starting bonus!\n`
+        + `Use *.work* to get a job and start earning!`);
 });
 
-// Helper function to reconnect
-function initializeSubBot(authPath) {
-    // Similar connection logic but without user interaction
-    // Would use the saved credentials in authPath
-}
+cmd({
+    pattern: 'balance',
+    alias: ['bal'],
+    desc: 'Check your balance',
+    category: 'game',
+    filename: __filename
+}, async (m, conn) => {
+    const game = getGameData();
+    registerPlayer(m.sender);
+    const player = game.players[m.sender];
+    
+    m.reply(`💳 *Account Balance*\n\n`
+        + `💰 Wallet: ${player.wallet} credits\n`
+        + `🏦 Bank: ${player.bank} credits\n`
+        + `💸 Debt: ${player.debt} credits\n`
+        + `🛒 Items: ${player.items.length > 0 ? player.items.join(', ') : 'None'}`);
+});
+
+cmd({
+    pattern: 'work',
+    alias: ['jobs'],
+    desc: 'Get a job to earn money',
+    category: 'game',
+    filename: __filename
+}, async (m, conn) => {
+    const game = getGameData();
+    registerPlayer(m.sender);
+    
+    let jobsList = '🔧 *Available Jobs*\n\n';
+    Object.entries(game.jobs).forEach(([job, details]) => {
+        jobsList += `*${job.charAt(0).toUpperCase() + job.slice(1)}*\n`
+                 + `Income: ${details.income} credits\n`
+                 + `Cooldown: ${details.cooldown} mins\n\n`;
+    });
+    
+    jobsList += `Reply with *.takejob [job]* to select one`;
+    m.reply(jobsList);
+});
+
+cmd({
+    pattern: 'takejob',
+    alias: ['acceptjob'],
+    desc: 'Accept a job',
+    category: 'game',
+    filename: __filename
+}, async (m, conn, args) => {
+    const job = args[0]?.toLowerCase();
+    const game = getGameData();
+    registerPlayer(m.sender);
+    
+    if (!job || !game.jobs[job]) {
+        return m.reply('❌ Invalid job! Use *.work* to see available jobs');
+    }
+    
+    game.players[m.sender].job = job;
+    saveGameData(game);
+    
+    m.reply(`🎉 You're now a *${job}*!\n`
+          + `Use *.labor* to work and earn ${game.jobs[job].income} credits every ${game.jobs[job].cooldown} mins`);
+});
+
+cmd({
+    pattern: 'labor',
+    alias: ['worknow'],
+    desc: 'Do your job to earn money',
+    category: 'game',
+    filename: __filename
+}, async (m, conn) => {
+    const game = getGameData();
+    registerPlayer(m.sender);
+    const player = game.players[m.sender];
+    
+    if (!player.job) {
+        return m.reply('❌ You need a job first! Use *.work*');
+    }
+    
+    const jobDetails = game.jobs[player.job];
+    const now = Date.now();
+    const cooldown = jobDetails.cooldown * 60 * 1000;
+    
+    if (now - player.lastWorked < cooldown) {
+        const remaining = Math.ceil((cooldown - (now - player.lastWorked)) / (60 * 1000));
+        return m.reply(`⏳ You can work again in ${remaining} minutes`);
+    }
+    
+    // Special handling for thief (risk of getting caught)
+    if (player.job === 'thief' && Math.random() < jobDetails.risk) {
+        const fine = Math.floor(jobDetails.income * 2);
+        player.wallet = Math.max(0, player.wallet - fine);
+        player.job = null;
+        saveGameData(game);
+        return m.reply(`🚨 You got caught stealing!\n`
+                    + `💰 Paid ${fine} credits fine\n`
+                    + `🔥 Lost your job as thief!`);
+    }
+    
+    // Successful work
+    player.wallet += jobDetails.income;
+    player.lastWorked = now;
+    saveGameData(game);
+    
+    m.reply(`💼 You worked as ${player.job} and earned ${jobDetails.income} credits!\n`
+          + `💰 New balance: ${player.wallet} credits`);
+});
+
+// Bank system
+cmd({
+    pattern: 'deposit',
+    alias: ['dep'],
+    desc: 'Deposit money to bank',
+    category: 'game',
+    filename: __filename
+}, async (m, conn, args) => {
+    const amount = parseInt(args[0]) || 0;
+    const game = getGameData();
+    registerPlayer(m.sender);
+    const player = game.players[m.sender];
+    
+    if (amount <= 0) return m.reply('❌ Please specify a valid amount');
+    if (amount > player.wallet) return m.reply('❌ Not enough money in wallet');
+    
+    player.wallet -= amount;
+    player.bank += amount;
+    saveGameData(game);
+    
+    m.reply(`🏦 Deposited ${amount} credits to bank\n`
+          + `💰 Wallet: ${player.wallet} | Bank: ${player.bank}`);
+});
+
+// Add more commands like withdraw, shop, buy, rob, etc...
+
+// Daily bonus system
+cmd({
+    pattern: 'daily',
+    alias: ['bonus'],
+    desc: 'Claim daily bonus',
+    category: 'game',
+    filename: __filename
+}, async (m, conn) => {
+    const game = getGameData();
+    registerPlayer(m.sender);
+    const player = game.players[m.sender];
+    
+    const now = Date.now();
+    const lastDaily = player.lastDaily || 0;
+    const dailyCooldown = 24 * 60 * 60 * 1000;
+    
+    if (now - lastDaily < dailyCooldown) {
+        const remaining = Math.ceil((dailyCooldown - (now - lastDaily)) / (60 * 60 * 1000));
+        return m.reply(`⏳ Come back in ${remaining} hours for your next daily bonus`);
+    }
+    
+    const bonus = 200 + Math.floor(Math.random() * 300);
+    player.wallet += bonus;
+    player.lastDaily = now;
+    saveGameData(game);
+    
+    m.reply(`🎁 Daily bonus claimed!\n`
+          + `💰 +${bonus} credits\n`
+          + `💳 New balance: ${player.wallet} credits`);
+});
+
+// Leaderboard command
+cmd({
+    pattern: 'leaderboard',
+    alias: ['lb', 'rich'],
+    desc: 'Show wealth leaderboard',
+    category: 'game',
+    filename: __filename
+}, async (m, conn) => {
+    const game = getGameData();
+    const players = Object.entries(game.players)
+        .map(([id, data]) => ({
+            id,
+            total: data.wallet + data.bank - data.debt
+        }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 10);
+    
+    let leaderboard = '🏆 *Top 10 Richest Players*\n\n';
+    players.forEach((player, index) => {
+        leaderboard += `${index + 1}. @${player.id.split('@')[0]} - ${player.total} credits\n`;
+    });
+    
+    m.reply(leaderboard);
+});
