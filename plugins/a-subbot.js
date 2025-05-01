@@ -2,62 +2,66 @@ const { cmd } = require('../command');
 const fs = require('fs');
 const path = require('path');
 
-// Game database path
-const GAME_DB = path.join(__dirname, '../lib/game.json');
+// Database setup
+const DB_PATH = path.join(__dirname, '../lib/game.json');
 
-// Initialize game database
-if (!fs.existsSync(GAME_DB)) {
-    fs.writeFileSync(GAME_DB, JSON.stringify({
-        players: {},
-        jobs: {
-            miner: { income: 50, cooldown: 30 },
-            fisher: { income: 30, cooldown: 20 },
-            thief: { income: 80, cooldown: 60, risk: 0.3 }
-        },
-        shops: {
-            phone: { price: 500, emoji: '📱' },
-            car: { price: 5000, emoji: '🚗' },
-            house: { price: 20000, emoji: '🏠' }
-        },
-        bank: {
-            interestRate: 0.05,
-            loanRate: 0.1
-        }
-    }, null, 2));
+// Initialize database
+function initDB() {
+    if (!fs.existsSync(DB_PATH)) {
+        const defaultData = {
+            players: {},
+            jobs: {
+                miner: { income: 50, cooldown: 30 },
+                fisher: { income: 30, cooldown: 20 },
+                thief: { income: 80, cooldown: 60, risk: 0.3 }
+            },
+            shops: {
+                phone: { price: 500, emoji: '📱' },
+                car: { price: 5000, emoji: '🚗' },
+                house: { price: 20000, emoji: '🏠' }
+            }
+        };
+        fs.writeFileSync(DB_PATH, JSON.stringify(defaultData, null, 2));
+    }
 }
 
-// Helper functions
-const getGameData = () => JSON.parse(fs.readFileSync(GAME_DB));
-const saveGameData = (data) => fs.writeFileSync(GAME_DB, JSON.stringify(data, null, 2));
+// Read database
+function readDB() {
+    initDB();
+    return JSON.parse(fs.readFileSync(DB_PATH));
+}
 
-// Register player if not exists
+// Write to database
+function writeDB(data) {
+    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+}
+
+// Register player
 function registerPlayer(userId) {
-    const game = getGameData();
-    if (!game.players[userId]) {
-        game.players[userId] = {
+    const db = readDB();
+    if (!db.players[userId]) {
+        db.players[userId] = {
             wallet: 100,
             bank: 0,
             items: [],
             job: null,
             lastWorked: 0,
-            debt: 0
+            lastDaily: 0
         };
-        saveGameData(game);
+        writeDB(db);
     }
 }
 
-// Economy Game Commands
+// Game commands
 cmd({
     pattern: 'register',
     alias: ['start'],
     desc: 'Join the economy game',
     category: 'game',
     filename: __filename
-}, async (m, conn) => {
+}, async (m) => {
     registerPlayer(m.sender);
-    m.reply(`🎉 Welcome to the economy game!\n\n`
-        + `💰 You received 100 credits as starting bonus!\n`
-        + `Use *.work* to get a job and start earning!`);
+    m.reply(`🎉 Welcome to the economy game!\n💰 You received 100 credits!\nUse *.work* to get a job!`);
 });
 
 cmd({
@@ -66,37 +70,29 @@ cmd({
     desc: 'Check your balance',
     category: 'game',
     filename: __filename
-}, async (m, conn) => {
-    const game = getGameData();
+}, async (m) => {
     registerPlayer(m.sender);
-    const player = game.players[m.sender];
+    const db = readDB();
+    const player = db.players[m.sender];
     
-    m.reply(`💳 *Account Balance*\n\n`
-        + `💰 Wallet: ${player.wallet} credits\n`
-        + `🏦 Bank: ${player.bank} credits\n`
-        + `💸 Debt: ${player.debt} credits\n`
-        + `🛒 Items: ${player.items.length > 0 ? player.items.join(', ') : 'None'}`);
+    m.reply(`💳 *Balance*\n\n💰 Wallet: ${player.wallet}\n🏦 Bank: ${player.bank}\n🛒 Items: ${player.items.length || 'None'}`);
 });
 
 cmd({
     pattern: 'work',
     alias: ['jobs'],
-    desc: 'Get a job to earn money',
+    desc: 'View available jobs',
     category: 'game',
     filename: __filename
-}, async (m, conn) => {
-    const game = getGameData();
-    registerPlayer(m.sender);
-    
+}, async (m) => {
+    const db = readDB();
     let jobsList = '🔧 *Available Jobs*\n\n';
-    Object.entries(game.jobs).forEach(([job, details]) => {
-        jobsList += `*${job.charAt(0).toUpperCase() + job.slice(1)}*\n`
-                 + `Income: ${details.income} credits\n`
-                 + `Cooldown: ${details.cooldown} mins\n\n`;
-    });
     
-    jobsList += `Reply with *.takejob [job]* to select one`;
-    m.reply(jobsList);
+    for (const [job, details] of Object.entries(db.jobs)) {
+        jobsList += `*${job.toUpperCase()}*\nIncome: ${details.income}\nCooldown: ${details.cooldown} mins\n\n`;
+    }
+    
+    m.reply(jobsList + 'Reply with *.takejob [job]* to select');
 });
 
 cmd({
@@ -105,143 +101,148 @@ cmd({
     desc: 'Accept a job',
     category: 'game',
     filename: __filename
-}, async (m, conn, args) => {
+}, async (m, _, args) => {
     const job = args[0]?.toLowerCase();
-    const game = getGameData();
+    if (!job) return m.reply('❌ Please specify a job');
+    
+    const db = readDB();
+    if (!db.jobs[job]) return m.reply('❌ Invalid job! Use *.work* to see options');
+    
     registerPlayer(m.sender);
+    db.players[m.sender].job = job;
+    writeDB(db);
     
-    if (!job || !game.jobs[job]) {
-        return m.reply('❌ Invalid job! Use *.work* to see available jobs');
-    }
-    
-    game.players[m.sender].job = job;
-    saveGameData(game);
-    
-    m.reply(`🎉 You're now a *${job}*!\n`
-          + `Use *.labor* to work and earn ${game.jobs[job].income} credits every ${game.jobs[job].cooldown} mins`);
+    m.reply(`🎉 You're now a ${job}!\nUse *.labor* to work and earn ${db.jobs[job].income} credits`);
 });
 
 cmd({
     pattern: 'labor',
     alias: ['worknow'],
-    desc: 'Do your job to earn money',
+    desc: 'Work to earn money',
     category: 'game',
     filename: __filename
-}, async (m, conn) => {
-    const game = getGameData();
+}, async (m) => {
+    const db = readDB();
     registerPlayer(m.sender);
-    const player = game.players[m.sender];
+    const player = db.players[m.sender];
     
-    if (!player.job) {
-        return m.reply('❌ You need a job first! Use *.work*');
-    }
+    if (!player.job) return m.reply('❌ Get a job first with *.work*');
     
-    const jobDetails = game.jobs[player.job];
+    const job = db.jobs[player.job];
     const now = Date.now();
-    const cooldown = jobDetails.cooldown * 60 * 1000;
+    const cooldown = job.cooldown * 60 * 1000;
     
     if (now - player.lastWorked < cooldown) {
-        const remaining = Math.ceil((cooldown - (now - player.lastWorked)) / (60 * 1000));
-        return m.reply(`⏳ You can work again in ${remaining} minutes`);
+        const remaining = Math.ceil((cooldown - (now - player.lastWorked)) / 60000);
+        return m.reply(`⏳ Come back in ${remaining} minutes`);
     }
     
-    // Special handling for thief (risk of getting caught)
-    if (player.job === 'thief' && Math.random() < jobDetails.risk) {
-        const fine = Math.floor(jobDetails.income * 2);
+    // Handle thief risk
+    if (player.job === 'thief' && Math.random() < job.risk) {
+        const fine = job.income * 2;
         player.wallet = Math.max(0, player.wallet - fine);
         player.job = null;
-        saveGameData(game);
-        return m.reply(`🚨 You got caught stealing!\n`
-                    + `💰 Paid ${fine} credits fine\n`
-                    + `🔥 Lost your job as thief!`);
+        writeDB(db);
+        return m.reply(`🚨 Caught stealing! Fined ${fine} credits and lost your job!`);
     }
     
     // Successful work
-    player.wallet += jobDetails.income;
+    player.wallet += job.income;
     player.lastWorked = now;
-    saveGameData(game);
+    writeDB(db);
     
-    m.reply(`💼 You worked as ${player.job} and earned ${jobDetails.income} credits!\n`
-          + `💰 New balance: ${player.wallet} credits`);
+    m.reply(`💼 Earned ${job.income} credits as ${player.job}!\n💰 New balance: ${player.wallet}`);
 });
 
-// Bank system
-cmd({
-    pattern: 'deposit',
-    alias: ['dep'],
-    desc: 'Deposit money to bank',
-    category: 'game',
-    filename: __filename
-}, async (m, conn, args) => {
-    const amount = parseInt(args[0]) || 0;
-    const game = getGameData();
-    registerPlayer(m.sender);
-    const player = game.players[m.sender];
-    
-    if (amount <= 0) return m.reply('❌ Please specify a valid amount');
-    if (amount > player.wallet) return m.reply('❌ Not enough money in wallet');
-    
-    player.wallet -= amount;
-    player.bank += amount;
-    saveGameData(game);
-    
-    m.reply(`🏦 Deposited ${amount} credits to bank\n`
-          + `💰 Wallet: ${player.wallet} | Bank: ${player.bank}`);
-});
-
-// Add more commands like withdraw, shop, buy, rob, etc...
-
-// Daily bonus system
 cmd({
     pattern: 'daily',
     alias: ['bonus'],
-    desc: 'Claim daily bonus',
+    desc: 'Claim daily reward',
     category: 'game',
     filename: __filename
-}, async (m, conn) => {
-    const game = getGameData();
+}, async (m) => {
+    const db = readDB();
     registerPlayer(m.sender);
-    const player = game.players[m.sender];
+    const player = db.players[m.sender];
     
     const now = Date.now();
-    const lastDaily = player.lastDaily || 0;
     const dailyCooldown = 24 * 60 * 60 * 1000;
     
-    if (now - lastDaily < dailyCooldown) {
-        const remaining = Math.ceil((dailyCooldown - (now - lastDaily)) / (60 * 60 * 1000));
-        return m.reply(`⏳ Come back in ${remaining} hours for your next daily bonus`);
+    if (now - player.lastDaily < dailyCooldown) {
+        const remaining = Math.ceil((dailyCooldown - (now - player.lastDaily)) / 3600000);
+        return m.reply(`⏳ Come back in ${remaining} hours`);
     }
     
     const bonus = 200 + Math.floor(Math.random() * 300);
     player.wallet += bonus;
     player.lastDaily = now;
-    saveGameData(game);
+    writeDB(db);
     
-    m.reply(`🎁 Daily bonus claimed!\n`
-          + `💰 +${bonus} credits\n`
-          + `💳 New balance: ${player.wallet} credits`);
+    m.reply(`🎁 Daily bonus: ${bonus} credits!\n💰 New balance: ${player.wallet}`);
 });
 
-// Leaderboard command
 cmd({
-    pattern: 'leaderboard',
-    alias: ['lb', 'rich'],
-    desc: 'Show wealth leaderboard',
+    pattern: 'shop',
+    alias: ['store'],
+    desc: 'View shop items',
     category: 'game',
     filename: __filename
-}, async (m, conn) => {
-    const game = getGameData();
-    const players = Object.entries(game.players)
+}, async (m) => {
+    const db = readDB();
+    let shopList = '🛍️ *Shop Items*\n\n';
+    
+    for (const [item, details] of Object.entries(db.shops)) {
+        shopList += `${details.emoji} *${item}* - ${details.price} credits\n`;
+    }
+    
+    m.reply(shopList + '\nUse *.buy [item]* to purchase');
+});
+
+cmd({
+    pattern: 'buy',
+    desc: 'Purchase an item',
+    category: 'game',
+    filename: __filename
+}, async (m, _, args) => {
+    const item = args[0]?.toLowerCase();
+    if (!item) return m.reply('❌ Specify an item to buy');
+    
+    const db = readDB();
+    if (!db.shops[item]) return m.reply('❌ Invalid item! Use *.shop*');
+    
+    registerPlayer(m.sender);
+    const player = db.players[m.sender];
+    
+    if (player.wallet < db.shops[item].price) {
+        return m.reply(`❌ You need ${db.shops[item].price - player.wallet} more credits!`);
+    }
+    
+    player.wallet -= db.shops[item].price;
+    player.items.push(item);
+    writeDB(db);
+    
+    m.reply(`✅ Purchased ${db.shops[item].emoji} ${item} for ${db.shops[item].price} credits!`);
+});
+
+cmd({
+    pattern: 'leaderboard',
+    alias: ['lb'],
+    desc: 'View richest players',
+    category: 'game',
+    filename: __filename
+}, async (m) => {
+    const db = readDB();
+    const players = Object.entries(db.players)
         .map(([id, data]) => ({
-            id,
-            total: data.wallet + data.bank - data.debt
+            id: id.split('@')[0],
+            total: data.wallet + data.bank
         }))
         .sort((a, b) => b.total - a.total)
         .slice(0, 10);
     
     let leaderboard = '🏆 *Top 10 Richest Players*\n\n';
-    players.forEach((player, index) => {
-        leaderboard += `${index + 1}. @${player.id.split('@')[0]} - ${player.total} credits\n`;
+    players.forEach((p, i) => {
+        leaderboard += `${i+1}. @${p.id} - ${p.total} credits\n`;
     });
     
     m.reply(leaderboard);
