@@ -46,7 +46,7 @@
     "wikipedia":"2.1.2",
     "yt-search":"2.11.1",
     "sequelize": "^6.37.5",
-    "sqlite3": "^5.1.7",
+    "sqlite3": "latest",
     "adm-zip": "^0.5.16",
     "api-dylux":"1.8.5",
     "acrcloud": "^1.4.0",
