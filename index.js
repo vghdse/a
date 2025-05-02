@@ -313,8 +313,19 @@ ${mrfrank}\n
 	
 conn.ev.on("group-participants.update", (update) => GroupEvents(conn, update));
 
-//=============READSTATUS=============
-        
+// =====ANTICALL
+	
+    conn.ev.on('call', async (call) => {
+    if (config.ANTI_CALL === 'true') {
+        try {
+            const rejectCall = require('./lib/callHandler').rejectCall;
+            await rejectCall(conn, call);
+        } catch (error) {
+            console.error('[❄️] Call rejection error:', error);
+        }
+    }
+});	
+ /// READ STATUS       
   conn.ev.on('messages.upsert', async(mek) => {
     mek = mek.messages[0]
     if (!mek.message) return
