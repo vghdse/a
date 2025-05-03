@@ -39,7 +39,7 @@ let msg = generateWAMessageFromContent(
             cards: [
               {
                 header: proto.Message.InteractiveMessage.Header.create({
-          ...(await prepareWAMessageMedia({ image: { url: 'https://i.ibb.co/Z2ZFb9x/mrfrankofc.jpg' } }, { upload: conn.waUploadToServer })),
+          ...(await prepareWAMessageMedia({ image: { url: 'https://files.catbox.moe/m31j88.jpg' } }, { upload: conn.waUploadToServer })),
           title: ``,
           gifPlayback: true,
           subtitle: 'Mr Frank OFC',
