@@ -115,7 +115,7 @@ async function loadSession() {
         }
 
         fs.writeFileSync(credsPath, JSON.stringify(response.data.credsData), 'utf8');
-       console.log('[❄️] Creds loaded successfully ✅');
+       console.log('[❄️] Creds downloaded ✅');
        
             
 	    return response.data.credsData;
