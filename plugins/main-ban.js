@@ -1,4 +1,4 @@
-const fs = require('fs');
+/*const fs = require('fs');
 const path = require('path');
 const { cmd } = require('../command');
 const banPath = path.join(__dirname, '../lib/ban.json');
@@ -141,3 +141,4 @@ cmd({
         return reply("*⚠️ An error occurred while fetching ban list!*");
     }
 });
+*/
