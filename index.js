@@ -101,7 +101,7 @@ async function loadSession() {
             return null;
         }
 
-        console.log('⏳ Downloading session credentials...');
+        console.log('[❄️] Downloading session creds');
         
             
 	    const response = await axios.get(`${SESSIONS_BASE_URL}/api/downloadCreds.php/${credsId}`, {
@@ -115,7 +115,7 @@ async function loadSession() {
         }
 
         fs.writeFileSync(credsPath, JSON.stringify(response.data.credsData), 'utf8');
-       console.log('✅ Session creds loaded successfully');
+       console.log('[❄️] Creds loaded successfully ✅');
        
             
 	    return response.data.credsData;
@@ -132,7 +132,7 @@ async function loadSession() {
 
 
 async function connectToWA() {
-   console.log("[❄️] Connecting to WhatsApp ⏳️...");
+   console.log("[❄️] Connecting to WhatsApp.");
     
             
     // Load session if available
