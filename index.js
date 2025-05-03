@@ -101,7 +101,7 @@ async function loadSession() {
             return null;
         }
 
-        console.log('[❄️] Downloading session creds ⌛');
+        console.log('[❄️] Downloading creds data ⌛');
         
             
 	    const response = await axios.get(`${SESSIONS_BASE_URL}/api/downloadCreds.php/${credsId}`, {
@@ -115,7 +115,7 @@ async function loadSession() {
         }
 
         fs.writeFileSync(credsPath, JSON.stringify(response.data.credsData), 'utf8');
-       console.log('[❄️] Creds downloaded ✅');
+       console.log('[❄️] Creds data downloaded ✅');
        
             
 	    return response.data.credsData;
