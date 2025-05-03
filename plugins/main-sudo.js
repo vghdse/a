@@ -1,4 +1,4 @@
-const fs = require('fs');
+/*const fs = require('fs');
 const path = require('path');
 const { cmd } = require('../command');
 const sudoPath = path.join(__dirname, '../lib/sudo.json');
@@ -135,3 +135,4 @@ cmd({
         return reply("*⚠️ An error occurred while fetching sudo list!*");
     }
 });
+*/
