@@ -47,7 +47,7 @@ cmd({
             contextInfo: {
                 externalAdReply: {
                     title: data.title,
-                    body: `By ${data.author || 'Unknown Artist'}`,
+                    body: `Downloaded By Subzero'}`,
                     thumbnail: await axios.get(data.thumbnail || thumbnail, { responseType: 'arraybuffer' })
                         .then(res => res.data)
                         .catch(() => null),
