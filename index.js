@@ -219,9 +219,9 @@ https://github.com/mrfr8nk\n
    - Current Status: ${config.AUTO_RECORDING || "off"}
    - Usage: ${config.PREFIX}autorecording on/off
 
-📖 *5. \`Auto Read Status\`*
+📖 *5. \`Auto React Status\`*
    - Current Status: ${config.AUTO_STATUS_REACT || "off"}
-   - Usage: ${config.PREFIX}autoreadstatus on/off
+   - Usage: ${config.PREFIX}autoreactstatus on/off
 
 👀 *#. \`Auto View Status\`*
    - Current Status: ${config.AUTO_STATUS_VIEW || "off"}
