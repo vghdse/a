@@ -278,10 +278,10 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
     // Default value for AUTO_VIEW_STATUS is "false"
     if (args[0] === "on") {
         config.AUTO_STATUS_REACT = "true";
-        return reply("Auto-viewing of statuses is now enabled.");
+        return reply("Autoreact of statuses is now enabled.");
     } else if (args[0] === "off") {
         config.AUTO_STATUS_REACT = "false";
-        return reply("Auto-viewing of statuses is now disabled.");
+        return reply("Autoreact of statuses is now disabled.");
     } else {
         return reply(`*🫟 ᴇxᴀᴍᴘʟᴇ:  .ᴀᴜᴛᴏ-sᴇᴇɴ ᴏɴ*`);
     }
@@ -289,9 +289,9 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
 //--------------------------------------------
 // AUTO_LIKE_STATUS COMMANDS
 //--------------------------------------------
-/*
+
 cmd({
-    pattern: "status-react",
+    pattern: "autostatusreact",
     alias: ["statusreaction"],
     desc: "Enable or disable auto-liking of statuses",
     category: "settings",
@@ -309,10 +309,10 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
         config.AUTO_LIKE_STATUS = "false";
         return reply("Auto-liking of statuses is now disabled.");
     } else {
-        return reply(`Example: . status-react on`);
+        return reply(`Example: .autostatusreact on`);
     }
 });
-
+/*
 cmd({
     pattern: "anti-call",
     alias: ["statusreaction"],
