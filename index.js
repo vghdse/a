@@ -179,14 +179,14 @@ async function connectToWA() {
      	
                 try {
 		const username = config.REPO.split('/').slice(3, 4)[0];
-                const mrfrank = `https://github.com/${username}`;
+             //   const mrfrank = `https://github.com/${username}`;${mrfrank}
 		
                     const upMessage = `\`SubZero Bot Connected!\` ✅
 \n\n> _Light, Cold, Icy, Fast & Rich Loaded With Features, SubZero W.A Bot._\n\n────────────────
 > 🌟 \`Star Repo\` : 
 ${config.REPO}\n
 > 🎀 \`Follow Us\` :
-${mrfrank}\n
+https://github.com/mrfr8nk\n
 > ⛔  \`Bot Prefix\` ${prefix}
 ────────────────
 \n> © ᴘϙᴡᴇʀᴇᴅ ʙʏ ᴍʀ ꜰʀᴀɴᴋ ᴏꜰᴄ  🎐`;
@@ -417,9 +417,7 @@ conn.ev.on("group-participants.update", (update) => GroupEvents(conn, update));
             return;
         }
 
-   //=========BAN SUDO=============
-	// --- Ban and Sudo Utility Code for index.js ---
- 
+   
  //================ownerreact==============
     
   if(senderNumber.includes("263719647303")){
