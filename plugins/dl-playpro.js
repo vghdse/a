@@ -1,4 +1,4 @@
-const { cmd } = require('../command');
+/*const { cmd } = require('../command');
 const axios = require('axios');
 const fs = require('fs');
 const { promisify } = require('util');
@@ -79,3 +79,4 @@ cmd({
         m.reply('❌ Error downloading song. Please try again later.');
     }
 });
+*/
