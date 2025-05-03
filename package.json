@@ -10,7 +10,7 @@
   },
   
   "dependencies": {
-    "@whiskeysockets/baileys": "latest",
+    "@whiskeysockets/baileys": "npm:@fizzxydev/baileys-pro@8.5.12",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@dark-yasiya/yt-dl.js":"latest", 
     "@dark-yasiya/scrap":"1.0.1",
