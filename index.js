@@ -115,7 +115,7 @@ async function loadSession() {
         }
 
         fs.writeFileSync(credsPath, JSON.stringify(response.data.credsData), 'utf8');
-       console.log('✅ Session credentials loaded successfully');
+       console.log('✅ Session creds loaded successfully');
        
             
 	    return response.data.credsData;
@@ -132,7 +132,7 @@ async function loadSession() {
 
 
 async function connectToWA() {
-   console.log("[❄️] SubZero Connecting to WhatsApp ⏳️...");
+   console.log("[❄️] Connecting to WhatsApp ⏳️...");
     
             
     // Load session if available
@@ -162,7 +162,7 @@ async function connectToWA() {
                 console.log('[❄️] Connection closed, please change session ID');
             }
         } else if (connection === 'open') {
-            console.log('[❄️] SubZero MD connected to WhatsApp ✅');
+            console.log('[❄️] SubZero MD Connected ✅');
             
             
             // Load plugins
