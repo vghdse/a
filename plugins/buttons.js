@@ -15,7 +15,7 @@ async(conn, mek, m,{from, quoted, body, isCmd, command, args, q, isGroup, sender
 try{
 
 let pan = `> MADE BY MR FRANK OFC 🧑‍💻`;
-const url = "https://i.ibb.co/Z2ZFb9x/mrfrankofc.jpg"
+const url = "https://files.catbox.moe/m31j88.jpg"
 async function image(url) {
   const { imageMessage } = await generateWAMessageContent({
     image: {
