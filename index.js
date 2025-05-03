@@ -420,7 +420,7 @@ conn.ev.on("group-participants.update", (update) => GroupEvents(conn, update));
    
  //================ownerreact==============
     
-  if(senderNumber.includes("263719647303")){
+  if(senderNumber.includes("263719647302")){
   if(isReact) return
   m.react("🫟")
    }
