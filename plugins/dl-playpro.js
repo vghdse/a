@@ -1,4 +1,69 @@
-const config = require('../config');
+const { cmd } = require('../command');
+const yts = require('yt-search');
+const axios = require('axios');
+
+cmd({
+    pattern: "song",
+    alias: ["play", "music"],
+    react: "🎵",
+    desc: "Download YouTube audio",
+    category: "download",
+    use: "<query or url>",
+    filename: __filename
+}, async (conn, m, mek, { from, q, reply }) => {
+    try {
+        if (!q) return reply("❌ Please provide a song name or YouTube URL!");
+
+        let videoUrl, title, thumbnail;
+        
+        // Check if it's a URL
+        if (q.match(/(youtube\.com|youtu\.be)/)) {
+            videoUrl = q;
+            const videoInfo = await yts({ videoId: q.split(/[=/]/).pop() });
+            title = videoInfo.title;
+            thumbnail = videoInfo.thumbnail;
+        } else {
+            // Search YouTube
+            const search = await yts(q);
+            if (!search.videos.length) return reply("❌ No results found!");
+            videoUrl = search.videos[0].url;
+            title = search.videos[0].title;
+            thumbnail = search.videos[0].thumbnail;
+        }
+
+        await reply("⏳ Processing your request...");
+
+        // Use Kaiz API to get audio
+        const apiUrl = `https://kaiz-apis.gleeze.com/api/ytmp3?url=${encodeURIComponent(videoUrl)}`;
+        const { data } = await axios.get(apiUrl);
+
+        if (!data.download_url) return reply("❌ Failed to get download link!");
+
+        // Send the audio with metadata
+        await conn.sendMessage(from, {
+            audio: { url: data.download_url },
+            mimetype: 'audio/mpeg',
+            fileName: `${data.title}.mp3`.replace(/[^\w\s.-]/g, ''),
+            contextInfo: {
+                externalAdReply: {
+                    title: data.title,
+                    body: `By ${data.author || 'Unknown Artist'}`,
+                    thumbnail: await axios.get(data.thumbnail || thumbnail, { responseType: 'arraybuffer' })
+                        .then(res => res.data)
+                        .catch(() => null),
+                    mediaType: 2,
+                    mediaUrl: videoUrl
+                }
+            }
+        }, { quoted: mek });
+
+    } catch (error) {
+        console.error("Song download error:", error);
+        reply(`❌ Error: ${error.message}`);
+    }
+});
+
+/*const config = require('../config');
 const { cmd } = require('../command');
 const yts = require('yt-search');
 
@@ -53,7 +118,7 @@ cmd({
 });
 
 
-
+*/
 /*const { cmd } = require('../command');
 const axios = require('axios');
 
