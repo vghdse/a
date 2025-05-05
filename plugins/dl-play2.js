@@ -10,7 +10,7 @@ const axiosInstance = axios.create({
 
 cmd(
     {
-        pattern: 'song',
+        pattern: 'song2',
         alias: ['play2', 'song2'],
         desc: 'YouTube audio downloader',
         category: 'media',
