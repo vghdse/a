@@ -63,113 +63,60 @@ cmd({
     }
 });
 
-/*const config = require('../config');
-const { cmd } = require('../command');
-const yts = require('yt-search');
 
 cmd({
-    pattern: "yt2",
-    alias: ["play5", "music5"],
-    react: "🎵",
-    desc: "Download audio from YouTube",
+    pattern: "video",
+    alias: ["vid", "ytvideo"],
+    react: "🎬",
+    desc: "Download YouTube video",
     category: "download",
-    use: ".song <query or url>",
+    use: "<query or url> [quality]",
     filename: __filename
 }, async (conn, m, mek, { from, q, reply }) => {
     try {
-        if (!q) return await reply("❌ Please provide a song name or YouTube URL!");
+        if (!q) return reply("❌ Please provide a video name or YouTube URL!");
 
-        let videoUrl, title;
+        // Extract quality if provided (default to 720)
+        const [query, quality = "360"] = q.split("|").map(item => item.trim());
+        
+        let videoUrl, title, thumbnail;
         
         // Check if it's a URL
-        if (q.match(/(youtube\.com|youtu\.be)/)) {
-            videoUrl = q;
-            const videoInfo = await yts({ videoId: q.split(/[=/]/).pop() });
+        if (query.match(/(youtube\.com|youtu\.be)/)) {
+            videoUrl = query;
+            const videoInfo = await yts({ videoId: query.split(/[=/]/).pop() });
             title = videoInfo.title;
+            thumbnail = videoInfo.thumbnail;
         } else {
             // Search YouTube
-            const search = await yts(q);
-            if (!search.videos.length) return await reply("❌ No results found!");
+            const search = await yts(query);
+            if (!search.videos.length) return reply("❌ No results found!");
             videoUrl = search.videos[0].url;
             title = search.videos[0].title;
+            thumbnail = search.videos[0].thumbnail;
         }
 
-        await reply("⏳ Downloading audio...");
+        await reply("⏳ Processing your video request...");
 
-        // Use API to get audio
-        const apiUrl = `https://apis.davidcyriltech.my.id/youtube/mp3?url=${encodeURIComponent(videoUrl)}`;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-
-        if (!data.success) return await reply("❌ Failed to download audio!");
-
-        await conn.sendMessage(from, {
-            audio: { url: data.result.download_url },
-            mimetype: 'audio/mpeg',
-            ptt: false
-        }, { quoted: mek });
-
-        await reply(`✅ *${title}* downloaded successfully!`);
-
-    } catch (error) {
-        console.error(error);
-        await reply(`❌ Error: ${error.message}`);
-    }
-});
-
-
-*/
-/*const { cmd } = require('../command');
-const axios = require('axios');
-
-cmd({
-    pattern: 'song5',
-    alias: ['play', 'ytmp3'],
-    desc: 'Download YouTube audio',
-    category: 'media',
-    filename: __filename,
-}, async (m, conn, args) => {
-    try {
-        // Check if query exists
-        if (!args.length) return m.reply('Please provide a YouTube URL or search query\nExample: .song https://youtu.be/dQw4w9WgXcQ\nOr: .song never gonna give you up');
-
-        const query = args.join(' ');
-        let videoUrl = query;
-
-        // If it's not a URL, search YouTube
-        if (!query.match(/youtu(be\.com|\.be)/)) {
-            const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-            const response = await axios.get(searchUrl);
-            const videoId = response.data.match(/\/watch\?v=([^"&?\/ ]{11})/)?.[1];
-            if (!videoId) return m.reply('No results found for your search');
-            videoUrl = `https://youtube.com/watch?v=${videoId}`;
-        }
-
-        // Call the API
-        const apiUrl = `https://kaiz-apis.gleeze.com/api/ytmp3?url= ${encodeURIComponent(videoUrl)}`;
+        // Use Kaiz API to get video
+        const apiUrl = `https://kaiz-apis.gleeze.com/api/ytmp4?url=${encodeURIComponent(videoUrl)}&quality=${quality}`;
         const { data } = await axios.get(apiUrl);
 
-        if (!data.download_url) return m.reply('Failed to get download link');
+        if (!data.download_url) return reply("❌ Failed to get video download link!");
 
-        // Send the audio file
-        await conn.sendMessage(m.chat, {
-            audio: { url: data.download_url },
-            mimetype: 'audio/mpeg',
-            fileName: `${data.title}.mp3`,
-            contextInfo: {
-                externalAdReply: {
-                    title: data.title,
-                    body: `By ${data.author}`,
-                    thumbnail: await axios.get(data.thumbnail, { responseType: 'arraybuffer' }).then(res => res.data),
-                    mediaType: 2,
-                    mediaUrl: videoUrl
-                }
-            }
-        }, { quoted: m });
+        // Send the video with metadata
+        await conn.sendMessage(from, {
+            video: { url: data.download_url },
+            mimetype: 'video/mp4',
+            fileName: `${data.title}.mp4`.replace(/[^\w\s.-]/g, ''),
+            caption: `*${data.title}*\nQuality: ${data.quality}p\n\nDownloaded by Subzero`,
+            thumbnail: await axios.get(data.thumbnail || thumbnail, { responseType: 'arraybuffer' })
+                .then(res => res.data)
+                .catch(() => null)
+        }, { quoted: mek });
 
     } catch (error) {
-        console.error('Song download error:', error);
-        m.reply('Error downloading song. Please try again later.');
+        console.error("Video download error:", error);
+        reply(`❌ Error: ${error.message}`);
     }
 });
-*/
