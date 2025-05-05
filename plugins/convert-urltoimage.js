@@ -3,6 +3,7 @@ const axios = require('axios');
 
 cmd({
     pattern: "getimage",
+    alias: ["tophoto","url2image","urltoimage"],
     desc: "Convert image URL to WhatsApp image",
     alias: ["imagefromurl", "fetchimage"],
     category: "media",
