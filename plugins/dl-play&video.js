@@ -26,7 +26,7 @@ const Config = require('../config');
 
 cmd(
     {
-        pattern: 'play',
+        pattern: 'playx',
         alias: ['ytmp3', 'ytaudio','yta'],
         desc: 'Download YouTube songs',
         category: 'media',
@@ -115,7 +115,7 @@ async function getThumbnailBuffer(videoUrl) {
 
 cmd(
     {
-        pattern: 'video',
+        pattern: 'videox',
         alias: ['ytmp4', 'ytvid'],
         desc: 'Download YouTube videos',
         category: 'media',
@@ -220,7 +220,7 @@ async function getThumbnailBuffer(videoUrl) {
 cmd(
     {
         pattern: 'ytdoc',
-        alias: ['ytmp3', 'mp3'],
+        alias: ['ytmp3x', 'mp3'],
         desc: 'Download YouTube songs as document',
         category: 'media',
         react: '📂',
