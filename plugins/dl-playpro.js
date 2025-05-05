@@ -109,7 +109,7 @@ cmd({
             video: { url: data.download_url },
             mimetype: 'video/mp4',
             fileName: `${data.title}.mp4`.replace(/[^\w\s.-]/g, ''),
-            caption: `*${data.title}*\nQuality: ${data.quality}p\n\nDownloaded by Subzero`,
+            caption: `*${data.title}*\nQuality: ${data.quality}p\n\n> DOWNLOADED BY SUBZERO`,
             thumbnail: await axios.get(data.thumbnail || thumbnail, { responseType: 'arraybuffer' })
                 .then(res => res.data)
                 .catch(() => null)
