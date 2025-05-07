@@ -293,7 +293,7 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
 cmd({
     pattern: "autostatusview",
     alias: ["setautoviewstatus","autoviewstatus","setautostatusview"],
-    desc: "Enable or disable auto-liking of statuses",
+    desc: "Enable or disable autoview of statuses",
     category: "settings",
     filename: __filename
 },    
@@ -303,10 +303,10 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
     const status = args[0]?.toLowerCase();
     // Default value for AUTO_LIKE_STATUS is "false"
     if (args[0] === "on") {
-        config.AUTO_VIEW_STATUS = "true";
+        config.AUTO_SEEN_STATUS = "true";
         return reply("Autoview of statuses is now enabled.");
     } else if (args[0] === "off") {
-        config.AUTO_VIEW_STATUS= "false";
+        config.AUTO_SEEN_STATUS= "false";
         return reply("Autoview of statuses is now disabled.");
     } else {
         return reply(`Example: .autoviewstatus on`);
