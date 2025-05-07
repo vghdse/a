@@ -9,7 +9,6 @@ function convertToBool(text, fault = "true") {
     return text === fault ? true : false;
 }
 
-
 const loadConfig = async () => {
     try {
         const data = await fs.readFile(
