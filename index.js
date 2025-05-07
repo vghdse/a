@@ -72,10 +72,7 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 7860;
   
-  
-
-//===================SESSION-AUTH============================
-
+  //===================SESSION-AUTH============================
 const sessionDir = path.join(__dirname, 'sessions');
 const credsPath = path.join(sessionDir, 'creds.json');
 
@@ -90,37 +87,57 @@ const SESSIONS_API_KEY = 'subzero-md'; // Your API Key
 async function loadSession() {
     try {
         if (!config.SESSION_ID) {
-            console.log('No SESSION_ID provided - Please put one');
+            console.log('No SESSION_ID provided - QR login will be generated');
             return null;
         }
 
-        const credsId = config.SESSION_ID;
-
-        if (!credsId.startsWith('SUBZERO-MD~')) {
-            console.log('Invalid SESSION_ID format - Must start with "SUBZERO-MD~"');
-            return null;
+        // Check if session file already exists
+        if (fs.existsSync(credsPath)) {
+            console.log('Using existing session file');
+            return require(credsPath);
         }
 
-        console.log('[❄️] Downloading creds data ⌛');
-        
-            
-	    const response = await axios.get(`${SESSIONS_BASE_URL}/api/downloadCreds.php/${credsId}`, {
-            headers: {
-                'x-api-key': SESSIONS_API_KEY
+        console.log('⏳ Attempting to download session credentials...');
+
+        // If SESSION_ID starts with "SUBZERO-MD~" - use Koyeb download
+        if (config.SESSION_ID.startsWith('SUBZERO-MD~')) {
+            console.log('Trying Koyeb session download...');
+            const response = await axios.get(`${SESSIONS_BASE_URL}/api/downloadCreds.php/${config.SESSION_ID}`, {
+                headers: { 'x-api-key': SESSIONS_API_KEY }
+            });
+
+            if (!response.data.credsData) {
+                throw new Error('No credential data received from Mongo server');
             }
-        });
 
-        if (!response.data.credsData) {
-            throw new Error('No credential data received from server. Re-pair for New Session ID.');
-        }
+            fs.writeFileSync(credsPath, JSON.stringify(response.data.credsData), 'utf8');
+            console.log('✅ Mongo session downloaded successfully');
+            return response.data.credsData;
+        } 
+        // Otherwise try MEGA.nz download
+        else {
+            console.log('Trying MEGA.nz download...');
+// Remove "SUBZERO-MD~" prefix if present, otherwise use full SESSION_ID
+const megaFileId = config.SESSION_ID.startsWith('SUBZERO-MD~') 
+    ? config.SESSION_ID.replace("SUBZERO-MD~", "") 
+    : config.SESSION_ID;
 
-        fs.writeFileSync(credsPath, JSON.stringify(response.data.credsData), 'utf8');
-       console.log('[❄️] Creds data downloaded ✅');
-       
+const filer = File.fromURL(`https://mega.nz/file/${megaFileId}`);
             
-	    return response.data.credsData;
+            const data = await new Promise((resolve, reject) => {
+                filer.download((err, data) => {
+                    if (err) reject(err);
+                    else resolve(data);
+                });
+            });
+            
+            fs.writeFileSync(credsPath, data);
+            console.log('✅ MEGA session downloaded successfully');
+            return JSON.parse(data.toString());
+        }
     } catch (error) {
-        console.error('❌ Error loading session:', error.response?.data || error.message);
+        console.error('❌ Error loading session:', error.message);
+        console.log('Will generate QR code instead');
         return null;
     }
 }
@@ -132,24 +149,29 @@ async function loadSession() {
 
 
 async function connectToWA() {
-   console.log("[❄️] Connecting to WhatsApp ⌛");
+    console.log("[❄️] SubZero Connecting to WhatsApp ⏳️...");
     
-            
-    // Load session if available
-    await loadSession();
+    // Load session if available (now handles both Koyeb and MEGA)
+    const creds = await loadSession();
     
-    const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, 'sessions'));
+    const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, 'sessions'), {
+        creds: creds || undefined // Pass loaded creds if available
+    });
+    
     const { version } = await fetchLatestBaileysVersion();
     
     const conn = makeWASocket({
-    logger: P({ level: 'silent' }),
-    printQRInTerminal: !config.SESSION_ID, // Only show QR if no SESSION_ID
-    browser: Browsers.macOS("Firefox"),
-    syncFullHistory: true,
-    auth: state,
-    version,
-    getMessage: async () => ({}) // Empty message handler
-});
+        logger: P({ level: 'silent' }),
+        printQRInTerminal: !creds, // Only show QR if no session loaded
+        browser: Browsers.macOS("Firefox"),
+        syncFullHistory: true,
+        auth: state,
+        version,
+        getMessage: async () => ({})
+    });
+    
+    // ... rest of your existing connectToWA code ...
+
 	
     conn.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
@@ -162,7 +184,7 @@ async function connectToWA() {
                 console.log('[❄️] Connection closed, please change session ID');
             }
         } else if (connection === 'open') {
-            console.log('[❄️] SubZero MD Connected ✅');
+            console.log('[❄️] SubZero MD connected to WhatsApp ✅');
             
             
             // Load plugins
@@ -179,14 +201,14 @@ async function connectToWA() {
      	
                 try {
 		const username = config.REPO.split('/').slice(3, 4)[0];
-             //   const mrfrank = `https://github.com/${username}`;${mrfrank}
+                const mrfrank = `https://github.com/${username}`;
 		
                     const upMessage = `\`SubZero Bot Connected!\` ✅
 \n\n> _Light, Cold, Icy, Fast & Rich Loaded With Features, SubZero W.A Bot._\n\n────────────────
 > 🌟 \`Star Repo\` : 
 ${config.REPO}\n
 > 🎀 \`Follow Us\` :
-https://github.com/mrfr8nk\n
+${mrfrank}\n
 > ⛔  \`Bot Prefix\` ${prefix}
 ────────────────
 \n> © ᴘϙᴡᴇʀᴇᴅ ʙʏ ᴍʀ ꜰʀᴀɴᴋ ᴏꜰᴄ  🎐`;
@@ -219,9 +241,9 @@ https://github.com/mrfr8nk\n
    - Current Status: ${config.AUTO_RECORDING || "off"}
    - Usage: ${config.PREFIX}autorecording on/off
 
-📖 *5. \`Auto React Status\`*
+📖 *5. \`Auto Read Status\`*
    - Current Status: ${config.AUTO_STATUS_REACT || "off"}
-   - Usage: ${config.PREFIX}autoreactstatus on/off
+   - Usage: ${config.PREFIX}autoreadstatus on/off
 
 👀 *#. \`Auto View Status\`*
    - Current Status: ${config.AUTO_STATUS_VIEW || "off"}
@@ -315,7 +337,16 @@ conn.ev.on("group-participants.update", (update) => GroupEvents(conn, update));
 
 // =====ANTICALL
 	
-    
+    conn.ev.on('call', async (call) => {
+    if (config.ANTI_CALL === 'true') {
+        try {
+            const rejectCall = require('./lib/callHandler').rejectCall;
+            await rejectCall(conn, call);
+        } catch (error) {
+            console.error('[❄️] Call rejection error:', error);
+        }
+    }
+});	
  /// READ STATUS       
   conn.ev.on('messages.upsert', async(mek) => {
     mek = mek.messages[0]
@@ -417,10 +448,12 @@ conn.ev.on("group-participants.update", (update) => GroupEvents(conn, update));
             return;
         }
 
-   
+   //=========BAN SUDO=============
+	// --- Ban and Sudo Utility Code for index.js ---
+ 
  //================ownerreact==============
     
-  if(senderNumber.includes("263719647302")){
+  if(senderNumber.includes("263719647303")){
   if(isReact) return
   m.react("🫟")
    }
