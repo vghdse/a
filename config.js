@@ -9,6 +9,7 @@ function convertToBool(text, fault = "true") {
     return text === fault ? true : false;
 }
 
+
 const loadConfig = async () => {
     try {
         const data = await fs.readFile(
@@ -25,9 +26,11 @@ const loadConfig = async () => {
     }
 };
 
+config = loadConfig();
+
 async function watchFiles() {
     try {
-        if (global.client.config.autoload) {
+        if (config.autoload) {
             fs.watch("./config.json", async () => {
                 console.log(
                     "detected change to config file reloading configurations"
@@ -40,9 +43,6 @@ async function watchFiles() {
         throw new Error(error.message);
     }
 }
-
-config = loadConfig();
-config["SESSION_ID"] = process.env.SESSION_ID || "";
 
 module.exports = {
     SESSION_ID: process.env.SESSION_ID,
