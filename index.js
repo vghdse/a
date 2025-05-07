@@ -241,12 +241,12 @@ ${mrfrank}\n
    - Current Status: ${config.AUTO_RECORDING || "off"}
    - Usage: ${config.PREFIX}autorecording on/off
 
-📖 *5. \`Auto Read Status\`*
+📖 *5. \`Auto React Status\`*
    - Current Status: ${config.AUTO_STATUS_REACT || "off"}
-   - Usage: ${config.PREFIX}autoreadstatus on/off
+   - Usage: ${config.PREFIX}autostatusreact on/off
 
 👀 *#. \`Auto View Status\`*
-   - Current Status: ${config.AUTO_STATUS_VIEW || "off"}
+   - Current Status: ${config.AUTO_STATUS_SEEN|| "off"}
    - Usage: ${config.PREFIX}autoviewstatus on/off
 
 🚫 *6. \`Anti Bad Word\`*
