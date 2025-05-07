@@ -16,5 +16,6 @@
   "STICKER_NAME": "SUBZERO-MD",
   "AUTO_STICKER": false,
   "HEART_STICKER": false,
-  "OWNER_REACT": false
+  "OWNER_REACT": false,
+  "autoload": true
 }
