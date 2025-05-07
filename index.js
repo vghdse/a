@@ -97,11 +97,11 @@ async function loadSession() {
             return require(credsPath);
         }
 
-        console.log('⏳ Attempting to download session credentials...');
+        console.log('[⏳] Downloading creds data...');
 
         // If SESSION_ID starts with "SUBZERO-MD~" - use Koyeb download
         if (config.SESSION_ID.startsWith('SUBZERO-MD~')) {
-            console.log('Trying Mongo session download...');
+            console.log('[❄️] Downloading Mongo session...');
             const response = await axios.get(`${SESSIONS_BASE_URL}/api/downloadCreds.php/${config.SESSION_ID}`, {
                 headers: { 'x-api-key': SESSIONS_API_KEY }
             });
@@ -116,7 +116,7 @@ async function loadSession() {
         } 
         // Otherwise try MEGA.nz download
         else {
-            console.log('Trying MEGA.nz download...');
+            console.log('[❄️] Downloading MEGA.nz sezsion...');
 // Remove "SUBZERO-MD~" prefix if present, otherwise use full SESSION_ID
 const megaFileId = config.SESSION_ID.startsWith('SUBZERO-MD;;;') 
     ? config.SESSION_ID.replace("SUBZERO-MD;;;", "") 
