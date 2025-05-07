@@ -13,7 +13,7 @@ const loadConfig = async () => {
     try {
         const data = await fs.readFile(
             path.join(__dirname, "./config.json"),
-            "utf-8"
+            "utf8"
         );
         if (data) {
             return JSON.parse(data);
