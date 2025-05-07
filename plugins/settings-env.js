@@ -303,10 +303,10 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
     const status = args[0]?.toLowerCase();
     // Default value for AUTO_LIKE_STATUS is "false"
     if (args[0] === "on") {
-        config.AUTO_SEEN_STATUS = "true";
+        config.AUTO_STATUS_SEEN = "true";
         return reply("Autoview of statuses is now enabled.");
     } else if (args[0] === "off") {
-        config.AUTO_SEEN_STATUS= "false";
+        config.AUTO_STATUS_SEEN= "false";
         return reply("Autoview of statuses is now disabled.");
     } else {
         return reply(`Example: .autoviewstatus on`);
