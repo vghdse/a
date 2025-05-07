@@ -204,7 +204,7 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
 
     const status = args[0]?.toLowerCase();
     if (!["on", "off"].includes(status)) {
-        return reply("*🫟 ᴇxᴀᴍᴘʟᴇ:  .ᴀᴜᴛᴏ-ᴛʏᴘɪɴɢ ᴏɴ*");
+        return reply("*🫟 ᴇxᴀᴍᴘʟᴇ:  .ᴀᴜᴛᴏᴛʏᴘɪɴɢ ᴏɴ*");
     }
 
     config.AUTO_TYPING = status === "on" ? "true" : "false";
@@ -226,7 +226,7 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
 
     const status = args[0]?.toLowerCase();
     if (!["on", "off"].includes(status)) {
-        return reply("*🫟 ᴇxᴀᴍᴘʟᴇ:  .ᴀʟᴡᴀʏs-ᴏɴʟɪɴᴇ ᴏɴ*");
+        return reply("*🫟 ᴇxᴀᴍᴘʟᴇ:  .ᴀʟᴡᴀʏsᴏɴʟɪɴᴇ ᴏɴ*");
     }
 
     config.ALWAYS_ONLINE = status === "on" ? "true" : "false";
@@ -248,7 +248,7 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
 
     const status = args[0]?.toLowerCase();
     if (!["on", "off"].includes(status)) {
-        return reply("*🫟 ᴇxᴀᴍᴘʟᴇ: .ᴀᴜᴛᴏ-ʀᴇᴄᴏʀᴅɪɴɢ ᴏɴ*");
+        return reply("*🫟 ᴇxᴀᴍᴘʟᴇ: .ᴀᴜᴛᴏʀᴇᴄᴏʀᴅɪɴɢ ᴏɴ*");
     }
 
     config.AUTO_RECORDING = status === "on" ? "true" : "false";
@@ -264,8 +264,8 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
 // AUTO_VIEW_STATUS COMMANDS
 //--------------------------------------------
 cmd({
-    pattern: "autoreadstatus",
-    alias: ["setautoreadstatus","autoviewstatus","autostatusreact"],
+    pattern: "autostatusreact",
+    alias: ["setautoreactstatus","autostatusreact"],
     react: "🫟",
     desc: "Enable or disable auto-viewing of statuses",
     category: "settings",
@@ -283,7 +283,7 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
         config.AUTO_STATUS_REACT = "false";
         return reply("Autoreact of statuses is now disabled.");
     } else {
-        return reply(`*🫟 ᴇxᴀᴍᴘʟᴇ:  .ᴀᴜᴛᴏ-sᴇᴇɴ ᴏɴ*`);
+        return reply(`*🫟 ᴇxᴀᴍᴘʟᴇ:  .autustatusreact on*`);
     }
 }); 
 //--------------------------------------------
@@ -291,8 +291,8 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
 //--------------------------------------------
 
 cmd({
-    pattern: "autostatusreact",
-    alias: ["statusreaction"],
+    pattern: "autostatusview",
+    alias: ["setautoviewstatus","autoviewstatus","setautostatusview"],
     desc: "Enable or disable auto-liking of statuses",
     category: "settings",
     filename: __filename
@@ -303,13 +303,13 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
     const status = args[0]?.toLowerCase();
     // Default value for AUTO_LIKE_STATUS is "false"
     if (args[0] === "on") {
-        config.AUTO_LIKE_STATUS = "true";
-        return reply("Auto-liking of statuses is now enabled.");
+        config.AUTO_VIEW_STATUS = "true";
+        return reply("Autoview of statuses is now enabled.");
     } else if (args[0] === "off") {
-        config.AUTO_LIKE_STATUS = "false";
-        return reply("Auto-liking of statuses is now disabled.");
+        config.AUTO_VIEW_STATUS= "false";
+        return reply("Autoview of statuses is now disabled.");
     } else {
-        return reply(`Example: .autostatusreact on`);
+        return reply(`Example: .autoviewstatus on`);
     }
 });
 /*
@@ -412,7 +412,7 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
         config.AUTO_STICKER = "false";
         return reply("auto-sticker feature is now disabled.");
     } else {
-        return reply(`_example:  .auto-sticker on_`);
+        return reply(`_example:  .autosticker on_`);
     }
 });
 //--------------------------------------------
@@ -439,7 +439,7 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
         config.AUTO_REPLY = "false";
         return reply("auto-reply feature is now disabled.");
     } else {
-        return reply(`*🫟 ᴇxᴀᴍᴘʟᴇ: . ᴀᴜᴛᴏ-ʀᴇᴘʟʏ ᴏɴ*`);
+        return reply(`*🫟 ᴇxᴀᴍᴘʟᴇ: . ᴀᴜᴛᴏʀᴇᴘʟʏ ᴏɴ*`);
     }
 });
 
@@ -467,7 +467,7 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
         config.AUTO_REACT = "false";
         await reply("autoreact feature is now disabled.");
     } else {
-        await reply(`*🔥 ᴇxᴀᴍᴘʟᴇ: .ᴀᴜᴛᴏ-ʀᴇᴀᴄᴛ ᴏɴ*`);
+        await reply(`*🔥 ᴇxᴀᴍᴘʟᴇ: .ᴀᴜᴛᴏʀᴇᴀᴄᴛ ᴏɴ*`);
     }
 });
 //--------------------------------------------
@@ -494,7 +494,7 @@ async (conn, mek, m, { from, args, isOwner, reply }) => {
         config.AUTO_STATUS_REPLY = "false";
         return reply("status-reply feature is now disabled.");
     } else {
-        return reply(`*🫟 ᴇxᴀᴍᴘʟᴇ:  .sᴛᴀᴛᴜs-ʀᴇᴘʟʏ ᴏɴ*`);
+        return reply(`*🫟 ᴇxᴀᴍᴘʟᴇ:  .sᴛᴀᴛᴜsʀᴇᴘʟʏ ᴏɴ*`);
     }
 });
 
