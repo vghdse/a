@@ -73,7 +73,7 @@ const app = express();
 const port = process.env.PORT || 9090;
   
   //===================SESSION-AUTH============================
-const sessionDir = path.join(__dirname, 'sessions');
+/*const sessionDir = path.join(__dirname, 'sessions');
 const credsPath = path.join(sessionDir, 'creds.json');
 
 // Create session directory if it doesn't exist
@@ -91,12 +91,7 @@ async function loadSession() {
             return null;
         }
 
-      /*  // Check if session file already exists
-        if (fs.existsSync(credsPath)) {
-            console.log('Using existing session file');
-            return require(credsPath);
-        }
-	*/
+      
         console.log('[⏳] Downloading creds data...');
 
         // If SESSION_ID starts with "SUBZERO-MD~" - use Koyeb download
@@ -141,6 +136,67 @@ const filer = File.fromURL(`https://mega.nz/file/${megaFileId}`);
         return null;
     }
 }
+*/
+//===================SESSION-AUTH============================
+const sessionDir = path.join(__dirname, 'sessions');
+const credsPath = path.join(sessionDir, 'creds.json');
+
+// Create session directory if it doesn't exist
+if (!fs.existsSync(sessionDir)) {
+    fs.mkdirSync(sessionDir, { recursive: true });
+}
+
+async function loadSession() {
+    try {
+        if (!config.SESSION_ID) {
+            console.log('No SESSION_ID provided - QR login will be generated');
+            return null;
+        }
+
+        console.log('[⏳] Downloading creds data...');
+
+        // If SESSION_ID starts with "SUBZERO-MD~" - use Koyeb download
+        if (config.SESSION_ID.startsWith('SUBZERO-MD~')) {
+            console.log('[❄️] Downloading session...');
+            const response = await axios.get(`https://subzero-md.koyeb.app/api/downloadCreds.php/${config.SESSION_ID}`, {
+                headers: { 'x-api-key': 'subzero-md' }
+            });
+
+            if (!response.data.credsData) {
+                throw new Error('No credential data received from server');
+            }
+
+            fs.writeFileSync(credsPath, JSON.stringify(response.data.credsData), 'utf8');
+            console.log('✅ Session downloaded successfully');
+            return response.data.credsData;
+        } 
+        // Otherwise try MEGA.nz download
+        else {
+            console.log('[❄️] Downloading MEGA.nz session...');
+            const megaFileId = config.SESSION_ID.startsWith('SUBZERO-MD;;;') 
+                ? config.SESSION_ID.replace("SUBZERO-MD;;;", "") 
+                : config.SESSION_ID;
+
+            const filer = File.fromURL(`https://mega.nz/file/${megaFileId}`);
+            
+            const data = await new Promise((resolve, reject) => {
+                filer.download((err, data) => {
+                    if (err) reject(err);
+                    else resolve(data);
+                });
+            });
+            
+            fs.writeFileSync(credsPath, data);
+            console.log('✅ MEGA session downloaded successfully');
+            return JSON.parse(data.toString());
+        }
+    } catch (error) {
+        console.error('❌ Error loading session:', error.message);
+        console.log('Will generate QR code instead');
+        return null;
+    }
+}
+//=============================================
 
 //=============================================
 
