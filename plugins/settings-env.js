@@ -115,7 +115,7 @@ cmd({
 
 // SETTINGS OVER
 
-cmd({
+/*cmd({
     pattern: "setbotname",
     alias: ["ownername", "setownername"],
     react: "👑",
@@ -134,6 +134,7 @@ cmd({
         return reply("❌ Failed to update owner name. Check console for details.");
     }
 });
+*/
 
 // WELCOME
 cmd({
