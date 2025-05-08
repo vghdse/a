@@ -1,4 +1,4 @@
-const { cmd } = require('../command');
+/*const { cmd } = require('../command');
 const fs = require('fs');
 const config = require('../config');
 
@@ -33,3 +33,4 @@ cmd({
         return reply("❌ Failed to update prefix. Check console for details.");
     }
 });
+*/
