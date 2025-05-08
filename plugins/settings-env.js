@@ -115,6 +115,26 @@ cmd({
 
 // SETTINGS OVER
 
+cmd({
+    pattern: "setowner",
+    alias: ["ownername", "setownername"],
+    react: "👑",
+    desc: "Set the bot owner's name",
+    category: "settings",
+    filename: __filename,
+}, async (conn, mek, m, { from, args, isOwner, reply }) => {
+    if (!isOwner) return reply("*📛 Only the owner can use this command!*");
+
+    const newOwnerName = args.join(' ');
+    if (!newOwnerName) return reply("❌ Please provide a new owner name. Example: `.setowner John Doe`");
+
+    if (updateConfigs('OWNER_NAME', newOwnerName)) {
+        return reply(`✅ Owner name successfully changed to *${newOwnerName}* in both config and environment`);
+    } else {
+        return reply("❌ Failed to update owner name. Check console for details.");
+    }
+});
+
 // WELCOME
 cmd({
     pattern: "welcome",
