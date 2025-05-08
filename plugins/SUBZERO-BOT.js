@@ -1,59 +1,35 @@
 const { cmd } = require('../command');
-const axios = require('axios');
+const fs = require('fs');
+const config = require('../config');
 
 cmd({
-    pattern: "mp3",
-    alias: ["ytmp3", "ytaudio"],
-    react: "🎧",
-    desc: "Download YouTube audio (fast)",
-    category: "download",
-    use: "<query or url>",
-    filename: __filename
-}, async (conn, m, mek, { from, q, reply }) => {
+    pattern: "setprefix",
+    alias: ["prefixx"],
+    react: "🔧",
+    desc: "Change the bot's command prefix",
+    category: "settings",
+    filename: __filename,
+}, async (conn, mek, m, { from, args, isOwner, reply }) => {
+    if (!isOwner) return reply("*📛 Only the owner can use this command!*");
+
+    const newPrefix = args[0];
+    if (!newPrefix) return reply("❌ Please provide a new prefix. Example: `.setprefix !`");
+    if (newPrefix.length > 2) return reply("❌ Prefix should be 1-2 characters maximum");
+
     try {
-        if (!q) return reply("❌ Please provide a YouTube URL or search query!");
+        // 1. Update in-memory config
+        config.PREFIX = newPrefix;
+        
+        // 2. Update config file
+        const configContent = `const PREFIX = '${newPrefix}';\n\nmodule.exports = {\n  PREFIX\n};`;
+        fs.writeFileSync('./config.js', configContent);
+        
+        // 3. Update process.env if needed
+        process.env.PREFIX = newPrefix;
 
-        // Extract video ID if URL is provided
-        let videoId;
-        if (q.match(/(youtube\.com|youtu\.be)/)) {
-            videoId = q.split(/[=/]/).pop().split("&")[0];
-            if (videoId.length !== 11) return reply("❌ Invalid YouTube URL!");
-        } else {
-            // Search for video if query is provided
-            const searchUrl = `https://kaiz-apis.gleeze.com/api/yts?q=${encodeURIComponent(q)}`;
-            const searchRes = await axios.get(searchUrl);
-            if (!searchRes.data?.videos?.length) return reply("❌ No results found!");
-            videoId = searchRes.data.videos[0].videoId;
-        }
-
-        await reply("⚡ Fetching audio...");
-
-        // Get MP3 download link
-        const apiUrl = `https://kaiz-apis.gleeze.com/api/ytdown-mp3?url=https://youtube.com/watch?v=${videoId}`;
-        const { data } = await axios.get(apiUrl);
-
-        if (!data.download_url) return reply("❌ Failed to get download link!");
-
-        // Send audio file
-        await conn.sendMessage(from, {
-            audio: { url: data.download_url },
-            mimetype: 'audio/mpeg',
-            fileName: `${data.title}.mp3`.replace(/[^\w\s.-]/g, ''),
-            contextInfo: {
-                externalAdReply: {
-                    title: data.title || "YouTube Audio",
-                    body: "Downloaded via Kaiz API",
-                    thumbnail: await axios.get(data.thumbnail || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`, { 
-                        responseType: 'arraybuffer' 
-                    }).then(res => res.data).catch(() => null),
-                    mediaType: 2,
-                    mediaUrl: `https://youtube.com/watch?v=${videoId}`
-                }
-            }
-        }, { quoted: mek });
-
+        return reply(`✅ Prefix successfully changed to *${newPrefix}*`);
     } catch (error) {
-        console.error("MP3 download error:", error);
-        reply(`❌ Error: ${error.message}`);
+        console.error("Error updating prefix:", error);
+        return reply("❌ Failed to update prefix. Check console for details.");
     }
 });
