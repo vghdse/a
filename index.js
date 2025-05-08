@@ -91,12 +91,12 @@ async function loadSession() {
             return null;
         }
 
-        // Check if session file already exists
+      /*  // Check if session file already exists
         if (fs.existsSync(credsPath)) {
             console.log('Using existing session file');
             return require(credsPath);
         }
-
+	*/
         console.log('[⏳] Downloading creds data...');
 
         // If SESSION_ID starts with "SUBZERO-MD~" - use Koyeb download
