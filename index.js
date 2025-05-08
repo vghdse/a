@@ -19,7 +19,7 @@ const {
     jidDecode,
     fetchLatestBaileysVersion,
     Browsers
-  } = require('gifted-baileys')
+  } = require('@whiskeysockets/baileys')
   
   
   const l = console.log
@@ -73,7 +73,7 @@ const app = express();
 const port = process.env.PORT || 9090;
   
   //===================SESSION-AUTH============================
-/*const sessionDir = path.join(__dirname, 'sessions');
+const sessionDir = path.join(__dirname, 'sessions');
 const credsPath = path.join(sessionDir, 'creds.json');
 
 // Create session directory if it doesn't exist
@@ -136,9 +136,9 @@ const filer = File.fromURL(`https://mega.nz/file/${megaFileId}`);
         return null;
     }
 }
-*/
+
 //===================SESSION-AUTH============================
-const sessionDir = path.join(__dirname, 'sessions');
+/*const sessionDir = path.join(__dirname, 'sessions');
 const credsPath = path.join(sessionDir, 'creds.json');
 
 // Create session directory if it doesn't exist
@@ -197,7 +197,7 @@ async function loadSession() {
     }
 }
 //=============================================
-
+*/
 //=============================================
 
 
