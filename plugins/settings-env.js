@@ -128,7 +128,7 @@ cmd({
     const newOwnerName = args.join(' ');
     if (!newOwnerName) return reply("❌ Please provide a new owner name. Example: `.setbotname John Doe`");
 
-    if (updateConfigs('bot_NAME', newOwnerName)) {
+    if (updateConfigs('BOT_NAME', newOwnerName)) {
         return reply(`✅ Owner name successfully changed to *${newOwnerName}* in both config and environment`);
     } else {
         return reply("❌ Failed to update owner name. Check console for details.");
