@@ -10,7 +10,7 @@
   },
   
   "dependencies": {
-    "gifted-baileys": "^1.5.6",  
+    "gifted-baileys": "^1.5.7",  
     "@adiwajshing/keyed-db": "latest",
     "@dark-yasiya/yt-dl.js":"latest", 
     "@dark-yasiya/scrap":"1.0.1",
