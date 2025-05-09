@@ -1,4 +1,5 @@
-const { isJidBroadcast, isJidGroup, isJidNewsletter } = require('@whiskeysockets/baileys');
+const config = require('./config')
+const { isJidBroadcast, isJidGroup, isJidNewsletter } = require(config.BAILEYS);
 const fs = require('fs/promises')
 const path = require('path')
 const { DataTypes } = require('sequelize');
