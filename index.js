@@ -1,3 +1,4 @@
+const config = require('./config')
 const {
   default: makeWASocket,
     useMultiFileAuthState,
@@ -28,7 +29,7 @@ const {
   const fs = require('fs')
   const ff = require('fluent-ffmpeg')
   const P = require('pino')
-  const config = require('./config')
+  
   const GroupEvents = require('./lib/groupevents');
   const qrcode = require('qrcode-terminal')
   const StickersTypes = require('wa-sticker-formatter')
