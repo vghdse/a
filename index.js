@@ -64,7 +64,12 @@ const {
   
   // Clear the temp directory every 5 minutes
   setInterval(clearTempDir, 5 * 60 * 1000);
-  
+
+
+
+const express = require("express");
+const app = express();
+const port = process.env.PORT || 9090;
   //===================SESSION-AUTH============================
 /*if (!fs.existsSync(__dirname + '/sessions/creds.json')) {
 if(!config.SESSION_ID) return console.log('Please add your session to SESSION_ID env !!')
@@ -131,9 +136,6 @@ async function loadSession() {
 
 
 
-const express = require("express");
-const app = express();
-const port = process.env.PORT || 9090;
   
   //=============================================
   
