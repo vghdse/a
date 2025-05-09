@@ -1,4 +1,4 @@
-const config = require('./config')
+const config = require('../config')
 const { isJidBroadcast, isJidGroup, isJidNewsletter } = require(config.BAILEYS);
 const fs = require('fs/promises')
 const path = require('path')
