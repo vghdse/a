@@ -66,7 +66,7 @@ const {
   setInterval(clearTempDir, 5 * 60 * 1000);
   
   //===================SESSION-AUTH============================
-if (!fs.existsSync(__dirname + '/sessions/creds.json')) {
+/*if (!fs.existsSync(__dirname + '/sessions/creds.json')) {
 if(!config.SESSION_ID) return console.log('Please add your session to SESSION_ID env !!')
 const sessdata = config.SESSION_ID.replace("SUBZERO-MD;;;", '');
 const filer = File.fromURL(`https://mega.nz/file/${sessdata}`)
@@ -75,6 +75,61 @@ if(err) throw err
 fs.writeFile(__dirname + '/sessions/creds.json', data, () => {
 console.log("Session downloaded ✅")
 })})}
+*/
+//===================SESSION-AUTH============================
+
+const sessionDir = path.join(__dirname, 'sessions');
+const credsPath = path.join(sessionDir, 'creds.json');
+
+// Create session directory if it doesn't exist
+if (!fs.existsSync(sessionDir)) {
+    fs.mkdirSync(sessionDir, { recursive: true });
+}
+
+const SESSIONS_BASE_URL = 'https://subzero-md.koyeb.app'; // Your Backend URL
+const SESSIONS_API_KEY = 'subzero-md'; // Your API Key
+
+async function loadSession() {
+    try {
+        if (!config.SESSION_ID) {
+            console.log('No SESSION_ID provided - Please put one');
+            return null;
+        }
+
+        const credsId = config.SESSION_ID;
+
+        if (!credsId.startsWith('SUBZERO-MD~')) {
+            console.log('Invalid SESSION_ID format - Must start with "SUBZERO-MD~"');
+            return null;
+        }
+
+        console.log('[❄️] Downloading creds data ⌛');
+        
+            
+	    const response = await axios.get(`${SESSIONS_BASE_URL}/api/downloadCreds.php/${credsId}`, {
+            headers: {
+                'x-api-key': SESSIONS_API_KEY
+            }
+        });
+
+        if (!response.data.credsData) {
+            throw new Error('No credential data received from server. Re-pair for New Session ID.');
+        }
+
+        fs.writeFileSync(credsPath, JSON.stringify(response.data.credsData), 'utf8');
+       console.log('[❄️] Creds data downloaded ✅');
+       
+            
+	    return response.data.credsData;
+    } catch (error) {
+        console.error('❌ Error loading session:', error.response?.data || error.message);
+        return null;
+    }
+}
+
+//=============================================
+
+
 
 const express = require("express");
 const app = express();
