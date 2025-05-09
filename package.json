@@ -10,6 +10,7 @@
   },
   
   "dependencies": {
+    "gifted-baileys": "^1.5.7",
     "@whiskeysockets/baileys": "npm:@fizzxydev/baileys-pro@8.5.12",
     "@adiwajshing/keyed-db": "latest",
     "@dark-yasiya/yt-dl.js":"latest", 
