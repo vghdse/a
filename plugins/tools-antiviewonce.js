@@ -1,5 +1,6 @@
+const config = require('../config');
 const { cmd } = require("../command");
-const { isJidGroup } = require('@whiskeysockets/baileys');
+const { isJidGroup } = require(config.BAILEYS);
 
 
 cmd({
