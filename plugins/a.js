@@ -2,103 +2,84 @@ const axios = require("axios");
 const { cmd } = require("../command");
 const yts = require("yt-search");
 
-const config = require('../config');
-
-function replaceYouTubeID(url) {
-    const regex = /(?:youtube\.com\/(?:.*v=|.*\/)|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/;
-    const match = url.match(regex);
-    return match ? match[1] : null;
+function getYouTubeID(url) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
 }
 
 cmd({
-    pattern: "songhd",
-    alias: ["musichd", "playhd"],
+    pattern: "songc",
+    alias: ["music", "playc"],
     react: "🎵",
-    desc: "Download HD quality audio from YouTube",
+    desc: "Download YouTube audio (add 'low' for small size)",
     category: "download",
-    use: ".songhd <query or YouTube URL>",
+    use: ".song <query/url> [low]",
     filename: __filename
 }, async (conn, m, mek, { from, q, reply }) => {
     try {
         if (!q) return reply("❌ Please provide a song name or YouTube URL!");
 
-        let id = q.startsWith("https://") ? replaceYouTubeID(q) : null;
+        // Check for low quality request
+        const lowQuality = q.includes(" low");
+        const cleanQuery = q.replace(" low", "").trim();
 
-        // If no ID (not a URL), search YouTube
-        if (!id) {
-            try {
-                const searchResults = await yts(q);
-                if (!searchResults.videos.length) return reply("❌ No results found!");
-                id = searchResults.videos[0].videoId;
-            } catch (e) {
-                return reply("❌ YouTube search failed. Please try again.");
-            }
+        // Get video ID
+        let videoId = cleanQuery.startsWith("http") ? getYouTubeID(cleanQuery) : null;
+        if (!videoId) {
+            const search = await yts(cleanQuery);
+            if (!search.videos.length) return reply("❌ No results found!");
+            videoId = search.videos[0].videoId;
         }
 
-        // Get video info
-        let videoInfo;
-        try {
-            videoInfo = await yts({ videoId: id });
-            if (!videoInfo) return reply("❌ Failed to fetch video info!");
-        } catch (e) {
-            return reply("❌ Couldn't get video information");
+        const processingMsg = await reply(lowQuality ? "⬇️ Downloading small audio..." : "⬇️ Downloading HD audio...");
+
+        // Use GiftedTech API
+        const apiUrl = `https://api.giftedtech.web.id/api/download/yta?apikey=gifted&url=https://youtu.be/${videoId}`;
+        const response = await axios.get(apiUrl);
+        
+        if (!response.data?.success || !response.data?.result?.media?.length) {
+            return reply("❌ Failed to get download options");
         }
 
-        const { title, thumbnail, timestamp, views, author } = videoInfo;
-        const processingMsg = await reply("⬇️ Downloading HD audio... Please wait");
-
-        try {
-            // Get download options from API
-            const apiUrl = `https://api.giftedtech.web.id/api/download/yta?apikey=gifted&url=https://youtu.be/${id}`;
-            const response = await axios.get(apiUrl, { timeout: 30000 });
-            
-            if (!response.data?.success || !response.data?.result?.media?.length) {
-                return reply("❌ No download options available");
-            }
-
-            // Find HD quality (MP3 128kbps or best available)
-            const mediaOptions = response.data.result.media;
-            const hdOption = mediaOptions.find(opt => opt.format.includes("128Kbps")) || 
-                            mediaOptions.find(opt => opt.format.includes("MP3")) || 
-                            mediaOptions[0];
-
-            if (!hdOption?.download_url) {
-                return reply("❌ No HD download link found");
-            }
-
-            // Send audio immediately
-            await conn.sendMessage(from, { 
-                audio: { url: hdOption.download_url }, 
-                mimetype: 'audio/mpeg',
-                fileName: `${title}.mp3`.replace(/[^\w\s.-]/gi, ''),
-                ptt: false
-            }, { quoted: mek });
-
-            // Send info as separate message
-            await conn.sendMessage(from, {
-                text: `✅ HD Audio Downloaded!\n\n` +
-                      `🎵 *${title}*\n` +
-                      `⏳ Duration: ${timestamp || "Unknown"}\n` +
-                      `👤 Artist: ${author?.name || "Unknown"}\n` +
-                      `💾 Size: ${hdOption.size}\n` +
-                      `📦 Format: ${hdOption.format}`
-            }, { quoted: mek });
-
-        } catch (error) {
-            console.error("Download error:", error);
-            reply(`❌ Download failed: ${error.message}`);
-        } finally {
-            try {
-                if (processingMsg?.key) {
-                    await conn.sendMessage(from, { delete: processingMsg.key });
-                }
-            } catch (e) {
-                console.log("Couldn't delete processing message");
-            }
+        // Select quality
+        const mediaOptions = response.data.result.media;
+        let selectedOption;
+        
+        if (lowQuality) {
+            // Find smallest size
+            selectedOption = mediaOptions.reduce((smallest, current) => {
+                const currentSize = parseFloat(current.size);
+                const smallestSize = parseFloat(smallest.size);
+                return currentSize < smallestSize ? current : smallest;
+            }, mediaOptions[0]);
+        } else {
+            // Find highest quality
+            selectedOption = mediaOptions.find(opt => opt.format.includes("128Kbps")) || 
+                           mediaOptions.find(opt => opt.format.includes("MP3")) || 
+                           mediaOptions[0];
         }
+
+        if (!selectedOption?.download_url) {
+            return reply("❌ No download link found");
+        }
+
+        // Send audio
+        await conn.sendMessage(from, {
+            audio: { url: selectedOption.download_url },
+            mimetype: 'audio/mpeg',
+            fileName: `audio.mp3`,
+            ptt: false
+        }, { quoted: mek });
+
+        // Send info
+        await reply(`✅ ${lowQuality ? "Small" : "HD"} Audio Downloaded!\n\n` +
+                   `🎵 *${response.data.result.title}*\n` +
+                   `💾 Size: ${selectedOption.size}\n` +
+                   `📦 Format: ${selectedOption.format}`);
 
     } catch (error) {
-        console.error("Error in songhd command:", error);
-        reply(`❌ Error: ${error.message}`);
+        console.error("Error:", error);
+        reply(`❌ Error: ${error.message.includes('403') ? 'Server blocked request' : 'Download failed'}`);
     }
 });
