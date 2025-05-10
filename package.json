@@ -10,6 +10,7 @@
   },
   
   "dependencies": {
+    "@shizodevs/baileys": "*",
     "baileys-elite": "*",
     "gifted-baileys": "^1.5.7",
     "@whiskeysockets/baileys": "npm:@fizzxydev/baileys-pro@8.5.12",
