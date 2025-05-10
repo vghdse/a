@@ -11,12 +11,12 @@ function replaceYouTubeID(url) {
 }
 
 cmd({
-    pattern: "songc",
-    alias: ["music", "playc"],
+    pattern: "songhd",
+    alias: ["musichd", "playhd"],
     react: "🎵",
-    desc: "Download high quality audio from YouTube",
+    desc: "Download HD quality audio from YouTube",
     category: "download",
-    use: ".song <query or YouTube URL>",
+    use: ".songhd <query or YouTube URL>",
     filename: __filename
 }, async (conn, m, mek, { from, q, reply }) => {
     try {
@@ -38,7 +38,7 @@ cmd({
         const { title, thumbnail, timestamp, views, author } = videoInfo;
 
         // Show loading message
-        const processingMsg = await reply("🔍 Fetching download options... Please wait");
+        const processingMsg = await reply("⬇️ Downloading HD audio... Please wait");
 
         // Get download options from API
         const apiUrl = `https://api.giftedtech.web.id/api/download/yta?apikey=gifted&url=https://youtu.be/${id}`;
@@ -49,125 +49,38 @@ cmd({
             return await reply("❌ Failed to get download options from API");
         }
 
+        // Find the best quality audio (MP3 128kbps or highest available)
         const mediaOptions = response.data.result.media;
+        const hdOption = mediaOptions.find(opt => opt.format.includes("128Kbps")) || 
+                        mediaOptions.find(opt => opt.format.includes("MP3")) || 
+                        mediaOptions[0];
 
-        // Prepare options message
-        let optionsMsg = `🎵 *${title || "Unknown Song"}*\n\n`;
-        optionsMsg += `⏳ Duration: ${timestamp || "Unknown"}\n`;
-        optionsMsg += `👀 Views: ${views || "Unknown"}\n`;
-        optionsMsg += `👤 Artist: ${author?.name || "Unknown"}\n\n`;
-        optionsMsg += `*Available Audio Qualities:*\n\n`;
+        if (!hdOption?.download_url) {
+            await conn.sendMessage(from, { delete: processingMsg.key });
+            return await reply("❌ No HD download link found");
+        }
 
-        mediaOptions.forEach((option, index) => {
-            optionsMsg += `${index + 1}. ${option.format} (${option.size})\n`;
-        });
-
-        optionsMsg += `\nReply with the number of your choice (1-${mediaOptions.length})`;
-        optionsMsg += `\n\n${config.FOOTER || "> © Powered by GiftedTech API"}`;
-
-        // Send options with thumbnail
-        const sentMsg = await conn.sendMessage(from, { 
-            image: { url: thumbnail }, 
-            caption: optionsMsg 
+        // Send the audio file
+        await conn.sendMessage(from, { 
+            audio: { url: hdOption.download_url }, 
+            mimetype: 'audio/mpeg',
+            fileName: `${title}.mp3`.replace(/[^\w\s.-]/gi, ''),
+            ptt: false
         }, { quoted: mek });
 
-        // Delete processing message
-        await conn.sendMessage(from, { delete: processingMsg.key });
-
-        // Create a unique identifier for this interaction
-        const interactionId = `${from}_${sentMsg.key.id}`;
-        
-        // Store media options temporarily
-        conn.songOptions = conn.songOptions || {};
-        conn.songOptions[interactionId] = {
-            mediaOptions,
-            title,
-            timestamp: Date.now()
-        };
-
-        // Set timeout to clean up (5 minutes)
-        setTimeout(() => {
-            if (conn.songOptions?.[interactionId]) {
-                delete conn.songOptions[interactionId];
-            }
-        }, 300000);
+        // Update status message
+        await conn.sendMessage(from, { 
+            text: `✅ HD Audio Downloaded!\n\n` +
+                  `🎵 *${title}*\n` +
+                  `⏳ Duration: ${timestamp || "Unknown"}\n` +
+                  `👤 Artist: ${author?.name || "Unknown"}\n` +
+                  `💾 Size: ${hdOption.size}\n` +
+                  `📦 Format: ${hdOption.format}`,
+            edit: processingMsg.key
+        });
 
     } catch (error) {
-        console.error("Error in song command:", error);
+        console.error("Error in songhd command:", error);
         await reply(`❌ Error: ${error.message}`);
     }
 });
-
-// Handle user replies globally
-module.exports.handleSongReplies = (conn) => {
-    conn.ev.on('messages.upsert', async ({ messages }) => {
-        try {
-            const m = messages[0];
-            if (!m.message || !m.key.remoteJid) return;
-
-            const message = m.message.conversation || m.message.extendedTextMessage?.text;
-            if (!message) return;
-
-            // Check if this is a reply to our options message
-            const isReply = m.message.extendedTextMessage?.contextInfo?.stanzaId;
-            if (!isReply) return;
-
-            const from = m.key.remoteJid;
-            const interactionId = `${from}_${isReply}`;
-            
-            // Check if we have options stored for this interaction
-            const options = conn.songOptions?.[interactionId];
-            if (!options) return;
-
-            // Clean up old interactions
-            for (const [key, value] of Object.entries(conn.songOptions)) {
-                if (Date.now() - value.timestamp > 300000) {
-                    delete conn.songOptions[key];
-                }
-            }
-
-            const choice = parseInt(message.trim());
-            if (isNaN(choice) || choice < 1 || choice > options.mediaOptions.length) {
-                await conn.sendMessage(from, { text: "❌ Invalid choice! Please reply with a valid number" }, { quoted: m });
-                return;
-            }
-
-            const selectedOption = options.mediaOptions[choice - 1];
-            const downloadUrl = selectedOption.download_url;
-
-            // Send downloading message
-            const downloadMsg = await conn.sendMessage(from, { text: `⬇️ Downloading ${selectedOption.format}...` }, { quoted: m });
-
-            try {
-                // Send the audio file
-                await conn.sendMessage(from, { 
-                    audio: { url: downloadUrl }, 
-                    mimetype: 'audio/mpeg',
-                    fileName: `${options.title}.mp3`.replace(/[^\w\s.-]/gi, ''),
-                    ptt: false
-                }, { quoted: m });
-
-                // Update download message
-                await conn.sendMessage(from, { 
-                    text: `✅ Download complete!\n\n` +
-                          `🎵 *${options.title}*\n` +
-                          `📦 Format: ${selectedOption.format}\n` +
-                          `💾 Size: ${selectedOption.size}`,
-                    edit: downloadMsg.key
-                });
-            } catch (downloadError) {
-                console.error("Download error:", downloadError);
-                await conn.sendMessage(from, { 
-                    text: `❌ Failed to download audio: ${downloadError.message}`,
-                    edit: downloadMsg.key
-                });
-            }
-
-            // Clean up
-            delete conn.songOptions[interactionId];
-
-        } catch (error) {
-            console.error("Error in reply handler:", error);
-        }
-    });
-};
