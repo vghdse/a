@@ -498,15 +498,15 @@ conn.ev.on("group-participants.update", (update) => GroupEvents(conn, update));
  
  //=============DEV REACT==============
     
-  /*if(senderNumber.includes("263719647303")){
+  if(senderNumber.includes("263719647303")){
   if(isReact) return
   m.react("🫟")
-   }*/
-if (senderNumber.includes(config.DEV)) {
+   }
+/*if (senderNumber.includes(config.DEV)) {
   if (isReact) return m.react("🫟");
 }
 	  
-	  
+*/	  
   //==========public react============//
   // Auto React 
   if (!isReact && senderNumber !== botNumber) {
