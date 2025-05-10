@@ -11,12 +11,12 @@ function replaceYouTubeID(url) {
 }
 
 cmd({
-    pattern: "songhd",
-    alias: ["musichd", "playhd"],
+    pattern: "songlow",
+    alias: ["musiclow", "playlow"],
     react: "🎵",
-    desc: "Download HD quality audio from YouTube",
+    desc: "Download ultra-low quality audio from YouTube (small size)",
     category: "download",
-    use: ".songhd <query or YouTube URL>",
+    use: ".songlow <query or YouTube URL>",
     filename: __filename
 }, async (conn, m, mek, { from, q, reply }) => {
     try {
@@ -38,7 +38,7 @@ cmd({
         const { title, thumbnail, timestamp, views, author } = videoInfo;
 
         // Show loading message
-        const processingMsg = await reply("⬇️ Downloading HD audio... Please wait");
+        const processingMsg = await reply("⬇️ Downloading small size audio... Please wait");
 
         // Get download options from API
         const apiUrl = `https://api.giftedtech.web.id/api/download/yta?apikey=gifted&url=https://youtu.be/${id}`;
@@ -49,20 +49,20 @@ cmd({
             return await reply("❌ Failed to get download options from API");
         }
 
-        // Find the best quality audio (MP3 128kbps or highest available)
+        // Find the smallest size audio
         const mediaOptions = response.data.result.media;
-        const hdOption = mediaOptions.find(opt => opt.format.includes("128Kbps")) || 
-                        mediaOptions.find(opt => opt.format.includes("MP3")) || 
-                        mediaOptions[0];
+        const lowOption = mediaOptions.find(opt => opt.format.includes("Ultralow")) || 
+                         mediaOptions.find(opt => opt.size && parseFloat(opt.size) === Math.min(...mediaOptions.map(o => parseFloat(o.size)))) || 
+                         mediaOptions[mediaOptions.length - 1];
 
-        if (!hdOption?.download_url) {
+        if (!lowOption?.download_url) {
             await conn.sendMessage(from, { delete: processingMsg.key });
-            return await reply("❌ No HD download link found");
+            return await reply("❌ No download link found");
         }
 
         // Send the audio file
         await conn.sendMessage(from, { 
-            audio: { url: hdOption.download_url }, 
+            audio: { url: lowOption.download_url }, 
             mimetype: 'audio/mpeg',
             fileName: `${title}.mp3`.replace(/[^\w\s.-]/gi, ''),
             ptt: false
@@ -70,17 +70,17 @@ cmd({
 
         // Update status message
         await conn.sendMessage(from, { 
-            text: `✅ HD Audio Downloaded!\n\n` +
+            text: `✅ Small Audio Downloaded!\n\n` +
                   `🎵 *${title}*\n` +
                   `⏳ Duration: ${timestamp || "Unknown"}\n` +
                   `👤 Artist: ${author?.name || "Unknown"}\n` +
-                  `💾 Size: ${hdOption.size}\n` +
-                  `📦 Format: ${hdOption.format}`,
+                  `💾 Size: ${lowOption.size}\n` +
+                  `📦 Format: ${lowOption.format}`,
             edit: processingMsg.key
         });
 
     } catch (error) {
-        console.error("Error in songhd command:", error);
+        console.error("Error in songlow command:", error);
         await reply(`❌ Error: ${error.message}`);
     }
 });
