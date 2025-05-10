@@ -1,85 +1,126 @@
-const axios = require("axios");
-const { cmd } = require("../command");
-const yts = require("yt-search");
+const { cmd } = require('../command');
+const axios = require('axios');
+const fs = require('fs');
+const { promisify } = require('util');
+const writeFileAsync = promisify(fs.writeFile);
+const Config = require('../config');
 
-function getYouTubeID(url) {
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
-}
+cmd(
+    {
+        pattern: 'songc',
+        alias: ['ytmusic', 'music', 'ytdl'],
+        desc: 'Download YouTube songs in different qualities',
+        category: 'media',
+        use: '<song name or YouTube URL> [quality]',
+        filename: __filename,
+    },
+    async (conn, mek, m, { quoted, args, q, reply, from }) => {
+        try {
+            if (!q) return reply('*Please provide a song name or YouTube URL*\nExample: .song Alan Walker Lily\nOr: .song https://youtu.be/ox4tmEV6-QU high');
 
-cmd({
-    pattern: "songc",
-    alias: ["music", "playc"],
-    react: "🎵",
-    desc: "Download YouTube audio (add 'low' for small size)",
-    category: "download",
-    use: ".song <query/url> [low]",
-    filename: __filename
-}, async (conn, m, mek, { from, q, reply }) => {
-    try {
-        if (!q) return reply("❌ Please provide a song name or YouTube URL!");
+            // Extract quality parameter (default: high)
+            const [input, quality] = q.split(' ');
+            const audioQuality = quality ? quality.toLowerCase() : 'high';
+            
+            if (!['high', 'low'].includes(audioQuality)) {
+                return reply('*Invalid quality specified*\nPlease use "high" or "low" (default: high)');
+            }
 
-        // Check for low quality request
-        const lowQuality = q.includes(" low");
-        const cleanQuery = q.replace(" low", "").trim();
+            // Send processing reaction
+            await conn.sendMessage(mek.chat, { react: { text: "⏳", key: mek.key } });
 
-        // Get video ID
-        let videoId = cleanQuery.startsWith("http") ? getYouTubeID(cleanQuery) : null;
-        if (!videoId) {
-            const search = await yts(cleanQuery);
-            if (!search.videos.length) return reply("❌ No results found!");
-            videoId = search.videos[0].videoId;
+            let videoUrl = input;
+            
+            // If it's not a URL, search YouTube
+            if (!input.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+/)) {
+                const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(input)}`;
+                const searchResponse = await axios.get(searchUrl);
+                
+                // Extract first video ID from search results
+                const videoIdMatch = searchResponse.data.match(/\/watch\?v=([a-zA-Z0-9_-]{11})/);
+                if (!videoIdMatch) return reply('*No results found for your search*');
+                
+                videoUrl = `https://youtube.com/watch?v=${videoIdMatch[1]}`;
+            }
+
+            // Call GiftedTech API
+            const apiUrl = `https://api.giftedtech.web.id/api/download/yta?apikey=gifted&url=${encodeURIComponent(videoUrl)}`;
+            const response = await axios.get(apiUrl);
+            
+            if (!response.data.success || !response.data.result?.media?.length) {
+                return reply('*Failed to fetch song information*');
+            }
+
+            const songInfo = response.data.result;
+            const mediaOptions = songInfo.media;
+
+            // Select appropriate media based on quality preference
+            let selectedMedia;
+            if (audioQuality === 'high') {
+                // Find the highest quality MP3 or fallback to highest quality overall
+                selectedMedia = mediaOptions.find(m => m.format.includes('MP3') && m.format.includes('128Kbps')) || 
+                               mediaOptions.reduce((prev, current) => {
+                                   const prevSize = parseFloat(prev.size.split(' ')[0]);
+                                   const currSize = parseFloat(current.size.split(' ')[0]);
+                                   return currSize > prevSize ? current : prev;
+                               });
+            } else {
+                // Find the lowest quality option
+                selectedMedia = mediaOptions.reduce((prev, current) => {
+                    const prevSize = parseFloat(prev.size.split(' ')[0]);
+                    const currSize = parseFloat(current.size.split(' ')[0]);
+                    return currSize < prevSize ? current : prev;
+                });
+            }
+
+            if (!selectedMedia?.download_url) {
+                return reply('*Failed to find a valid download link*');
+            }
+
+            // Download the audio file
+            const audioResponse = await axios.get(selectedMedia.download_url, { responseType: 'arraybuffer' });
+            const audioBuffer = Buffer.from(audioResponse.data, 'binary');
+
+            // Get thumbnail buffer
+            const thumbnailBuffer = await getThumbnailBuffer(videoUrl);
+
+            // Send the audio file
+            await conn.sendMessage(mek.chat, { 
+                audio: audioBuffer,
+                mimetype: 'audio/mpeg',
+                fileName: `${songInfo.title}.mp3`.replace(/[^\w\s.-]/gi, ''),
+                contextInfo: {
+                    externalAdReply: {
+                        title: songInfo.title,
+                        body: `🎵 ${selectedMedia.format} | ${selectedMedia.size}`,
+                        thumbnail: thumbnailBuffer,
+                        mediaType: 2,
+                        mediaUrl: videoUrl,
+                        sourceUrl: videoUrl
+                    }
+                }
+            }, { quoted: mek });
+
+            // Send success reaction
+            await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
+
+        } catch (error) {
+            console.error('Error in song command:', error);
+            await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
+            reply('*Error downloading song. Please try again later.*');
         }
-
-        const processingMsg = await reply(lowQuality ? "⬇️ Downloading small audio..." : "⬇️ Downloading HD audio...");
-
-        // Use GiftedTech API
-        const apiUrl = `https://api.giftedtech.web.id/api/download/yta?apikey=gifted&url=https://youtu.be/${videoId}`;
-        const response = await axios.get(apiUrl);
-        
-        if (!response.data?.success || !response.data?.result?.media?.length) {
-            return reply("❌ Failed to get download options");
-        }
-
-        // Select quality
-        const mediaOptions = response.data.result.media;
-        let selectedOption;
-        
-        if (lowQuality) {
-            // Find smallest size
-            selectedOption = mediaOptions.reduce((smallest, current) => {
-                const currentSize = parseFloat(current.size);
-                const smallestSize = parseFloat(smallest.size);
-                return currentSize < smallestSize ? current : smallest;
-            }, mediaOptions[0]);
-        } else {
-            // Find highest quality
-            selectedOption = mediaOptions.find(opt => opt.format.includes("128Kbps")) || 
-                           mediaOptions.find(opt => opt.format.includes("MP3")) || 
-                           mediaOptions[0];
-        }
-
-        if (!selectedOption?.download_url) {
-            return reply("❌ No download link found");
-        }
-
-        // Send audio
-        await conn.sendMessage(from, {
-            audio: { url: selectedOption.download_url },
-            mimetype: 'audio/mpeg',
-            fileName: `audio.mp3`,
-            ptt: false
-        }, { quoted: mek });
-
-        // Send info
-        await reply(`✅ ${lowQuality ? "Small" : "HD"} Audio Downloaded!\n\n` +
-                   `🎵 *${response.data.result.title}*\n` +
-                   `💾 Size: ${selectedOption.size}\n` +
-                   `📦 Format: ${selectedOption.format}`);
-
-    } catch (error) {
-        console.error("Error:", error);
-        reply(`❌ Error: ${error.message.includes('403') ? 'Server blocked request' : 'Download failed'}`);
     }
-});
+);
+
+// Helper function to get YouTube thumbnail
+async function getThumbnailBuffer(videoUrl) {
+    try {
+        const videoId = videoUrl.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/)[1];
+        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        const response = await axios.get(thumbnailUrl, { responseType: 'arraybuffer' });
+        return Buffer.from(response.data, 'binary');
+    } catch {
+        // Fallback to a default thumbnail if needed
+        return fs.readFileSync('./assets/default_thumbnail.jpg');
+    }
+}
