@@ -496,12 +496,17 @@ conn.ev.on("group-participants.update", (update) => GroupEvents(conn, update));
    //=========BAN SUDO=============
 	// --- Ban and Sudo Utility Code for index.js ---
  
- //================ownerreact==============
+ //=============DEV REACT==============
     
-  if(senderNumber.includes("263719647303")){
+  /*if(senderNumber.includes("263719647303")){
   if(isReact) return
   m.react("🫟")
-   }
+   }*/
+if (senderNumber.includes(config.DEV)) {
+  if (isReact) return m.react("🫟");
+}
+	  
+	  
   //==========public react============//
   // Auto React 
   if (!isReact && senderNumber !== botNumber) {
