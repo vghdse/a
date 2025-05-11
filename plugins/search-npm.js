@@ -48,7 +48,7 @@ cmd({
                 externalAdReply: {
                     title: pkg.name,
                     body: pkg.description || "NPM package",
-                    thumbnail: await (await axios.get('https://static.npmjs.com/338e4905a2684ca96e08c7780fc68412.png', { responseType: 'arraybuffer' })).data,
+                    thumbnail: await (await axios.get('https://files.catbox.moe/18il7k.jpg', { responseType: 'arraybuffer' })).data,
                     sourceUrl: pkg.packageLink || "https://www.npmjs.com"
                 }
             }
