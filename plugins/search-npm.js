@@ -1,93 +1,65 @@
 const { cmd } = require('../command');
 const axios = require('axios');
-const Config = require('../config');
 
 cmd(
     {
         pattern: 'npm',
         alias: ['npmpkg', 'npmsearch'],
-        desc: 'Search for NPM packages',
+        desc: 'Search for NPM packages (debug mode)',
         category: 'utilities',
         use: '<package name>',
         filename: __filename,
     },
     async (conn, mek, m, { quoted, args, q, reply, from }) => {
         try {
-            if (!q) return reply('📦 *Please provide an NPM package name*\nExample: .npm axios');
+            if (!q) return reply('Please provide an NPM package name\nExample: .npm axios');
 
-            // Send processing reaction
             await conn.sendMessage(mek.chat, { react: { text: "🔍", key: mek.key } });
 
             const apiUrl = `https://api.giftedtech.web.id/api/search/npmsearch?apikey=gifted&packagename=${encodeURIComponent(q)}`;
             
+            // Make the API request
             const response = await axios.get(apiUrl);
             
-            if (!response.data.success || !response.data.result) {
-                return reply('❌ *Package not found or API error*');
+            // Display the raw API response
+            let debugMessage = `🔧 RAW API RESPONSE for "${q}":\n\n`;
+            debugMessage += '```json\n';
+            debugMessage += JSON.stringify(response.data, null, 2);
+            debugMessage += '\n```';
+            
+            // Send the raw response
+            await reply(debugMessage);
+
+            // If response is successful, also show formatted info
+            if (response.data.success && response.data.result) {
+                const pkg = response.data.result;
+                let infoMessage = `📦 Package: ${pkg.name}\n`;
+                infoMessage += `🔄 Version: ${pkg.version}\n`;
+                infoMessage += `📝 Description: ${pkg.description}\n`;
+                infoMessage += `🔗 NPM: ${pkg.packageLink}\n`;
+                
+                await reply(infoMessage);
             }
 
-            const pkg = response.data.result;
-            
-            // Format the response with emojis
-            let message = `📦 *${pkg.name}* v${pkg.version}\n\n`;
-            message += `📝 *Description:* ${pkg.description}\n\n`;
-            message += `🕒 *Published:* ${pkg.publishedDate}\n`;
-            message += `👤 *Owner:* ${pkg.owner}\n`;
-            message += `📜 *License:* ${pkg.license}\n\n`;
-            
-            if (pkg.keywords && pkg.keywords.length > 0 && pkg.keywords[0] !== "N/A") {
-                message += `🏷️ *Keywords:* ${pkg.keywords.join(', ')}\n\n`;
-            }
-            
-            message += `🔗 *NPM Page:* ${pkg.packageLink}\n`;
-            if (pkg.homepage && pkg.homepage !== "N/A") {
-                message += `🌐 *Homepage:* ${pkg.homepage}\n`;
-            }
-            if (pkg.downloadLink && pkg.downloadLink !== "N/A") {
-                message += `⬇️ *Download:* ${pkg.downloadLink}\n`;
-            }
-
-            // Send the formatted message
-            await conn.sendMessage(mek.chat, { 
-                text: message,
-                contextInfo: {
-                    externalAdReply: {
-                        title: `NPM: ${pkg.name}`,
-                        body: pkg.description.substring(0, 50) + (pkg.description.length > 50 ? '...' : ''),
-                        thumbnail: await getNpmThumbnail(pkg.name),
-                        mediaType: 1,
-                        sourceUrl: pkg.packageLink
-                    }
-                }
-            }, { quoted: mek });
-
-            // Send success reaction
             await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
 
         } catch (error) {
-            console.error('Error in npm command:', error);
+            console.error('NPM search error:', error);
+            
+            let errorMessage = '❌ Error occurred:\n';
+            errorMessage += '```\n';
+            errorMessage += error.message;
+            errorMessage += '\n```';
+            
+            if (error.response) {
+                errorMessage += '\nAPI Response:\n';
+                errorMessage += '```json\n';
+                errorMessage += JSON.stringify(error.response.data, null, 2);
+                errorMessage += '\n```';
+            }
+            
+            await reply(errorMessage);
             await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
-            reply('❌ *Error searching NPM. Please try again later.*');
         }
     }
 );
-
-// Helper function to get NPM package thumbnail
-async function getNpmThumbnail(packageName) {
-    try {
-        // Try to get logo from npms.io
-        const npmsResponse = await axios.get(`https://api.npms.io/v2/package/${encodeURIComponent(packageName)}`);
-        if (npmsResponse.data?.collected?.metadata?.links?.repository) {
-            const repoUrl = npmsResponse.data.collected.metadata.links.repository;
-            if (repoUrl.includes('github.com')) {
-                const repoPath = repoUrl.split('github.com/')[1].split('/').slice(0, 2).join('/');
-                return `https://opengraph.githubassets.com/1/${repoPath}`;
-            }
-        }
-        
-        // Fallback to standard NPM icon
-        return 'https://files.catbox.moe/18il7k.jpg';
-    } catch {
-        return null;
-    }
-}
