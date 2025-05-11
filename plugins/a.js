@@ -1,126 +1,125 @@
 const { cmd } = require('../command');
 const axios = require('axios');
-const fs = require('fs');
-const { promisify } = require('util');
-const writeFileAsync = promisify(fs.writeFile);
 const Config = require('../config');
+
+// Configure axios with better settings
+const axiosInstance = axios.create({
+  timeout: 15000, // 15 second timeout
+  maxRedirects: 5
+});
 
 cmd(
     {
         pattern: 'songc',
-        alias: ['ytmusic', 'music', 'ytdl'],
-        desc: 'Download YouTube songs in different qualities',
+        alias: ['play3', 'song3'],
+        desc: 'YouTube audio downloader using GiftedTech API',
         category: 'media',
-        use: '<song name or YouTube URL> [quality]',
+        react: '🎵',
+        use: '<YouTube URL or search query>',
         filename: __filename,
     },
-    async (conn, mek, m, { quoted, args, q, reply, from }) => {
+    async (conn, mek, m, { text, reply }) => {
         try {
-            if (!q) return reply('*Please provide a song name or YouTube URL*\nExample: .song Alan Walker Lily\nOr: .song https://youtu.be/ox4tmEV6-QU high');
+            if (!text) return reply('🎵 *Usage:* .song3 <query/url>\nExample: .song3 https://youtu.be/ox4tmEV6-QU\n.song3 Alan Walker Lily');
 
-            // Extract quality parameter (default: high)
-            const [input, quality] = q.split(' ');
-            const audioQuality = quality ? quality.toLowerCase() : 'high';
-            
-            if (!['high', 'low'].includes(audioQuality)) {
-                return reply('*Invalid quality specified*\nPlease use "high" or "low" (default: high)');
-            }
-
-            // Send processing reaction
             await conn.sendMessage(mek.chat, { react: { text: "⏳", key: mek.key } });
 
-            let videoUrl = input;
-            
-            // If it's not a URL, search YouTube
-            if (!input.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+/)) {
-                const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(input)}`;
-                const searchResponse = await axios.get(searchUrl);
-                
-                // Extract first video ID from search results
-                const videoIdMatch = searchResponse.data.match(/\/watch\?v=([a-zA-Z0-9_-]{11})/);
-                if (!videoIdMatch) return reply('*No results found for your search*');
-                
-                videoUrl = `https://youtube.com/watch?v=${videoIdMatch[1]}`;
-            }
+            // Get video URL
+            const videoUrl = await getVideoUrl(text);
+            if (!videoUrl) return reply('🎵 No results found for your search');
 
-            // Call GiftedTech API
+            // Fetch song data from GiftedTech API
             const apiUrl = `https://api.giftedtech.web.id/api/download/yta?apikey=gifted&url=${encodeURIComponent(videoUrl)}`;
-            const response = await axios.get(apiUrl);
+            const apiResponse = await axiosInstance.get(apiUrl);
             
-            if (!response.data.success || !response.data.result?.media?.length) {
-                return reply('*Failed to fetch song information*');
+            if (!apiResponse.data?.success || !apiResponse.data?.result?.media?.[0]?.download_url) {
+                return reply('🎵 Failed to fetch audio - API error');
             }
 
-            const songInfo = response.data.result;
-            const mediaOptions = songInfo.media;
+            const songData = apiResponse.data.result;
+            
+            // Select the best quality audio (first item in media array)
+            const audioInfo = songData.media[0];
 
-            // Select appropriate media based on quality preference
-            let selectedMedia;
-            if (audioQuality === 'high') {
-                // Find the highest quality MP3 or fallback to highest quality overall
-                selectedMedia = mediaOptions.find(m => m.format.includes('MP3') && m.format.includes('128Kbps')) || 
-                               mediaOptions.reduce((prev, current) => {
-                                   const prevSize = parseFloat(prev.size.split(' ')[0]);
-                                   const currSize = parseFloat(current.size.split(' ')[0]);
-                                   return currSize > prevSize ? current : prev;
-                               });
-            } else {
-                // Find the lowest quality option
-                selectedMedia = mediaOptions.reduce((prev, current) => {
-                    const prevSize = parseFloat(prev.size.split(' ')[0]);
-                    const currSize = parseFloat(current.size.split(' ')[0]);
-                    return currSize < prevSize ? current : prev;
+            // Get thumbnail
+            let thumbnailBuffer;
+            try {
+                const thumbnailResponse = await axiosInstance.get(songData.thumbnail, {
+                    responseType: 'arraybuffer'
                 });
+                thumbnailBuffer = Buffer.from(thumbnailResponse.data, 'binary');
+            } catch {
+                thumbnailBuffer = null;
             }
 
-            if (!selectedMedia?.download_url) {
-                return reply('*Failed to find a valid download link*');
-            }
+            // Format song information
+            const songInfo = `🎧 *${songData.title}*\n` +
+                            `📦 Format: ${audioInfo.format}\n` +
+                            `💾 Size: ${audioInfo.size}\n\n` +
+                            `> © ᴘᴏᴡᴇʀᴇᴅ ʙʏ ɢɪғᴛᴇᴅᴛᴇᴄʜ ᴀᴘɪ`;
 
-            // Download the audio file
-            const audioResponse = await axios.get(selectedMedia.download_url, { responseType: 'arraybuffer' });
-            const audioBuffer = Buffer.from(audioResponse.data, 'binary');
-
-            // Get thumbnail buffer
-            const thumbnailBuffer = await getThumbnailBuffer(videoUrl);
-
-            // Send the audio file
-            await conn.sendMessage(mek.chat, { 
-                audio: audioBuffer,
-                mimetype: 'audio/mpeg',
-                fileName: `${songInfo.title}.mp3`.replace(/[^\w\s.-]/gi, ''),
+            // Send song info with thumbnail
+            await conn.sendMessage(mek.chat, {
+                image: thumbnailBuffer,
+                caption: songInfo,
                 contextInfo: {
                     externalAdReply: {
-                        title: songInfo.title,
-                        body: `🎵 ${selectedMedia.format} | ${selectedMedia.size}`,
+                        title: songData.title,
+                        body: `Format: ${audioInfo.format} | Size: ${audioInfo.size}`,
                         thumbnail: thumbnailBuffer,
-                        mediaType: 2,
+                        mediaType: 1,
                         mediaUrl: videoUrl,
                         sourceUrl: videoUrl
                     }
                 }
             }, { quoted: mek });
 
-            // Send success reaction
+            // Download and send audio
+            const audioResponse = await axiosInstance.get(audioInfo.download_url, {
+                responseType: 'arraybuffer',
+                headers: { 
+                    'Referer': 'https://www.youtube.com/',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            });
+
+            await conn.sendMessage(mek.chat, {
+                audio: Buffer.from(audioResponse.data, 'binary'),
+                mimetype: 'audio/mpeg',
+                fileName: `${songData.title.replace(/[^\w\s]/gi, '')}.mp3`,
+                contextInfo: {
+                    externalAdReply: {
+                        title: songData.title,
+                        body: `🎵 ${Config.BOT_NAME}`,
+                        thumbnail: thumbnailBuffer,
+                        mediaType: 1,
+                        mediaUrl: videoUrl,
+                        sourceUrl: videoUrl
+                    }
+                }
+            });
+
             await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
 
         } catch (error) {
-            console.error('Error in song command:', error);
+            console.error('Error:', error);
             await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
-            reply('*Error downloading song. Please try again later.*');
+            reply('🎵 Error: ' + (error.message || 'Please try again later'));
         }
     }
 );
 
-// Helper function to get YouTube thumbnail
-async function getThumbnailBuffer(videoUrl) {
+// Helper to get video URL (same as before)
+async function getVideoUrl(input) {
+    if (input.match(/youtu\.?be/)) return input;
+    
     try {
-        const videoId = videoUrl.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/)[1];
-        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-        const response = await axios.get(thumbnailUrl, { responseType: 'arraybuffer' });
-        return Buffer.from(response.data, 'binary');
-    } catch {
-        // Fallback to a default thumbnail if needed
-        return fs.readFileSync('./assets/default_thumbnail.jpg');
+        const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(input)}`;
+        const response = await axiosInstance.get(searchUrl);
+        const videoId = response.data.match(/\/watch\?v=([a-zA-Z0-9_-]{11})/)?.[1];
+        return videoId ? `https://youtube.com/watch?v=${videoId}` : null;
+    } catch (e) {
+        console.error('Search error:', e);
+        return null;
     }
 }
