@@ -44,7 +44,7 @@ cmd(
                 }),
                 // Send minimal info immediately
                 conn.sendMessage(mek.chat, { 
-                    text: `> Downloading ${apiResponse.data.title.substring(0, 50)}...` 
+                    text: `\`\`\`Downloading song...\`\`\`` 
                 })
             ]);
 
