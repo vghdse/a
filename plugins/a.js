@@ -13,11 +13,11 @@ const axiosInstance = axios.create({
 
 cmd(
     {
-        pattern: 'songc',
-        alias: ['play', 'music'],
+        pattern: 'song',
+        alias: ['play', 'ytmp3'],
         desc: 'Instant YouTube MP3 downloader',
         category: 'media',
-        react: '🎵',
+        //react: '🎵',
         use: '<YouTube URL or search query>',
         filename: __filename,
     },
@@ -44,7 +44,7 @@ cmd(
                 }),
                 // Send minimal info immediately
                 conn.sendMessage(mek.chat, { 
-                    text: `⬇️ Downloading: ${apiResponse.data.title.substring(0, 50)}...` 
+                    text: `> Downloading ${apiResponse.data.title.substring(0, 50)}...` 
                 })
             ]);
 
