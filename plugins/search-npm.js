@@ -86,7 +86,7 @@ async function getNpmThumbnail(packageName) {
         }
         
         // Fallback to standard NPM icon
-        return 'https://static.npmjs.com/338e4905a2684ca96e08c7780fc68412.png';
+        return 'https://files.catbox.moe/18il7k.jpg';
     } catch {
         return null;
     }
