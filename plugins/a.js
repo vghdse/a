@@ -39,12 +39,17 @@ cmd(
             const apiUrl = `https://api.giftedtech.web.id/api/download/yta?apikey=gifted&url=${encodeURIComponent(videoUrl)}`;
             const apiResponse = await axiosInstance.get(apiUrl);
             
-            if (!apiResponse.data?.success || !apiResponse.data?.result?.media?.[0]?.download_url) {
+            if (!apiResponse.data?.success || !apiResponse.data?.result?.media) {
                 return reply('🎵 Failed to fetch audio - API error');
             }
 
             const songData = apiResponse.data.result;
-            const audioInfo = songData.media[0];
+            
+            // Find the ultralow quality webm format
+            const audioInfo = songData.media.find(item => 
+                item.format.includes('Ultralow') && 
+                item.download_url.includes('.webm')
+            ) || songData.media[0]; // Fallback to first if not found
 
             // Get thumbnail
             let thumbnailBuffer;
@@ -89,14 +94,14 @@ cmd(
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                         'Accept': 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5',
                         'Range': 'bytes=0-',
-                        'Accept-Encoding': 'identity' // Important for audio downloads
+                        'Accept-Encoding': 'identity'
                     }
                 });
 
                 await conn.sendMessage(mek.chat, {
                     audio: Buffer.from(audioResponse.data, 'binary'),
-                    mimetype: 'audio/mpeg',
-                    fileName: `${songData.title.replace(/[^\w\s]/gi, '')}.mp3`,
+                    mimetype: 'audio/webm',
+                    fileName: `${songData.title.replace(/[^\w\s]/gi, '')}.webm`,
                     contextInfo: {
                         externalAdReply: {
                             title: songData.title,
