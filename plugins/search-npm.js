@@ -59,6 +59,6 @@ cmd({
 
     } catch (error) {
         console.error("NPM search error:", error);
-        reply(`❌ Error: ${error.response?.status === 404 ? "Package not found" : "Search failed"}`);
+       // reply(`❌ Error: ${error.response?.status === 404 ? "Package not found" : "Search failed"}`);
     }
 });
