@@ -1,3 +1,4 @@
+const axios = require('axios')
 const config = require('./config')
 const {
   default: makeWASocket,
@@ -35,7 +36,6 @@ const {
   const util = require('util')
   const { sms, downloadMediaMessage, AntiDelete } = require('./lib')
   const FileType = require('file-type');
-  const axios = require('axios')
   const { File } = require('megajs')
   const { fromBuffer } = require('file-type')
   const bodyparser = require('body-parser')
