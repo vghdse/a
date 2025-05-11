@@ -24,7 +24,7 @@ cmd({
 
         const pkg = response.data.result;
         
-        let message = `📦 *NPM Package Info*\n\n` +
+        let message = `📦 \`NPM Package Info\` \n\n` +
                      `✨ *Name:* ${pkg.name || "N/A"}\n` +
                      `📝 *Description:* ${pkg.description || "N/A"}\n` +
                      `🏷️ *Version:* ${pkg.version || "N/A"}\n` +
@@ -39,7 +39,7 @@ cmd({
             message += `🏷️ *Keywords:* ${pkg.keywords.join(", ")}\n`;
         }
 
-        message += `\nPowered By Mr Frank`;
+        message += `\n> Gᴇɴᴇʀᴀᴛᴇᴅ ʙʏ Sᴜʙᴢᴇʀᴏ`;
 
         // Send the result
         await conn.sendMessage(from, { 
@@ -48,7 +48,7 @@ cmd({
                 externalAdReply: {
                     title: pkg.name,
                     body: pkg.description || "NPM package",
-                    thumbnail: await (await axios.get('https://files.catbox.moe/18il7k.jpg', { responseType: 'arraybuffer' })).data,
+                    thumbnail: await (await axios.get('https://files.catbox.moe/u099km.jpg', { responseType: 'arraybuffer' })).data,
                     sourceUrl: pkg.packageLink || "https://www.npmjs.com"
                 }
             }
