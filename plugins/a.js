@@ -4,8 +4,15 @@ const Config = require('../config');
 
 // Configure axios with better settings
 const axiosInstance = axios.create({
-  timeout: 15000, // 15 second timeout
-  maxRedirects: 5
+  timeout: 30000, // Increased timeout to 30 seconds
+  maxRedirects: 5,
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Accept': '*/*',
+    'Accept-Encoding': 'identity', // Important for audio downloads
+    'Connection': 'keep-alive',
+    'Referer': 'https://www.youtube.com/'
+  }
 });
 
 cmd(
@@ -37,8 +44,6 @@ cmd(
             }
 
             const songData = apiResponse.data.result;
-            
-            // Select the best quality audio (first item in media array)
             const audioInfo = songData.media[0];
 
             // Get thumbnail
@@ -74,32 +79,42 @@ cmd(
                 }
             }, { quoted: mek });
 
-            // Download and send audio
-            const audioResponse = await axiosInstance.get(audioInfo.download_url, {
-                responseType: 'arraybuffer',
-                headers: { 
-                    'Referer': 'https://www.youtube.com/',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
-            });
-
-            await conn.sendMessage(mek.chat, {
-                audio: Buffer.from(audioResponse.data, 'binary'),
-                mimetype: 'audio/mpeg',
-                fileName: `${songData.title.replace(/[^\w\s]/gi, '')}.mp3`,
-                contextInfo: {
-                    externalAdReply: {
-                        title: songData.title,
-                        body: `🎵 ${Config.BOT_NAME}`,
-                        thumbnail: thumbnailBuffer,
-                        mediaType: 1,
-                        mediaUrl: videoUrl,
-                        sourceUrl: videoUrl
+            // Download and send audio with proper headers
+            try {
+                const audioResponse = await axiosInstance.get(audioInfo.download_url, {
+                    responseType: 'arraybuffer',
+                    headers: {
+                        'Referer': 'https://www.youtube.com/',
+                        'Origin': 'https://www.youtube.com',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        'Accept': 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5',
+                        'Range': 'bytes=0-',
+                        'Accept-Encoding': 'identity' // Important for audio downloads
                     }
-                }
-            });
+                });
 
-            await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
+                await conn.sendMessage(mek.chat, {
+                    audio: Buffer.from(audioResponse.data, 'binary'),
+                    mimetype: 'audio/mpeg',
+                    fileName: `${songData.title.replace(/[^\w\s]/gi, '')}.mp3`,
+                    contextInfo: {
+                        externalAdReply: {
+                            title: songData.title,
+                            body: `🎵 ${Config.BOT_NAME}`,
+                            thumbnail: thumbnailBuffer,
+                            mediaType: 1,
+                            mediaUrl: videoUrl,
+                            sourceUrl: videoUrl
+                        }
+                    }
+                });
+
+                await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
+            } catch (downloadError) {
+                console.error('Download error:', downloadError);
+                await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
+                reply('🎵 Download failed: The audio file could not be retrieved. Please try again later.');
+            }
 
         } catch (error) {
             console.error('Error:', error);
@@ -109,7 +124,7 @@ cmd(
     }
 );
 
-// Helper to get video URL (same as before)
+// Helper to get video URL
 async function getVideoUrl(input) {
     if (input.match(/youtu\.?be/)) return input;
     
