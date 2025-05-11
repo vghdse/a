@@ -2,19 +2,13 @@ const { cmd } = require('../command');
 const axios = require('axios');
 const Config = require('../config');
 
-// Configure axios with YouTube-specific headers
+// Configure axios with better settings
 const axiosInstance = axios.create({
-  timeout: 30000,
+  timeout: 30000, // 30 second timeout
   maxRedirects: 5,
   headers: {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept': '*/*',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Referer': 'https://www.youtube.com/',
-    'Origin': 'https://www.youtube.com',
-    'Sec-Fetch-Dest': 'empty',
-    'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Site': 'same-site'
+    'Accept': '*/*'
   }
 });
 
@@ -22,7 +16,7 @@ cmd(
     {
         pattern: 'song3',
         alias: ['play3', 'song3'],
-        desc: 'YouTube audio downloader',
+        desc: 'YouTube MP3 downloader using Kaiz API',
         category: 'media',
         react: '🎵',
         use: '<YouTube URL or search query>',
@@ -38,72 +32,43 @@ cmd(
             const videoUrl = await getVideoUrl(text);
             if (!videoUrl) return reply('🎵 No results found for your search');
 
-            // Fetch song data from API
-            const apiUrl = `https://api.giftedtech.web.id/api/download/yta?apikey=gifted&url=${encodeURIComponent(videoUrl)}`;
+            // Fetch song data from Kaiz API
+            const apiUrl = `https://kaiz-apis.gleeze.com/api/ytdown-mp3?url=${encodeURIComponent(videoUrl)}`;
             const apiResponse = await axiosInstance.get(apiUrl);
             
-            if (!apiResponse.data?.success || !apiResponse.data?.result?.media) {
-                return reply('🎵 Failed to get download links from API');
+            if (!apiResponse.data?.download_url) {
+                return reply('🎵 Failed to fetch download link from API');
             }
 
-            const songData = apiResponse.data.result;
-            
-            // Select the ultralow webm format (itag 600)
-            const audioInfo = songData.media.find(item => 
-                item.download_url.includes('itag=600') || 
-                item.format.includes('Ultralow')
-            );
-            
-            if (!audioInfo) {
-                return reply('🎵 Ultralow quality not available');
-            }
+            const songData = apiResponse.data;
 
-            // Get thumbnail
-            let thumbnailBuffer;
-            try {
-                const thumbnailResponse = await axiosInstance.get(songData.thumbnail, {
-                    responseType: 'arraybuffer'
-                });
-                thumbnailBuffer = Buffer.from(thumbnailResponse.data, 'binary');
-            } catch {
-                thumbnailBuffer = null;
-            }
-
-            // Send song info first
-            const songInfo = `🎧 *${songData.title}*\n` +
-                            `📦 Format: ${audioInfo.format}\n` +
-                            `💾 Size: ${audioInfo.size}\n\n` +
-                            `> Downloading audio...`;
+            // Send initial info
+            const songInfo = `🎧 *${songData.title}*\n\n` +
+                            `> Downloading audio...\n\n` +
+                            `> © Powered by Kaiz API`;
 
             await conn.sendMessage(mek.chat, {
-                image: thumbnailBuffer,
-                caption: songInfo
+                text: songInfo
             }, { quoted: mek });
 
-            // Download audio with YouTube-specific headers
+            // Download and send audio
             try {
-                const audioResponse = await axiosInstance.get(audioInfo.download_url, {
+                const audioResponse = await axiosInstance.get(songData.download_url, {
                     responseType: 'arraybuffer',
                     headers: {
                         'Referer': 'https://www.youtube.com/',
-                        'Origin': 'https://www.youtube.com',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Accept': 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9',
-                        'Range': 'bytes=0-',
-                        'Accept-Encoding': 'identity',
-                        'Connection': 'keep-alive'
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                     }
                 });
 
                 await conn.sendMessage(mek.chat, {
                     audio: Buffer.from(audioResponse.data, 'binary'),
-                    mimetype: 'audio/webm',
-                    fileName: `${songData.title.substring(0, 64).replace(/[^\w\s]/gi, '')}.webm`,
+                    mimetype: 'audio/mpeg',
+                    fileName: songData.title,
                     contextInfo: {
                         externalAdReply: {
                             title: songData.title,
                             body: `🎵 ${Config.BOT_NAME}`,
-                            thumbnail: thumbnailBuffer,
                             mediaType: 1,
                             mediaUrl: videoUrl,
                             sourceUrl: videoUrl
@@ -113,19 +78,20 @@ cmd(
 
                 await conn.sendMessage(mek.chat, { react: { text: "✅", key: mek.key } });
             } catch (downloadError) {
-                console.error('Download Error:', downloadError);
+                console.error('Download error:', downloadError);
                 await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
-                reply('🎵 Failed to download audio. The link may have expired. Try again.');
+                reply('🎵 Download failed: The audio file could not be retrieved. Please try again later.');
             }
 
         } catch (error) {
-            console.error('Command Error:', error);
+            console.error('Error:', error);
             await conn.sendMessage(mek.chat, { react: { text: "❌", key: mek.key } });
             reply('🎵 Error: ' + (error.message || 'Please try again later'));
         }
     }
 );
 
+// Helper to get video URL
 async function getVideoUrl(input) {
     if (input.match(/youtu\.?be/)) return input;
     
@@ -135,7 +101,7 @@ async function getVideoUrl(input) {
         const videoId = response.data.match(/\/watch\?v=([a-zA-Z0-9_-]{11})/)?.[1];
         return videoId ? `https://youtube.com/watch?v=${videoId}` : null;
     } catch (e) {
-        console.error('Search Error:', e);
+        console.error('Search error:', e);
         return null;
     }
 }
