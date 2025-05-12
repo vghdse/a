@@ -1,217 +1,91 @@
-/*
-
-$$$$$$\            $$\                                               
-$$  __$$\           $$ |                                              
-$$ /  \__|$$\   $$\ $$$$$$$\  $$$$$$$$\  $$$$$$\   $$$$$$\   $$$$$$\  
-\$$$$$$\  $$ |  $$ |$$  __$$\ \____$$  |$$  __$$\ $$  __$$\ $$  __$$\ 
- \____$$\ $$ |  $$ |$$ |  $$ |  $$$$ _/ $$$$$$$$ |$$ |  \__|$$ /  $$ |
-$$\   $$ |$$ |  $$ |$$ |  $$ | $$  _/   $$   ____|$$ |      $$ |  $$ |
-\$$$$$$  |\$$$$$$  |$$$$$$$  |$$$$$$$$\ \$$$$$$$\ $$ |      \$$$$$$  |
- \______/  \______/ \_______/ \________| \_______|\__|       \______/
-
-Project Name : SubZero MD
-Creator      : Darrell Mucheri ( Mr Frank OFC )
-Repo         : https//github.com/mrfrank-ofc/SUBZERO-MD
-Support      : wa.me/18062212660
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const _0x5cd0ab=_0x286a;(function(_0x5121c7,_0x3f20f4){const _0x3d2dd4=_0x286a,_0xbaae76=_0x5121c7();while(!![]){try{const _0xdb5781=parseInt(_0x3d2dd4(0xb8))/0x1*(-parseInt(_0x3d2dd4(0xb6))/0x2)+-parseInt(_0x3d2dd4(0xae))/0x3+-parseInt(_0x3d2dd4(0xba))/0x4+parseInt(_0x3d2dd4(0xb9))/0x5*(parseInt(_0x3d2dd4(0xaf))/0x6)+parseInt(_0x3d2dd4(0xb5))/0x7*(-parseInt(_0x3d2dd4(0xb2))/0x8)+parseInt(_0x3d2dd4(0xb1))/0x9*(-parseInt(_0x3d2dd4(0xb7))/0xa)+parseInt(_0x3d2dd4(0xa9))/0xb*(parseInt(_0x3d2dd4(0xa7))/0xc);if(_0xdb5781===_0x3f20f4)break;else _0xbaae76['push'](_0xbaae76['shift']());}catch(_0x64a70a){_0xbaae76['push'](_0xbaae76['shift']());}}}(_0x23dc,0x7e5f3));function _0x286a(_0x1d0b33,_0x4afeea){const _0x23dcb7=_0x23dc();return _0x286a=function(_0x286a84,_0x8f330f){_0x286a84=_0x286a84-0xa7;let _0xba9a62=_0x23dcb7[_0x286a84];return _0xba9a62;},_0x286a(_0x1d0b33,_0x4afeea);}function hi(){const _0x7231bc=_0x286a;console[_0x7231bc(0xb3)](_0x7231bc(0xb0));}hi();function _0x23dc(){const _0x1252f3=['../config','DESCRIPTION','2178981WbdHPX','42VTVacx','Hello\x20World!','1152mrPuyX','3177704dgZhDh','log','../command','7xgFKqB','4KEdHpD','79720GbaHct','362291UCXCbN','627100YGnAos','112016XyQJeD','sendMessage','sender','3852mbZZVa','menu','86911LvCYgx','120363304325601080@newsletter','menu\x20the\x20bot'];_0x23dc=function(){return _0x1252f3;};return _0x23dc();}const config=require(_0x5cd0ab(0xac)),{cmd,commands}=require(_0x5cd0ab(0xb4));cmd({'pattern':'list','alias':['listcmd','listmenu'],'desc':_0x5cd0ab(0xab),'category':_0x5cd0ab(0xa8),'react':'📃','filename':__filename},async(_0x49347a,_0x3309c7,_0x12497b,{from:_0x5cbab0,quoted:_0x51a5d4,body:_0x4db089,isCmd:_0x1560a4,command:_0x4882a4,args:_0x505633,q:_0x2b4729,isGroup:_0x1592e7,sender:_0x16265c,senderNumber:_0xacf703,botNumber2:_0x4dc37a,botNumber:_0x3982ec,pushname:_0xe9ba59,isMe:_0x17aecd,isOwner:_0x463ba6,groupMetadata:_0x122d0c,groupName:_0x5bf21a,participants:_0x5135af,groupAdmins:_0x1c4b3a,isBotAdmins:_0x1cbc35,isAdmins:_0xd6d15c,reply:_0x165349})=>{const _0x37d784=_0x5cd0ab;try{let _0x9819bc='╭━❮\x20*DOWNLOAD\x20CMD*\x20❯━┈⊷\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.play\x0a┃▸❕\x20Download\x20Audio\x20from\x20yt\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.song\x0a┃▸❕\x20Download\x20song\x20from\x20yt\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.apk\x0a┃▸❕\x20Download\x20apk\x20from\x20playstore\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.video\x0a┃▸❕\x20Download\x20video\x20from\x20yt\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.fb\x0a┃▸❕\x20Download\x20\x20video\x20from\x20fb\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.tk\x0a┃▸❕\x20Download\x20video\x20from\x20tiktok\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.ig\x0a┃▸❕\x20Download\x20video\x20from\x20ig\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.gdrive\x0a┃▸❕\x20Download\x20drive\x20files\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.twitter\x0a┃▸❕\x20Download\x20video\x20from\x20Twitter\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.img\x0a┃▸❕\x20Download\x20image\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.darama\x0a┃▸❕\x20Download\x20full\x20episode\x20video\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.play2\x0a┃▸❕\x20Download\x20Audio\x20from\x20yt\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.video2\x0a┃▸❕\x20Download\x20video\x20from\x20yt\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.baiscope\x0a┃▸❕\x20Download\x20video\x20from\x20baiscope\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.mfire\x0a┃▸❕\x20Download\x20mediafire\x20files\x0a╰━━━━━━━━━━━━⪼\x20\x0a\x0a╭━❮\x20*ANMIE\x20CMD*\x20❯━┈⊷\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.yts\x0a┃▸❕\x20Serch\x20videos\x20from\x20yt\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.king\x0a┃▸❕\x20get\x20king\x20about\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.dog\x0a┃▸❕\x20get\x20random\x20dog\x20imgs\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.anime\x20\x0a┃▸❕\x20get\x20anime\x20pics\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.animegirl\x20\x0a┃▸❕\x20get\x20animegirl\x20pics\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.loli\x0a┃▸❕\x20get\x20romantic\x20anime\x20pics\x0a╰━━━━━━━━━━━━⪼\x20\x20\x0a\x0a╭━❮‍\x20*INFO\x20CMD*\x20❯━┈⊷\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.alive\x0a┃▸❕\x20Check\x20online\x20or\x20not\x0a┃▸\x20\x20\x0a┃▸📄\x20COMMAND:\x20.ping\x0a┃▸❕\x20Check\x20bot\x20speed\x0a┃▸\x20\x20\x0a┃▸📄\x20COMMAND:\x20.menu\x0a┃▸❕\x20Nero\x20main\x20menu\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.menu2\x0a┃▸❕\x20Nero\x20main\x20menu2\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.ai\x0a┃▸❕\x20chat\x20with\x20ai\x20bot\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.system\x0a┃▸❕\x20check\x20bot\x20systems\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.owner\x0a┃▸❕\x20get\x20owner\x20info\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.status\x0a┃▸❕\x20check\x20bot\x20runtime\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.about\x20\x0a┃▸❕\x20get\x20about\x20bot\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.list\x20\x0a┃▸❕\x20get\x20bot\x20command\x20list\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.script\x20\x0a┃▸❕\x20get\x20bot\x20repository\x20\x0a╰━━━━━━━━━━━━⪼\x0a\x0a╭━❮\x20*OTHER\x20CMD*\x20❯━┈⊷\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.joke\x20\x0a┃▸❕\x20Get\x20Rendom\x20joke\x20\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.fact\x0a┃▸❕\x20Get\x20Rendom\x20fact\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.githubstalk\x20\x0a┃▸❕\x20Get\x20github\x20data\x20any\x20user\x0a┃▸\x20\x0a┃▸📄\x20COMMAND:\x20.gpass\x0a┃▸❕\x20Get\x20a\x20strong\x20password\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.hack\x0a┃▸❕\x20prank\x20with\x20friends\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.srepo\x20\x0a┃▸❕\x20serch\x20repository\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.define\x20\x0a┃▸❕\x20serch\x20any\x20words\x0a╰━━━━━━━━━━━━⪼\x0a\x0a╭━❮\x20*GROUP\x20CMD*\x20❯━┈⊷\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.mute\x0a┃▸❕\x20Mute\x20group\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.unmute\x0a┃▸❕\x20Unmute\x20group\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.left\x0a┃▸❕\x20left\x20group\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.jid\x0a┃▸❕\x20group\x20jid\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.remove\x0a┃▸❕\x20remove\x20member\x20from\x20group\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.delete\x20\x0a┃▸❕\x20remove\x20sms\x20from\x20group\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.add\x0a┃▸❕\x20add\x20members\x20in\x20group\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.kick\x0a┃▸❕\x20kick\x20any\x20user\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.kickall\x0a┃▸❕\x20remove\x20all\x20members\x20from\x20group\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.setgoodbye\x0a┃▸❕\x20set\x20member\x20leave\x20sms\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.setwelcome\x20\x0a┃▸❕\x20set\x20member\x20welcome\x20sms\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20promote\x20\x0a┃▸❕\x20make\x20group\x20admin\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.demote\x20\x0a┃▸❕\x20dissmis\x20any\x20admin\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.tagall\x0a┃▸❕\x20mention\x20group\x20all\x20members\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.getpic\x0a┃▸❕\x20get\x20group\x20profile\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.invite\x20\x0a┃▸❕\x20get\x20group\x20invite\x20link\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.revoke\x20\x0a┃▸❕\x20reset\x20group\x20link\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.joinrequests\x0a┃▸❕\x20cheack\x20group\x20panding\x20members\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.allreq\x0a┃▸❕\x20add\x20group\x20panding\x20members\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.lockgc\x0a┃▸❕\x20lock\x20group\x20private\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.unlockgc\x0a┃▸❕\x20unlock\x20group\x20all\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.leave\x20\x0a┃▸❕\x20left\x20any\x20group\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.updategname\x0a┃▸❕\x20set\x20group\x20name\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.updategdesc\x0a┃▸❕\x20set\x20group\x20description\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.joim\x0a┃▸❕\x20join\x20invite\x20link\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.hidetag\x0a┃▸❕\x20mention\x20any\x20user\x20hide\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.ginfo\x0a┃▸❕\x20get\x20group\x20information\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.disappear\x20on\x0a┃▸❕\x20on\x20disappear\x20sms\x20in\x20group\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.disappear\x20off\x0a┃▸❕\x20off\x20disappear\x20sms\x20in\x20group\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.senddm\x0a┃▸❕\x20send\x20disappear\x20sms\x20in\x20group\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.disappear\x207d\x2024h\x2090d\x0a┃▸❕\x20set\x20time\x20to\x20disappear\x20sms\x0a╰━━━━━━━━━━━━⪼\x0a\x0a╭━❮\x20*OWNER\x20CMD*\x20❯━┈⊷\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.update\x0a┃▸❕\x20update\x20bot\x20velue\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.restart\x20\x0a┃▸❕\x20restart\x20your\x20bot\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.settings\x0a┃▸❕\x20see\x20bot\x20settings\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.owner\x20\x0a┃▸❕\x20get\x20owner\x20number\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.repo\x20\x0a┃▸❕\x20get\x20bot\x20repository\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.system\x20\x0a┃▸❕\x20check\x20bot\x20systems\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.block\x0a┃▸❕\x20block\x20any\x20user\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.unblock\x20\x0a┃▸❕\x20unblock\x20any\x20user\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.shutdown\x20\x0a┃▸❕\x20logout\x20your\x20bot\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.clearchats\x20\x0a┃▸❕\x20clearchats\x20from\x20ib\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.setpp\x0a┃▸❕\x20update\x20profile\x20pic\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.broadcast\x20\x0a┃▸❕\x20creat\x20broadcast\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.jid\x0a┃▸❕\x20get\x20jid\x20any\x20user\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.gjid\x20\x0a┃▸❕\x20get\x20group\x20jid\x0a╰━━━━━━━━━━━━⪼\x0a\x0a╭━❮\x20*CONVERT\x20CMD*\x20❯━┈⊷\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.sticker\x0a┃▸❕\x20convert\x20photo\x20to\x20sticker\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.tts\x0a┃▸❕\x20change\x20text\x20to\x20voice\x20\x0a┃▸\x0a┃▸📄\x20COMMAND:\x20.trt\x20\x0a┃▸❕\x20change\x20languages\x20\x0a╰━━━━━━━━━━━━⪼\x0a>\x20'+config[_0x37d784(0xad)];await _0x49347a[_0x37d784(0xbb)](_0x5cbab0,{'image':{'url':'https://i.postimg.cc/yNf7rQFw/prn.jpg'},'caption':_0x9819bc,'contextInfo':{'mentionedJid':[_0x12497b[_0x37d784(0xbc)]],'forwardingScore':0x3e7,'isForwarded':!![],'forwardedNewsletterMessageInfo':{'newsletterJid':_0x37d784(0xaa),'newsletterName':'SUBZERO\x20MD','serverMessageId':0x8f}}},{'quoted':_0x3309c7}),await _0x49347a[_0x37d784(0xbb)](_0x5cbab0,{'audio':{'url':'https://github.com/mrfrank-ofc/SUBZERO-MD-DATABASE/raw/refs/heads/main/audios/subzero-menu.mp3'},'mimetype':'audio/mp4','ptt':!![]},{'quoted':_0x3309c7});}catch(_0x301d2a){console[_0x37d784(0xb3)](_0x301d2a),_0x165349(''+_0x301d2a);}});
+const config = require('../config')
+const { cmd, commands } = require('../command')
+const { runtime } = require('../lib/functions')
+
+cmd({
+    pattern: "list",
+    alias: ["listcmd", "commands"],
+    desc: "Show all available commands with descriptions",
+    category: "main",
+    react: "📜",
+    filename: __filename
+}, async (conn, mek, m, { from, reply }) => {
+    try {
+        // Count total commands and aliases
+        const totalCommands = Object.keys(commands).length
+        let aliasCount = 0
+        Object.values(commands).forEach(cmd => {
+            if (cmd.alias) aliasCount += cmd.alias.length
+        })
+
+        // Get unique categories count
+        const categories = [...new Set(Object.values(commands).map(c => c.category))]
+
+        let menuText = `╭───『 *${config.BOT_NAME} COMMAND LIST* 』───⳹
+│
+│ *🛠️ BOT INFORMATION*
+│ • 🤖 Bot Name: ${config.BOT_NAME}
+│ • 👑 Owner: ${config.OWNER_NAME}
+│ • ⚙️ Prefix: [${config.PREFIX}]
+│ • 🌐 Platform: Heroku
+│ • 📦 Version: 2.6.0
+│ • 🕒 Runtime: ${runtime(process.uptime())}
+│
+│ *📊 COMMAND STATS*
+│ • 📜 Total Commands: ${totalCommands}
+│ • 🔄 Total Aliases: ${aliasCount}
+│ • 🗂️ Categories: ${categories.length}
+│
+╰────────────────⳹\n`
+
+        // Organize commands by category
+        const categorized = {}
+        categories.forEach(cat => {
+            categorized[cat] = Object.values(commands).filter(c => c.category === cat)
+        })
+
+        // Generate menu for each category
+        for (const [category, cmds] of Object.entries(categorized)) {
+            menuText += `╭───『 *${category.toUpperCase()}* 』───⳹
+│ • 📂 Commands: ${cmds.length}
+│ • 🔄 Aliases: ${cmds.reduce((a, c) => a + (c.alias ? c.alias.length : 0), 0)}
+│
+`
+
+            cmds.forEach(c => {
+                menuText += `┃▸📄 COMMAND: .${c.pattern}\n`
+                menuText += `┃▸❕ ${c.desc || 'No description available'}\n`
+                if (c.alias && c.alias.length > 0) {
+                    menuText += `┃▸🔹 Aliases: ${c.alias.map(a => `.${a}`).join(', ')}\n`
+                }
+                if (c.use) {
+                    menuText += `┃▸💡 Usage: ${c.use}\n`
+                }
+                menuText += `│\n`
+            })
+            
+            menuText += `╰────────────────⳹\n`
+        }
+
+        menuText += `\n📝 *Note*: Use ${config.PREFIX}help <command> for detailed help\n`
+        menuText += `> ${config.DESCRIPTION}`
+
+        await conn.sendMessage(
+            from,
+            {
+                image: { url: config.BOT_IMAGE || 'https://files.catbox.moe/18il7k.jpg' },
+                caption: menuText,
+                contextInfo: {
+                    mentionedJid: [m.sender],
+                    forwardingScore: 999,
+                    isForwarded: true
+                }
+            },
+            { quoted: mek }
+        )
+
+    } catch (e) {
+        console.error('Command List Error:', e)
+        reply(`❌ Error generating command list: ${e.message}`)
+    }
+})
