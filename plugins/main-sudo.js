@@ -31,7 +31,7 @@ cmd({
         // اگر هیچ هدفی وارد نشده بود، پیام خطا بده
         if (!target) return reply("❌ Please provide a number or tag/reply a user.");
 
-        let own = JSON.parse(fs.readFileSync("./lib/owner.json", "utf-8"));
+        let own = JSON.parse(fs.readFileSync("./lib/sudo.json", "utf-8"));
 
         if (own.includes(target)) {
             return reply("❌ This user is already a temporary owner.");
