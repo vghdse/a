@@ -126,10 +126,10 @@ cmd(
         conn.sendMessage(mek.chat, { text: `\`\`\`Downloading song...\`\`\`` })
       ]);
 
-      // Send audio with title as caption and correct mimetype
+      // Send audio with title as caption
       await conn.sendMessage(mek.chat, {
         audio: Buffer.from(audioResponse.data, 'binary'),
-        mimetype: 'audio/mp3',
+        mimetype: 'audio/mpeg',
         fileName: `${apiResponse.data.title.substring(0, 64)}.mp3`.replace(/[^\w\s.-]/gi, ''),
         ptt: false,
         caption: `🎵 *Now Playing:* ${apiResponse.data.title}`
