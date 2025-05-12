@@ -1,4 +1,4 @@
-/*const { cmd } = require('../command');
+const { cmd } = require('../command');
 
 cmd({
     pattern: "react",
@@ -29,4 +29,4 @@ cmd({
         reply("❌ Error: " + error.message);
     }
 });
-*/
+
