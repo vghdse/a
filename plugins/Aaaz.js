@@ -1,4 +1,4 @@
-const { cmd } = require('../commands');
+ /*const { cmd } = require('../commands');
 
 // Help menu command
 cmd(
@@ -40,3 +40,4 @@ cmd(
     reply(menu.trim());
   }
 );
+*/
