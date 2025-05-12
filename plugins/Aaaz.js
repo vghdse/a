@@ -1,4 +1,4 @@
-const { cmd, commands } = require('../lib');
+const { cmd } = require('../commands');
 
 // Help menu command
 cmd(
