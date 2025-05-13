@@ -1,11 +1,12 @@
 const fs = require("fs");
 const path = require("path");
+const { exec } = require("child_process");
 const { cmd } = require("../command");
 
 const prefixPath = path.join(__dirname, "../lib/prefix.json");
 
 cmd({
-    pattern: "setprefix3",
+    pattern: "setprefix",
     alias: ["changeprefix"],
     desc: "Change the bot's command prefix",
     category: "owner",
@@ -13,11 +14,23 @@ cmd({
     filename: __filename
 }, async (conn, mek, m, { args, isCreator, reply }) => {
     if (!isCreator) return reply("❗ Only the bot owner can use this command.");
-    const newPrefix = args[0];
-    if (!newPrefix || newPrefix.length > 2) return reply("❌ Provide a valid prefix (1-2 characters).");
 
-    let prefixData = { prefix: newPrefix };
-    fs.writeFileSync(prefixPath, JSON.stringify(prefixData, null, 2));
+    const newPrefix = args[0]?.trim();
+    if (!newPrefix || newPrefix.length > 2) return reply("❌ Provide a valid prefix (1–2 characters).");
 
-    reply(`✅ Prefix updated to: *${newPrefix}*`);
+    try {
+        fs.writeFileSync(prefixPath, JSON.stringify({ prefix: newPrefix }, null, 2));
+        await reply(`✅ Prefix updated to: *${newPrefix}*\n\n♻️ Restarting bot...`);
+
+        exec("pm2 restart all", (err, stdout, stderr) => {
+            if (err) {
+                console.error("Restart error:", err);
+                return;
+            }
+            console.log("Bot restarted with PM2.");
+        });
+    } catch (err) {
+        console.error("Error:", err);
+        reply("❌ Failed to update prefix.");
+    }
 });
