@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const prefixPath = path.join(__dirname, 'lib', 'prefix.json');
-const prefixData = JSON.parse(fs.readFileSync(prefixPath, 'utf8'));
+const configPath = path.join(__dirname, "lib", "config.json");
+const configData = JSON.parse(fs.readFileSync(configPath, "utf8"));
 
 if (fs.existsSync('config.env')) require('dotenv').config({ path: './config.env' });
 
@@ -12,15 +12,15 @@ function convertToBool(text, fault = 'true') {
 module.exports = {
     // ===== BOT CORE SETTINGS =====
     SESSION_ID: process.env.SESSION_ID || "",  // Your bot's session ID (keep it secure)
-    PREFIX: prefixData.prefix || ".",  // Command prefix (e.g., "., / ! * - +")
-    BOT_NAME: process.env.BOT_NAME || "SUBZERO-MD",  // Bot's display name
+    PREFIX: configData.PREFIX || ".",  // Command prefix (e.g., "., / ! * - +")
+    BOT_NAME: process.env.BOT_NAME || configData.BOT_NAME || "SUBZERO-MD",  // Bot's display name
     MODE: process.env.MODE || "public",        // Bot mode: public/private/group/inbox
     REPO: process.env.REPO || "https://github.com/mrfrankofcc/SUBZERO-MD",  // Bot's GitHub repo
     BAILEYS: process.env.BAILEYS || "@shizodevs/baileys",  // Bot's BAILEYS
 
     // ===== OWNER & DEVELOPER SETTINGS =====
     OWNER_NUMBER: process.env.OWNER_NUMBER || "263719647303",  // Owner's WhatsApp number
-    OWNER_NAME: process.env.OWNER_NAME || "Mr Frank",           // Owner's name
+    OWNER_NAME: process.env.OWNER_NAME || configData.OWNER_NAME || "Mr Frank",           // Owner's name
     DEV: process.env.DEV || "263719647303",                     // Developer's contact number
     DEVELOPER_NUMBER: '263719647303@s.whatsapp.net',            // Developer's WhatsApp ID
 
