@@ -1,43 +1,23 @@
- /*const { cmd } = require('../commands');
+const fs = require("fs");
+const path = require("path");
+const { cmd } = require("../command");
 
-// Help menu command
-cmd(
-  {
-    pattern: 'help',
-    alias: ['menu', 'commands'],
-    desc: 'Shows list of all available commands',
-    category: 'general',
-    use: '[command name]',
+const prefixPath = path.join(__dirname, "../lib/prefix.json");
+
+cmd({
+    pattern: "setprefix3",
+    alias: ["changeprefix"],
+    desc: "Change the bot's command prefix",
+    category: "owner",
+    react: "✏️",
     filename: __filename
-  },
-  async (conn, m, msg, { text, reply }) => {
-    if (text) {
-      // Show detailed help for a specific command
-      const command = commands.find(c => c.pattern === text || c.alias?.includes(text));
-      if (!command) return reply(`❌ Command "${text}" not found.`);
-      return reply(`*Command:* ${command.pattern}\n*Description:* ${command.desc || 'No description'}\n*Usage:* ${command.use || 'No usage'}\n*Category:* ${command.category}`);
-    }
+}, async (conn, mek, m, { args, isCreator, reply }) => {
+    if (!isCreator) return reply("❗ Only the bot owner can use this command.");
+    const newPrefix = args[0];
+    if (!newPrefix || newPrefix.length > 2) return reply("❌ Provide a valid prefix (1-2 characters).");
 
-    // Group commands by category
-    const grouped = {};
-    for (const cmd of commands) {
-      if (cmd.dontAddCommandList) continue;
-      if (!grouped[cmd.category]) grouped[cmd.category] = [];
-      grouped[cmd.category].push(cmd);
-    }
+    let prefixData = { prefix: newPrefix };
+    fs.writeFileSync(prefixPath, JSON.stringify(prefixData, null, 2));
 
-    // Build help menu text
-    let menu = `*HELP MENU*\nHere are the available commands:\n\n`;
-
-    for (const [category, cmds] of Object.entries(grouped)) {
-      menu += `╭─── *${category.toUpperCase()}*\n`;
-      cmds.forEach(c => {
-        menu += `│ • *${c.pattern}* — ${c.desc || 'No description'}\n`;
-      });
-      menu += `╰────\n\n`;
-    }
-
-    reply(menu.trim());
-  }
-);
-*/
+    reply(`✅ Prefix updated to: *${newPrefix}*`);
+});
