@@ -1,4 +1,4 @@
-// MineRush Full Game Bot 
+/*// MineRush Full Game Bot 
 const fs = require("fs"); 
 const path = require("path"); 
 const { cmd } = require("../command");
@@ -25,3 +25,4 @@ cmd({ pattern: "promote", desc: "Promote user to Pro", category: "owner", react:
 
 cmd({ pattern: "pro", desc: "Check pro benefits", category: "game", react: "✨", filename: __filename }, async (conn, mek, m, { sender, reply }) => { const db = loadDB(); const user = getUser(db, sender); if (user.isPro) { reply("✨ You are a Pro user! Benefits: 3x faster mining, rob protection, and more!"); } else { reply("🔓 Unlock Pro to enjoy faster mining and exclusive features!"); } });
 
+*/
