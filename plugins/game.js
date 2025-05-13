@@ -1,4 +1,4 @@
-const fs = require("fs");
+/*const fs = require("fs");
 const path = require("path");
 const { cmd } = require("../command");
 
@@ -247,3 +247,4 @@ cmd({
         reply("❌ Couldn't check Pro status. Please try again.");
     }
 });
+*/
