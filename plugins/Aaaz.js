@@ -6,7 +6,7 @@ cmd({
     pattern: "setprefix",
     desc: "Set the bot's command prefix",
     category: "owner",
-    react: "✏️",
+    react: "✅",
     filename: __filename
 }, async (conn, mek, m, { args, isCreator, reply }) => {
     if (!isCreator) return reply("❗ Only the bot owner can use this command.");
@@ -21,8 +21,58 @@ cmd({
 
 
 
+cmd({
+    pattern: "setbotname",
+    desc: "Set the bot's name",
+    category: "owner",
+    react: "✅",
+    filename: __filename
+}, async (conn, mek, m, { args, isCreator, reply }) => {
+    if (!isCreator) return reply("❗ Only the bot owner can use this command.");
+    const newName = args.join(" ").trim();
+    if (!newName) return reply("❌ Provide a bot name.");
+
+    setConfig("BOT_NAME", newName);
+
+    await reply(`✅ Bot name updated to: *${newName}*\n\n♻️ Restarting...`);
+    setTimeout(() => exec("pm2 restart all"), 2000);
+});
 
 
+cmd({
+    pattern: "setownername",
+    desc: "Set the owner's name",
+    category: "owner",
+    react: "✅",
+    filename: __filename
+}, async (conn, mek, m, { args, isCreator, reply }) => {
+    if (!isCreator) return reply("❗ Only the bot owner can use this command.");
+    const name = args.join(" ").trim();
+    if (!name) return reply("❌ Provide an owner name.");
+
+    setConfig("OWNER_NAME", name);
+
+    await reply(`✅ Owner name updated to: *${name}*\n\n♻️ Restarting...`);
+    setTimeout(() => exec("pm2 restart all"), 2000);
+});
+
+
+cmd({
+    pattern: "setbotimage",
+    desc: "Set the bot's image URL",
+    category: "owner",
+    react: "✅",
+    filename: __filename
+}, async (conn, mek, m, { args, isCreator, reply }) => {
+    if (!isCreator) return reply("❗ Only the bot owner can use this command.");
+    const url = args[0];
+    if (!url || !url.startsWith("http")) return reply("❌ Provide a valid image URL.");
+
+    setConfig("BOT_IMAGE", url);
+
+    await reply(`✅ Bot image updated.\n\n♻️ Restarting...`);
+    setTimeout(() => exec("pm2 restart all"), 2000);
+});
 
 /*const fs = require("fs");
 const path = require("path");
