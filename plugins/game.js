@@ -1,4 +1,7 @@
-// MineRush Full Game Bot const fs = require("fs"); const path = require("path"); const { cmd } = require("../command");
+// MineRush Full Game Bot 
+const fs = require("fs"); 
+const path = require("path"); 
+const { cmd } = require("../command");
 
 const DB_PATH = path.resolve(__dirname, "../lib/empire.json");
 
