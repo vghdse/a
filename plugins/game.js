@@ -1,4 +1,4 @@
-const fs = require("fs"); const path = require("path");
+/* const fs = require("fs"); const path = require("path");
 
 const DATA_PATH = path.join(__dirname, "../lib/empire.json"); if (!fs.existsSync(DATA_PATH)) fs.writeFileSync(DATA_PATH, JSON.stringify({}));
 
@@ -53,4 +53,4 @@ const level = Math.floor(user.xp / 100) + 1; const progress = user.xp % 100;
 const msg = 👛 *Your Wallet*\n\n + 👤 Name: ${user.name || "Unknown"}\n + 💰 Coins: ${formatNumber(user.coins)}\n + ⭐ XP: ${formatNumber(user.xp)}\n + 📈 Level: ${level} (${progress}/100 XP);
 
 reply(msg); });
-
+*/
