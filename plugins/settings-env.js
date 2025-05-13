@@ -12,7 +12,7 @@ const path = require('path');
 let antilinkAction = "off"; // Default state
 let warnCount = {}; // Track warnings per user
 
-const { setConfig } = require("../lib/configdb");
+const { setConfig, getConfig } = require("../lib/configdb");
 const { exec } = require("child_process");
 
 cmd({
@@ -191,26 +191,7 @@ cmd({
 
 // SETTINGS OVER
 
-/*cmd({
-    pattern: "setbotname",
-    alias: ["ownername", "setownername"],
-    react: "👑",
-    desc: "Set the bot owner's name",
-    category: "settings",
-    filename: __filename,
-}, async (conn, mek, m, { from, args, isOwner, reply }) => {
-    if (!isOwner) return reply("*📛 Only the owner can use this command!*");
 
-    const newOwnerName = args.join(' ');
-    if (!newOwnerName) return reply("❌ Please provide a new owner name. Example: `.setbotname John Doe`");
-
-    if (updateConfigs('BOT_NAME', newOwnerName)) {
-        return reply(`✅ Owner name successfully changed to *${newOwnerName}* in both config and environment`);
-    } else {
-        return reply("❌ Failed to update owner name. Check console for details.");
-    }
-});
-*/
 
 // WELCOME
 cmd({
@@ -241,7 +222,7 @@ async (conn, mek, m, { from, args, isCreator, reply }) => {
 
 // ===========
 
-cmd({
+/*cmd({
     pattern: "mode",
     alias: ["setmode"],
     react: "🫟",
@@ -268,6 +249,36 @@ cmd({
         return reply("❌ Invalid mode. Please use `.mode private` or `.mode public`.");
     }
 });
+*/
+
+
+
+cmd({
+    pattern: "mode",
+    alias: ["setmode"],
+    react: "🫟",
+    desc: "Set bot mode to private or public.",
+    category: "settings",
+    filename: __filename,
+}, async (conn, mek, m, { args, isCreator, reply }) => {
+    if (!isCreator) return reply("*📛 Only the owner can use this command!*");
+
+    const currentMode = getConfig("MODE") || "public";
+
+    if (!args[0]) {
+        return reply(`📌 Current mode: *${currentMode}*\n\nUsage: .mode private OR .mode public`);
+    }
+
+    const modeArg = args[0].toLowerCase();
+
+    if (["private", "public"].includes(modeArg)) {
+        setConfig("MODE", modeArg);
+        return reply(`✅ Bot mode is now set to *${modeArg.toUpperCase()}*.`);
+    } else {
+        return reply("❌ Invalid mode. Please use `.mode private` or `.mode public`.");
+    }
+});
+
 
 cmd({
     pattern: "autotyping",
