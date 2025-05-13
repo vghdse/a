@@ -222,7 +222,7 @@ async (conn, mek, m, { from, args, isCreator, reply }) => {
 
 // ===========
 
-/*cmd({
+cmd({
     pattern: "mode",
     alias: ["setmode"],
     react: "🫟",
@@ -249,10 +249,10 @@ async (conn, mek, m, { from, args, isCreator, reply }) => {
         return reply("❌ Invalid mode. Please use `.mode private` or `.mode public`.");
     }
 });
-*/
 
 
 
+/*
 cmd({
     pattern: "mode",
     alias: ["setmode"],
@@ -278,7 +278,7 @@ cmd({
         return reply("❌ Invalid mode. Please use `.mode private` or `.mode public`.");
     }
 });
-
+*/
 
 cmd({
     pattern: "autotyping",
