@@ -43,7 +43,7 @@ module.exports = {
     AUTO_VOICE: process.env.AUTO_VOICE || "false",              // Auto-send voice messages?
     AUTO_RECORDING: process.env.AUTO_RECORDING || "false",      // Auto-record voice notes?
     AUTO_TYPING: process.env.AUTO_TYPING || "false",            // Show typing indicator?
-    BOT_IMAGE: process.env.BOT_IMAGE || configData.BOT_IMAGE || "",  // Bot's "alive" image
+    BOT_IMAGE: configData.BOT_IMAGE || "",  // Bot's "alive" image
 
     // ===== SECURITY & ANTI-FEATURES =====
     ANTI_CALL: process.env.ANTI_CALL || "true",
