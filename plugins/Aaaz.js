@@ -1,4 +1,30 @@
-const fs = require("fs");
+const { cmd } = require("../command");
+const { setConfig } = require("../lib/configdb");
+const { exec } = require("child_process");
+
+cmd({
+    pattern: "setprefix",
+    desc: "Set the bot's command prefix",
+    category: "owner",
+    react: "✏️",
+    filename: __filename
+}, async (conn, mek, m, { args, isCreator, reply }) => {
+    if (!isCreator) return reply("❗ Only the bot owner can use this command.");
+    const newPrefix = args[0]?.trim();
+    if (!newPrefix || newPrefix.length > 2) return reply("❌ Provide a valid prefix (1–2 characters).");
+
+    setConfig("PREFIX", newPrefix);
+
+    await reply(`✅ Prefix updated to: *${newPrefix}*\n\n♻️ Restarting...`);
+    setTimeout(() => exec("pm2 restart all"), 2000);
+});
+
+
+
+
+
+
+/*const fs = require("fs");
 const path = require("path");
 const { exec } = require("child_process");
 const { cmd } = require("../command");
@@ -13,6 +39,7 @@ cmd({
     filename: __filename
 }, async (conn, mek, m, { args, isCreator, reply }) => {
     if (!isCreator) return reply("❗ Only the bot owner can use this command.");
+  
     const newPrefix = args[0]?.trim();
     if (!newPrefix || newPrefix.length > 2) return reply("❌ Provide a valid prefix (1–2 characters).");
 
@@ -45,3 +72,4 @@ cmd({
     await reply(`✅ Bot image URL updated.\n\n♻️ Restarting...`);
     setTimeout(() => exec("pm2 restart all"), 2000);
 });
+*/
