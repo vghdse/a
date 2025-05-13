@@ -1,4 +1,4 @@
-const fs = require("fs");
+/*const fs = require("fs");
 const path = require("path");
 
 const DATA_PATH = path.join(__dirname, "../lib/empire.json");
@@ -125,3 +125,4 @@ cmd({
 
   reply(msg);
 });
+"/
