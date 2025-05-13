@@ -1,4 +1,8 @@
 const fs = require('fs');
+const path = require('path');
+const prefixPath = path.join(__dirname, 'lib', 'prefix.json');
+const prefixData = JSON.parse(fs.readFileSync(prefixPath, 'utf8'));
+
 if (fs.existsSync('config.env')) require('dotenv').config({ path: './config.env' });
 
 function convertToBool(text, fault = 'true') {
@@ -8,7 +12,7 @@ function convertToBool(text, fault = 'true') {
 module.exports = {
     // ===== BOT CORE SETTINGS =====
     SESSION_ID: process.env.SESSION_ID || "",  // Your bot's session ID (keep it secure)
-    PREFIX: process.env.PREFIX || ".",         // Command prefix (e.g., "., / ! * - +")
+    PREFIX: prefixData.prefix || ".",  // Command prefix (e.g., "., / ! * - +")
     BOT_NAME: process.env.BOT_NAME || "SUBZERO-MD",  // Bot's display name
     MODE: process.env.MODE || "public",        // Bot mode: public/private/group/inbox
     REPO: process.env.REPO || "https://github.com/mrfrankofcc/SUBZERO-MD",  // Bot's GitHub repo
