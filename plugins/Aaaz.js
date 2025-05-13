@@ -16,21 +16,30 @@ cmd({
     if (!isCreator) return reply("❗ Only the bot owner can use this command.");
 
     const newPrefix = args[0]?.trim();
-    if (!newPrefix || newPrefix.length > 2) return reply("❌ Provide a valid prefix (1–2 characters).");
+    if (!newPrefix || newPrefix.length > 2) {
+        return reply("❌ Provide a valid prefix (1–2 characters).");
+    }
 
     try {
+        // Save new prefix to file
         fs.writeFileSync(prefixPath, JSON.stringify({ prefix: newPrefix }, null, 2));
-        await reply(`✅ Prefix updated to: *${newPrefix}*\n\n♻️ Restarting bot...`);
 
-        exec("pm2 restart all", (err, stdout, stderr) => {
-            if (err) {
-                console.error("Restart error:", err);
-                return;
-            }
-            console.log("Bot restarted with PM2.");
-        });
+        // Inform the user and delay restart
+        await reply(`✅ Prefix updated to: *${newPrefix}*\n\n♻️ Restarting bot in 2 seconds...`);
+
+        // Restart bot after delay
+        setTimeout(() => {
+            exec("pm2 restart all", (err, stdout, stderr) => {
+                if (err) {
+                    console.error("PM2 restart error:", err);
+                } else {
+                    console.log("Bot restarted successfully via PM2.");
+                }
+            });
+        }, 2000);
+
     } catch (err) {
-        console.error("Error:", err);
+        console.error("Error updating prefix:", err);
         reply("❌ Failed to update prefix.");
     }
 });
