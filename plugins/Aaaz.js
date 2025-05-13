@@ -16,30 +16,28 @@ cmd({
     if (!isCreator) return reply("❗ Only the bot owner can use this command.");
 
     const newPrefix = args[0]?.trim();
-    if (!newPrefix || newPrefix.length > 2) {
-        return reply("❌ Provide a valid prefix (1–2 characters).");
-    }
+    if (!newPrefix || newPrefix.length > 2) return reply("❌ Provide a valid prefix (1–2 characters).");
 
     try {
-        // Save new prefix to file
+        // Write the new prefix
         fs.writeFileSync(prefixPath, JSON.stringify({ prefix: newPrefix }, null, 2));
-
-        // Inform the user and delay restart
-        await reply(`✅ Prefix updated to: *${newPrefix}*\n\n♻️ Restarting bot in 2 seconds...`);
-
-        // Restart bot after delay
+        
+        // Send success message first
+        await reply(`✅ Prefix updated to: *${newPrefix}*\n\n♻️ Restarting bot...`);
+        
+        // Add a small delay to ensure message is sent before restart
         setTimeout(() => {
-            exec("pm2 restart all", (err, stdout, stderr) => {
+            exec("pm2 restart all", (err) => {
                 if (err) {
-                    console.error("PM2 restart error:", err);
-                } else {
-                    console.log("Bot restarted successfully via PM2.");
+                    console.error("Restart error:", err);
+                    // You might want to notify the owner about restart failure
+                    // But the bot might be restarting so this message may not send
                 }
             });
-        }, 2000);
-
+        }, 1000); // 1 second delay
+        
     } catch (err) {
-        console.error("Error updating prefix:", err);
-        reply("❌ Failed to update prefix.");
+        console.error("Error:", err);
+        reply("❌ Failed to update prefix. Error: " + err.message);
     }
 });
