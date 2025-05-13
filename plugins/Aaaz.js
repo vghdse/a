@@ -23,3 +23,25 @@ cmd({
     await reply(`✅ Prefix updated to: *${newPrefix}*\n\n♻️ Restarting...`);
     setTimeout(() => exec("pm2 restart all"), 2000);
 });
+
+
+
+
+cmd({
+    pattern: "setbotimage",
+    desc: "Set the bot's image URL",
+    category: "owner",
+    react: "🖼️",
+    filename: __filename
+}, async (conn, mek, m, { args, isCreator, reply }) => {
+    if (!isCreator) return reply("❗ Only the bot owner can use this command.");
+    const newImage = args[0];
+    if (!newImage || !newImage.startsWith("http")) return reply("❌ Provide a valid image URL.");
+
+    const config = JSON.parse(fs.readFileSync(configPath));
+    config.BOT_IMAGE = newImage;
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+    await reply(`✅ Bot image URL updated.\n\n♻️ Restarting...`);
+    setTimeout(() => exec("pm2 restart all"), 2000);
+});
