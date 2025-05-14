@@ -14,6 +14,67 @@ let warnCount = {}; // Track warnings per user
 
 const { setConfig, getConfig } = require("../lib/configdb");
 const { exec } = require("child_process");
+const FormData = require('form-data');
+const os = require('os');
+const axios = require('axios');
+
+cmd({
+  pattern: "setbotimage",
+  desc: "Set the bot's image URL",
+  category: "owner",
+  react: "✅",
+  filename: __filename
+}, async (conn, mek, m, { args, isCreator, reply }) => {
+  try {
+    if (!isCreator) return reply("❗ Only the bot owner can use this command.");
+
+    let imageUrl = args[0];
+
+    // If no URL and replying to an image
+    if (!imageUrl && m.quoted) {
+      const quotedMsg = m.quoted;
+      const mimeType = (quotedMsg.msg || quotedMsg).mimetype || '';
+      if (!mimeType.startsWith("image")) return reply("❌ Please reply to an image.");
+
+      const mediaBuffer = await quotedMsg.download();
+      const extension = mimeType.includes("jpeg") ? ".jpg" : ".png";
+      const tempFilePath = path.join(os.tmpdir(), `botimg_${Date.now()}${extension}`);
+      fs.writeFileSync(tempFilePath, mediaBuffer);
+
+      const form = new FormData();
+      form.append("fileToUpload", fs.createReadStream(tempFilePath), `botimage${extension}`);
+      form.append("reqtype", "fileupload");
+
+      const response = await axios.post("https://catbox.moe/user/api.php", form, {
+        headers: form.getHeaders()
+      });
+
+      fs.unlinkSync(tempFilePath);
+
+      if (typeof response.data !== 'string' || !response.data.startsWith('https://')) {
+        throw `Catbox upload failed: ${response.data}`;
+      }
+
+      imageUrl = response.data;
+    }
+
+    if (!imageUrl || !imageUrl.startsWith("http")) {
+      return reply("❌ Provide a valid image URL or reply to an image.");
+    }
+
+    setConfig("BOT_IMAGE", imageUrl);
+
+    await reply(`✅ Bot image updated.\n\n*New URL:* ${imageUrl}\n\n♻️ Restarting...`);
+    setTimeout(() => exec("pm2 restart all"), 2000);
+
+  } catch (err) {
+    console.error(err);
+    reply(`❌ Error: ${err.message || err}`);
+  }
+});
+
+
+
 
 cmd({
     pattern: "setprefix",
@@ -70,7 +131,7 @@ cmd({
 });
 
 
-cmd({
+/*cmd({
     pattern: "setbotimage",
     desc: "Set the bot's image URL",
     category: "owner",
@@ -86,7 +147,7 @@ cmd({
     await reply(`✅ Bot image updated.\n\n♻️ Restarting...`);
     setTimeout(() => exec("pm2 restart all"), 2000);
 });
-
+*/
 
 //SETTINGS MENU
 
