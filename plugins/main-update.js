@@ -30,6 +30,29 @@ const dbAll = promisify(db.all.bind(db));
   }
 })();
 
+// Function to get current commit hash (local version)
+async function getLocalVersion() {
+  try {
+    // Try to get from git (if available)
+    if (fs.existsSync(path.join(__dirname, '../.git/HEAD'))) {
+      const head = fs.readFileSync(path.join(__dirname, '../.git/HEAD'), 'utf8').trim();
+      if (head.startsWith('ref: ')) {
+        const ref = head.substring(5);
+        if (fs.existsSync(path.join(__dirname, `../.git/${ref}`))) {
+          return fs.readFileSync(path.join(__dirname, `../.git/${ref}`), 'utf8').trim();
+        }
+      }
+      return head;
+    }
+    // Fallback to database record
+    const lastUpdate = await dbGet("SELECT version FROM updates ORDER BY update_date DESC LIMIT 1");
+    return lastUpdate?.version || "unknown";
+  } catch (e) {
+    console.error('Failed to get local version:', e);
+    return "unknown";
+  }
+}
+
 cmd({  
   pattern: "update",  
   alias: ["upgrade", "sync"],  
@@ -42,38 +65,51 @@ cmd({
   
   try {
     const repoUrl = config.REPO || "https://github.com/mrfraank/SUBZERO";
-    const repoName = repoUrl.split('/').pop();
+    const repoApiUrl = repoUrl.replace('github.com', 'api.github.com/repos');
     
-    // Check for updates first
-    await reply("```🔍 Checking for updates...```");
-    const latestRelease = await axios.get(`${repoUrl.replace('github.com', 'api.github.com/repos')}/releases/latest`, {
+    // Get current local version
+    const localVersion = await getLocalVersion();
+    await reply(`🔍 Current version: ${localVersion}`);
+    
+    // Get latest release info
+    await reply("```Checking for updates...```");
+    const latestRelease = await axios.get(`${repoApiUrl}/releases/latest`, {
       timeout: 10000
     }).catch(() => null);
     
-    // Get current version from db
-    const currentVersion = await dbGet("SELECT version FROM updates ORDER BY update_date DESC LIMIT 1");
-    
-    if (latestRelease && currentVersion && latestRelease.data.tag_name === currentVersion.version) {
-      return reply(`✅ You already have the latest version (${currentVersion.version})`);
+    // Get latest commit from main branch if no release found
+    let latestVersion = latestRelease?.data?.tag_name;
+    if (!latestVersion) {
+      const mainBranch = await axios.get(`${repoApiUrl}/commits/main`, {
+        timeout: 10000
+      }).catch(() => null);
+      latestVersion = mainBranch?.data?.sha;
     }
     
-    await reply("```📥 Downloading updates directly...```");
+    if (!latestVersion) {
+      return reply("❌ Could not fetch latest version information");
+    }
     
-    // 1. Download the ZIP directly to memory
+    // Compare versions
+    if (localVersion === latestVersion) {
+      return reply(`✅ You already have the latest version (${localVersion})`);
+    }
+    
+    await reply(`📥 New version available: ${latestVersion}\nDownloading updates...`);
+    
+    // Download the ZIP
     const { data } = await axios.get(`${repoUrl}/archive/main.zip`, {
       responseType: "arraybuffer",
       timeout: 30000
     });
 
-    // 2. Process ZIP directly in memory
+    // Process ZIP
     const zip = new AdmZip(data);
     const zipEntries = zip.getEntries();
-    
-    // 3. Find and process files directly from ZIP
     const protectedFiles = ["config.js", "app.json", "data", "lib/update.db"];
-    const basePath = `${repoName}-main/`;
+    const basePath = `${repoUrl.split('/').pop()}-main/`;
     
-    await reply("```🔄 Applying updates...```");
+    await reply("🔄 Applying updates...");
     
     for (const entry of zipEntries) {
       if (entry.isDirectory) continue;
@@ -81,29 +117,24 @@ cmd({
       const relativePath = entry.entryName.replace(basePath, '');
       const destPath = path.join(__dirname, '..', relativePath);
       
-      // Skip protected files
       if (protectedFiles.some(f => destPath.includes(f))) continue;
       
-      // Ensure directory exists
       const dir = path.dirname(destPath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
       
-      // Write file directly from ZIP
       zip.extractEntryTo(entry, dir, false, true, entry.name);
     }
 
-    // Record the update in database
-    const version = latestRelease?.data?.tag_name || `manual-${Date.now()}`;
-    const changes = latestRelease?.data?.body || "Manual update";
-    
+    // Record update
+    const changes = latestRelease?.data?.body || "Main branch update";
     await dbRun(
       "INSERT INTO updates (version, changes) VALUES (?, ?)",
-      [version, changes]
+      [latestVersion, changes]
     );
 
-    await reply(`\`\`\`✅ Update complete! (${version})\n\nChanges:\n${changes}\`\`\`\n\n*Restarting...*`);
+    await reply(`✅ Update to ${latestVersion} complete!\n\nChanges:\n${changes}\n\nRestarting...`);
     setTimeout(() => process.exit(0), 2000);
 
   } catch (error) {
@@ -111,38 +142,6 @@ cmd({
     reply(`❌ Update failed: ${error.message}\n\nPlease update manually from:\n${config.REPO || "https://github.com/mrfraank/SUBZERO"}`);
   }
 });
-
-// Add command to check update history
-cmd({
-  pattern: "updatehistory",
-  alias: ["updates", "versionhistory"],
-  react: '📜',
-  desc: "Show update history",
-  category: "system",
-  filename: __filename
-}, async (client, message, args, { reply }) => {
-  try {
-    const updates = await dbAll("SELECT version, update_date, changes FROM updates ORDER BY update_date DESC LIMIT 10");
-    
-    if (!updates.length) {
-      return reply("No update history found.");
-    }
-    
-    let messageText = "📜 *Update History*\n\n";
-    updates.forEach((update, index) => {
-      messageText += `*${index + 1}. ${update.version}* (${new Date(update.update_date).toLocaleString()})\n` +
-                    `Changes: ${update.changes.split('\n')[0].substring(0, 50)}...\n\n`;
-    });
-    
-    reply(messageText);
-  } catch (e) {
-    console.error('Update history error:', e);
-    reply('❌ Failed to fetch update history');
-  }
-});
-
-
-
 /*
 const { cmd } = require("../command");
 const axios = require('axios');
