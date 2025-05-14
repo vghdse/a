@@ -1,4 +1,4 @@
-const { cmd } = require("../command");
+/*const { cmd } = require("../command");
 const axios = require('axios');
 const fs = require('fs');
 const path = require("path");
@@ -67,9 +67,9 @@ cmd({
     reply(`❌ Update failed: ${err.message}`);
   }
 });
+*/
 
-
-/* const { cmd } = require("../command");
+const { cmd } = require("../command");
 const axios = require('axios');
 const fs = require('fs');
 const path = require("path");
@@ -136,4 +136,4 @@ cmd({
   }
 });
 
-*/
+
