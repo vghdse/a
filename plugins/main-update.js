@@ -39,7 +39,7 @@ cmd({
     const zip = new AdmZip(zipRes.data);
     const zipEntries = zip.getEntries();
     const basePath = `${repoName}-main/`;
-    const protectedFiles = ["config.js", "app.json", "data", "lib/updatedb.js"];
+    const protectedFiles = ["config.js", "app.json", "sessions", "lib/updatedb.js"];
 
     for (const entry of zipEntries) {
       if (entry.isDirectory) continue;
