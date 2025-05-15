@@ -12,7 +12,6 @@
   "dependencies": {
     "better-sqlite3": "^9.0.0",
     "@shizodevs/baileys": "*",
-    "baileys-elite": "*",
     "gifted-baileys": "^1.5.7",
     "@whiskeysockets/baileys": "npm:@fizzxydev/baileys-pro@8.5.12",
     "@adiwajshing/keyed-db": "^0.2.4",
