@@ -19,6 +19,7 @@ const FormData = require('form-data');
 const { setConfig, getConfig } = require("../lib/configdb");
 ///tesbbbbb
 
+
 cmd({
   pattern: "setprefix1",
   desc: "Set the bot's command prefix",
@@ -27,13 +28,13 @@ cmd({
   filename: __filename
 }, async (conn, mek, m, { args, isCreator, reply }) => {
   if (!isCreator) return reply("❗ Only the bot owner can use this command.");
+
   const newPrefix = args[0]?.trim();
   if (!newPrefix || newPrefix.length > 2) return reply("❌ Provide a valid prefix (1–2 characters).");
 
   await setConfig("PREFIX", newPrefix);
-  await reply(`✅ Prefix updated to: *${newPrefix}*\n\n♻️ Restarting bot...`);
-
-  setTimeout(() => exec("pm2 restart all"), 1000);
+  await reply(`✅ Prefix updated to: *${newPrefix}*\n\n♻️ Restarting...`);
+  setTimeout(() => exec("pm2 restart all"), 2000);
 });
 
 cmd({
@@ -44,13 +45,13 @@ cmd({
   filename: __filename
 }, async (conn, mek, m, { args, isCreator, reply }) => {
   if (!isCreator) return reply("❗ Only the bot owner can use this command.");
+
   const newName = args.join(" ").trim();
   if (!newName) return reply("❌ Provide a bot name.");
 
   await setConfig("BOT_NAME", newName);
-  await reply(`✅ Bot name updated to: *${newName}*\n\n♻️ Restarting bot...`);
-
-  setTimeout(() => exec("pm2 restart all"), 1000);
+  await reply(`✅ Bot name updated to: *${newName}*\n\n♻️ Restarting...`);
+  setTimeout(() => exec("pm2 restart all"), 2000);
 });
 
 cmd({
@@ -61,13 +62,13 @@ cmd({
   filename: __filename
 }, async (conn, mek, m, { args, isCreator, reply }) => {
   if (!isCreator) return reply("❗ Only the bot owner can use this command.");
-  const ownerName = args.join(" ").trim();
-  if (!ownerName) return reply("❌ Provide an owner name.");
 
-  await setConfig("OWNER_NAME", ownerName);
-  await reply(`✅ Owner name updated to: *${ownerName}*\n\n♻️ Restarting bot...`);
+  const newOwner = args.join(" ").trim();
+  if (!newOwner) return reply("❌ Provide an owner name.");
 
-  setTimeout(() => exec("pm2 restart all"), 1000);
+  await setConfig("OWNER_NAME", newOwner);
+  await reply(`✅ Owner name updated to: *${newOwner}*\n\n♻️ Restarting...`);
+  setTimeout(() => exec("pm2 restart all"), 2000);
 });
 //-£-*;*-+
 
