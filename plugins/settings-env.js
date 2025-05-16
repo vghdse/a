@@ -31,9 +31,9 @@ cmd({
   if (!newPrefix || newPrefix.length > 2) return reply("❌ Provide a valid prefix (1–2 characters).");
 
   await setConfig("PREFIX", newPrefix);
-  global.prefix = newPrefix; // Live update for current session
+  await reply(`✅ Prefix updated to: *${newPrefix}*\n\n♻️ Restarting bot...`);
 
-  return reply(`✅ Prefix updated to: *${newPrefix}*`);
+  setTimeout(() => exec("pm2 restart all"), 1000);
 });
 
 cmd({
@@ -48,9 +48,9 @@ cmd({
   if (!newName) return reply("❌ Provide a bot name.");
 
   await setConfig("BOT_NAME", newName);
-  global.botName = newName;
+  await reply(`✅ Bot name updated to: *${newName}*\n\n♻️ Restarting bot...`);
 
-  return reply(`✅ Bot name updated to: *${newName}*`);
+  setTimeout(() => exec("pm2 restart all"), 1000);
 });
 
 cmd({
@@ -61,13 +61,13 @@ cmd({
   filename: __filename
 }, async (conn, mek, m, { args, isCreator, reply }) => {
   if (!isCreator) return reply("❗ Only the bot owner can use this command.");
-  const newOwner = args.join(" ").trim();
-  if (!newOwner) return reply("❌ Provide an owner name.");
+  const ownerName = args.join(" ").trim();
+  if (!ownerName) return reply("❌ Provide an owner name.");
 
-  await setConfig("OWNER_NAME", newOwner);
-  global.ownerName = newOwner;
+  await setConfig("OWNER_NAME", ownerName);
+  await reply(`✅ Owner name updated to: *${ownerName}*\n\n♻️ Restarting bot...`);
 
-  return reply(`✅ Owner name updated to: *${newOwner}*`);
+  setTimeout(() => exec("pm2 restart all"), 1000);
 });
 //-£-*;*-+
 
