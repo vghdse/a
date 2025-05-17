@@ -10,7 +10,7 @@ function convertToBool(text, fault = 'true') {
     return text === fault ? true : false;
 }
 
-async function loadConfig() {
+async function Config() {
     return {
         // ===== BOT CORE SETTINGS =====
         SESSION_ID: process.env.SESSION_ID || "SUBZERO-MD~upZYmIjJZ7uYe4E58AFv",
@@ -69,7 +69,7 @@ async function loadConfig() {
     };
 }
 
-module.exports = loadConfig;
+module.exports = Config;
 /*const fs = require('fs');
 const path = require('path');
 const { getConfig } = require("./lib/configdb");
